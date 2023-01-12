@@ -1,4 +1,5 @@
 #pragma once
+
 namespace utilities {
 
 	/*!***********************************************************************
@@ -34,4 +35,6 @@ namespace utilities {
 		If mouse clicked inside button, returns 1, if not returns 0
 	*************************************************************************/
 	int rectbuttonClicked_AlignCorner(float rect_x, float rect_y, float rect_width, float rect_height);
+
+	void aeDrawQuadMesh(f32 vertice1, f32 vertice2, f32 vertice3, f32 vertice4, u32 color);
 }

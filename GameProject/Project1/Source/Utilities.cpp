@@ -1,5 +1,6 @@
 #include "AEEngine.h"
 #include "Utilities.h"
+
 namespace utilities {
 
 	int rectbuttonClicked_AlignCtr(float rect_x, float rect_y, float rect_width, float rect_height) {
@@ -26,5 +27,16 @@ namespace utilities {
 				} return 0;
 			} return 0;
 		} return 0;
+	}
+
+	void aeDrawQuadMesh(f32 vertice1, f32 vertice2, f32 vertice3, f32 vertice4, u32 color) {
+
+		AEGfxTriAdd(vertice1, vertice1, color, vertice3, vertice3,
+					vertice2, vertice1, color, vertice4, vertice3,
+					vertice1, vertice2, color, vertice3, vertice4);
+
+		AEGfxTriAdd(vertice2, vertice1, color, vertice4, vertice3,
+					vertice2, vertice2, color, vertice4, vertice4,
+					vertice1, vertice2, color, vertice3, vertice4);
 	}
 }
