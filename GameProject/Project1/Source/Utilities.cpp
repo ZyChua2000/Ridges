@@ -39,4 +39,8 @@ namespace utilities {
 					vertice2, vertice2, color, vertice4, vertice4,
 					vertice1, vertice2, color, vertice3, vertice4);
 	}
+
+	float getAngle(float x1, float y1, float x2, float y2) {
+		return AEACos((x1 - x2) / sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2))));
+	}
 }
