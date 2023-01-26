@@ -87,10 +87,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
 	pblack = AEGfxMeshEnd();
 
-	entity planet;
-	planet.x = 0;
-	planet.y = 0;
-
 	s32 x{ 0 }, y{ 0 }; //init xy pos
 	
 	entity blackhole;
@@ -102,7 +98,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	//Rotate Init
 	float i{ 0 };
-
+	
 	//Movement Init
 	AEVec2 player_pos{ 0, 0 }; // player position
 	AEVec2 player_direction{ 0,0 }; //player direction
@@ -137,7 +133,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		player_direction.x = 0;// set y direction to 0 initially, if key is released x direction is set back to 0
 		player_direction.y = 0;// set y direction to 0 initially, if key is released y direction is set back to 0
 
-		if (y < planet.y + 350) {
+		if (y < player_pos.y + 350) {
 			cursorAngle = -cursorAngle;
 		}
 
@@ -193,7 +189,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 
 		player_pos.x += player_direction.x * 0.016; // 0.016 is delta time temp value
-		player_pos.y += player_direction.y * 0.016;
+		player_pos.y -= player_direction.y * 0.016;
 
 		if (AEInputCheckTriggered(AEVK_E) == 1) {
 			blackhole.x += 5 * cos(Angle);
@@ -221,7 +217,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEMtx33Rot(&rotate, i);
 		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
 		AEMtx33 translate = { 0 };
-		AEMtx33Trans(&translate, player_pos.x, player_pos.y);
+		AEMtx33Trans(&translate, player_pos.x, -player_pos.y); // - pos y to match with mouse and player coordinate 
 		// Concat the matrices (TRS) 
 		AEMtx33 transform = { 0 };
 		AEMtx33Concat(&transform, &rotate, &scale);
@@ -297,7 +293,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AEMtx33Rot(&rotate, slashRot);
 			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
 			AEMtx33 translate = { 0 };
-			AEMtx33Trans(&translate, player_pos.x + slashX, player_pos.y + slashY);
+			AEMtx33Trans(&translate, player_pos.x + slashX, -player_pos.y + slashY); // - for pos y to match player and mouse coordinate
 			// Concat the matrices (TRS) 
 			AEMtx33 transform = { 0 };
 			AEMtx33Concat(&transform, &rotate, &scale);
