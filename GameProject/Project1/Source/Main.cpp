@@ -4,13 +4,17 @@
 #include "AEEngine.h"
 #include "Utilities.h"
 #include "iostream"
+
+int state = 0;
 struct entity {
 	double x;
 	double y;
 };
 
 
-
+char strx[11] = "X position";
+char stry[11] = "Y position";
+s32 mx, my;
 // ---------------------------------------------------------------------------
 // main
 
@@ -80,6 +84,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
 	AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
 	AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
+	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
 	pblack = AEGfxMeshEnd();
 
 	entity planet;
@@ -101,6 +106,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//Movement Init
 	AEVec2 player_pos{ 0, 0 }; // player position
 	AEVec2 player_direction{ 0,0 }; //player direction
+	
 	float speed{ 150.f };
 
 	// Game Loop
@@ -111,9 +117,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		// Handling Input
 		AEInputUpdate();
+		
 
 		// Your own update logic goes here
+		if (AEInputCheckTriggered(AEVK_F3)) {
 
+			state ^= 1;
+		}
 
 		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player_pos.x, player_pos.y);
 		blackhole.x -= cos(Angle) / 5;
@@ -296,6 +306,62 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AEGfxSetTransform(transform.m);
 			// Actually drawing the mesh
 			AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+		}
+
+		if (state == 1)
+		{
+
+			AEInputGetCursorPosition(&mx, &my);
+			u8 keyw = AEInputCheckCurr(AEVK_W);
+			u8 keya = AEInputCheckCurr(AEVK_A);
+			u8 keys = AEInputCheckCurr(AEVK_S);
+			u8 keyd = AEInputCheckCurr(AEVK_D);
+			char debug[20] = "Debug Screen";
+			char input[20] = "Input";
+			char a[20] = "A";
+			char w[20] = "W";
+			char s[20] = "S";
+			char d[20] = "D";
+			char playerpos[100] = { player_pos.x,player_pos.y };
+			AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
+			AEGfxPrint(font, input, -0.99f, 0.65f, 1.5f, 1.0f, 0.2f, 0.2f);
+			char mouse_xy_buffer[50] = " "; // buffer
+			sprintf_s(mouse_xy_buffer, "Mouse Position X: %d", mx);
+			AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 0.2f, 0.2f);
+			sprintf_s(mouse_xy_buffer, "Mouse Position Y: %d", my);
+			AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 0.2f, 0.2f);
+			AEGfxPrint(font, a, -0.99f, 0.55f, 1.0f, 1.0f, 0.2f, 0.2f);
+			AEGfxPrint(font, w, -0.99f, 0.60f, 1.0f, 1.0f, 0.2f, 0.2f);
+			AEGfxPrint(font, s, -0.99f, 0.50f, 1.0f, 1.0f, 0.2f, 0.2f);
+			AEGfxPrint(font, d, -0.99f, 0.45f, 1.0f, 1.0f, 0.2f, 0.2f);
+			sprintf_s(playerpos, "Player Position X: %d", int(player_pos.x));
+			AEGfxPrint(font, playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 0.2f, 0.2f);
+			sprintf_s(playerpos, "Player Position Y: %d", int(player_pos.y));
+			AEGfxPrint(font, playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 0.2f, 0.2f);
+
+
+			if (AEInputCheckCurr(AEVK_W))
+			{
+				sprintf_s(w, "W Pressed", keyw);
+				AEGfxPrint(font, w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+			if (AEInputCheckCurr(AEVK_A))
+			{
+				sprintf_s(a, "A Pressed", keya);
+				AEGfxPrint(font, a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+			if (AEInputCheckCurr(AEVK_S))
+			{
+				sprintf_s(s, "S Pressed", keys);
+				AEGfxPrint(font, s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+			if (AEInputCheckCurr(AEVK_D))
+			{
+				sprintf_s(s, "D Pressed", keyd);
+				AEGfxPrint(font, s, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+
+
 		}
 
 		// Informing the system about the loop's end
