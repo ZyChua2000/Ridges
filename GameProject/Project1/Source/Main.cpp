@@ -118,7 +118,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Handling Input
 		AEInputUpdate();
 		
-
+		 
 		// Your own update logic goes here
 		if (AEInputCheckTriggered(AEVK_F3)) {
 
