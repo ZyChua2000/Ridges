@@ -526,16 +526,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 					}
 					else
 					{
-						counter = counter;
 						live -= 1;
 					}
 				}
 			}
 			if (live > 0 && counter == 0)
 			{
-				char count[20] = "Counter: ";
-				sprintf_s(count, "Counter: %d You Win", counter);
-				AEGfxPrint(counterfont, count, -0.20f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f);
+				char count[50] = "Counter: ";
+				sprintf_s(count, "Counter Left: %d You Win", counter);
+				AEGfxPrint(counterfont, count, -0.30f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+			if (live == 0 && counter > 0)
+			{
+				char count[50] = "Counter: ";
+				sprintf_s(count, "Counter Left: %d, No More Live. You Lose", counter);
+				AEGfxPrint(counterfont, count, -0.45f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f);
 			}
 		}
 
