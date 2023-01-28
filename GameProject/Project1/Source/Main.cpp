@@ -144,7 +144,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//Movement Init
 	//AEVec2 player_pos{ 0, 0 }; // player position
 	//AEVec2 player_direction{ 0,0 }; //player direction
-	
 	//float speed{ 150.f };
 
 	// Game Loop
