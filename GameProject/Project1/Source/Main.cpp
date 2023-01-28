@@ -18,7 +18,7 @@ struct player_stats{ //STRUCT FOR PLAYER RELATED
 	AEVec2 direction{ 0,0 }; //player direction
 	float slashX;
 	float slashY;
-	float slashRot;// reminder to throw in slash as well
+	float slashRot;
 };
 
 
