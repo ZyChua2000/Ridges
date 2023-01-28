@@ -54,4 +54,25 @@ namespace utilities {
 		Radian Angle relative to X axis and the base object
 	*************************************************************************/
 	float getAngle(float x1, float y1, float x2, float y2);
+
+
+
+	/*!***********************************************************************
+	\brief
+		This function checks if the mouse click is within the circle
+	\param[in] radius
+		radius of the circle
+	\param[in] click_x
+		X coordinate of the mouse click
+	\param[in] click_y
+		Y coordinate of the mouse click
+	\param[in] center_x
+		X coordinate of the circle
+	\param[in] center_y
+		Y coordinate of the circle
+	\return
+		0 or 1
+	*************************************************************************/
+	int WithinCircle(float radius, float click_x, float click_y, float center_x, float center_y);
+
 }

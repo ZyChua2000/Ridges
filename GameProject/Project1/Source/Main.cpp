@@ -12,7 +12,7 @@ struct entity {
 };
 
 float charScaleX = 100;
-
+int width = 1200, height = 700, scaling = 50;
 
 char strx[11] = "X position";
 char stry[11] = "Y position";
@@ -34,7 +34,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// Initialization of your own variables go here
 
 	// Using custom window procedure
-	AESysInit(hInstance, nCmdShow, 1200, 700, 1, 60, true, NULL);
+	AESysInit(hInstance, nCmdShow, width, height, 1, 60, true, NULL);
 
 	// Changing the window title
 	AESysSetWindowTitle("Game Name");
@@ -73,6 +73,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	spriteMesh = AEGfxMeshEnd();
 
 
+	AEGfxVertexList* uprightmesh = 0;
+
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
+		0.5f, -0.5f, 0xFFFFFF00, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0xFF00FFFF, 1.0f, 0.0f);
+
+	AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+		0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+
+	uprightmesh = AEGfxMeshEnd();
+
 	AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	AEGfxVertexList* pblack = 0;
 	AEGfxMeshStart();
@@ -87,7 +101,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
 	AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
 	AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
+	AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
+	AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
+	AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
 	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
 	pblack = AEGfxMeshEnd();
 
 	s32 x{ 0 }, y{ 0 }; //init xy pos
@@ -96,8 +114,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	blackhole.x = -200;
 	blackhole.y = 100;
 
-	int direction = 0;
+	int direction = 0, counter = 10, live = 3;
 	float cursorAngle;
+
+	int translateX = 250, translateY = -250;
+	int max_x = 550, min_x = -550;
+	int max_y = 300, min_y = -300;
+	bool enable = 0;
 
 	//Rotate Init
 	float i{ 0 };
@@ -403,7 +426,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 				break;
 			}
 
-
 			// Set the texture to pTex 
 			AEGfxTextureSet(sTex, 0, 0);
 			// Create a scale matrix that scales by 100 x and y 
@@ -427,7 +449,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		if (state == 1)
 		{
-
 			AEInputGetCursorPosition(&mx, &my);
 			u8 keyw = AEInputCheckCurr(AEVK_W);
 			u8 keya = AEInputCheckCurr(AEVK_A);
@@ -477,8 +498,251 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 				sprintf_s(s, "D Pressed", keyd);
 				AEGfxPrint(font, s, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
 			}
+		}
+
+		if (AEInputCheckTriggered(AEVK_0))
+		{
+			enable = 1;
+			std::cout << "Generate planet earth" << '\n';
+		}
+		if (enable == 1)
+		{
+			if (counter > 0 && live > 0)
+			{
+				char count[20] = "Counter: ";
+				sprintf_s(count, "Counter: %d", counter);
+				AEGfxPrint(counterfont, count, 0.15f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+			
+			if (AEInputCheckTriggered(AEVK_LBUTTON))
+			{
+				if (live > 0 && counter != 0)
+				{
+					if (utilities::WithinCircle(scaling / 2, x, y, translateX + width / 2, translateY + height / 2) == 1)
+					{
+						translateX = min_x + rand() % (max_x - min_x + 1);
+						translateY = min_y + rand() % (max_y - min_y + 1);
+						counter -= 1;
+					}
+					else
+					{
+						counter = counter;
+						live -= 1;
+					}
+				}
+			}
+			if (live > 0 && counter == 0)
+			{
+				char count[20] = "Counter: ";
+				sprintf_s(count, "Counter: %d You Win", counter);
+				AEGfxPrint(counterfont, count, -0.20f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f);
+			}
+		}
 
 
+		if (counter > 0 && live > 0)
+		{
+			if (live == 2)
+			{
+				//first empty heart from the left
+				AEGfxTextureSet(eheart, 0, 0);
+				AEMtx33 fheart_scale1 = { 0 };
+				AEMtx33Scale(&fheart_scale1, scaling, scaling);
+				AEMtx33 fheart_rotate1 = { 0 };
+				AEMtx33Rot(&fheart_rotate1, 0);
+				AEMtx33 fheart_translate1 = { 0 };
+				AEMtx33Trans(&fheart_translate1, -52, 325);
+				AEMtx33 fheart_transform1 = { 0 };
+				AEMtx33Concat(&fheart_transform1, &fheart_rotate1, &fheart_scale1);
+				AEMtx33Concat(&fheart_transform1, &fheart_translate1, &fheart_transform1);
+				AEGfxSetTransform(fheart_transform1.m);
+				AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+			}
+
+			if (live == 1)
+			{
+				//first empty heart from the left
+				AEGfxTextureSet(eheart, 0, 0);
+				AEMtx33 fheart_scale1 = { 0 };
+				AEMtx33Scale(&fheart_scale1, scaling, scaling);
+				AEMtx33 fheart_rotate1 = { 0 };
+				AEMtx33Rot(&fheart_rotate1, 0);
+				AEMtx33 fheart_translate1 = { 0 };
+				AEMtx33Trans(&fheart_translate1, -52, 325);
+				AEMtx33 fheart_transform1 = { 0 };
+				AEMtx33Concat(&fheart_transform1, &fheart_rotate1, &fheart_scale1);
+				AEMtx33Concat(&fheart_transform1, &fheart_translate1, &fheart_transform1);
+				AEGfxSetTransform(fheart_transform1.m);
+				AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+
+				//second empty heart from the left
+				AEGfxTextureSet(eheart, 0, 0);
+				AEMtx33 fheart_scale2 = { 0 };
+				AEMtx33Scale(&fheart_scale2, scaling, scaling);
+				AEMtx33 fheart_rotate2 = { 0 };
+				AEMtx33Rot(&fheart_rotate2, 0);
+				AEMtx33 fheart_translate2 = { 0 };
+				AEMtx33Trans(&fheart_translate2, 0, 325);
+				AEMtx33 fheart_transform2 = { 0 };
+				AEMtx33Concat(&fheart_transform2, &fheart_rotate2, &fheart_scale2);
+				AEMtx33Concat(&fheart_transform2, &fheart_translate2, &fheart_transform2);
+				AEGfxSetTransform(fheart_transform2.m);
+				AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+			}
+			if (live == 0)
+			{
+				//first empty heart from the left
+				AEGfxTextureSet(eheart, 0, 0);
+				AEMtx33 fheart_scale1 = { 0 };
+				AEMtx33Scale(&fheart_scale1, scaling, scaling);
+				AEMtx33 fheart_rotate1 = { 0 };
+				AEMtx33Rot(&fheart_rotate1, 0);
+				AEMtx33 fheart_translate1 = { 0 };
+				AEMtx33Trans(&fheart_translate1, -52, 325);
+				AEMtx33 fheart_transform1 = { 0 };
+				AEMtx33Concat(&fheart_transform1, &fheart_rotate1, &fheart_scale1);
+				AEMtx33Concat(&fheart_transform1, &fheart_translate1, &fheart_transform1);
+				AEGfxSetTransform(fheart_transform1.m);
+				AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+
+				//second empty heart from the left
+				AEGfxTextureSet(eheart, 0, 0);
+				AEMtx33 fheart_scale2 = { 0 };
+				AEMtx33Scale(&fheart_scale2, scaling, scaling);
+				AEMtx33 fheart_rotate2 = { 0 };
+				AEMtx33Rot(&fheart_rotate2, 0);
+				AEMtx33 fheart_translate2 = { 0 };
+				AEMtx33Trans(&fheart_translate2, 0, 325);
+				AEMtx33 fheart_transform2 = { 0 };
+				AEMtx33Concat(&fheart_transform2, &fheart_rotate2, &fheart_scale2);
+				AEMtx33Concat(&fheart_transform2, &fheart_translate2, &fheart_transform2);
+				AEGfxSetTransform(fheart_transform2.m);
+				AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+
+				//third empty heart from the left
+				AEGfxTextureSet(eheart, 0, 0);
+				AEMtx33 fheart_scale3 = { 0 };
+				AEMtx33Scale(&fheart_scale3, scaling, scaling);
+				AEMtx33 fheart_rotate3 = { 0 };
+				AEMtx33Rot(&fheart_rotate3, 0);
+				AEMtx33 fheart_translate3 = { 0 };
+				AEMtx33Trans(&fheart_translate3, 52, 325);
+				AEMtx33 fheart_transform3 = { 0 };
+				AEMtx33Concat(&fheart_transform3, &fheart_rotate3, &fheart_scale3);
+				AEMtx33Concat(&fheart_transform3, &fheart_translate3, &fheart_transform3);
+				AEGfxSetTransform(fheart_transform3.m);
+				AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+			}
+		}
+		if (enable == 1)
+		{
+			if (counter > 0 && live > 0)
+			{
+				//creating the planetearh
+				AEGfxTextureSet(planetTex, 0, 0);
+				AEMtx33 scale = { 0 };
+				AEMtx33Scale(&scale, scaling, scaling);
+				AEMtx33 rotate = { 0 };
+				AEMtx33Rot(&rotate, 0);
+				AEMtx33 translate = { 0 };
+				AEMtx33Trans(&translate, translateX, -(translateY));
+				AEMtx33 transform = { 0 };
+				AEMtx33Concat(&transform, &rotate, &scale);
+				AEMtx33Concat(&transform, &translate, &transform);
+				AEGfxSetTransform(transform.m);
+				AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+				if (live == 3)
+				{
+					//first heart from the left
+					AEGfxTextureSet(fheart, 0, 0);
+					AEMtx33 fheart_scale1 = { 0 };
+					AEMtx33Scale(&fheart_scale1, scaling, scaling);
+					AEMtx33 fheart_rotate1 = { 0 };
+					AEMtx33Rot(&fheart_rotate1, 0);
+					AEMtx33 fheart_translate1 = { 0 };
+					AEMtx33Trans(&fheart_translate1, -52, 325);
+					AEMtx33 fheart_transform1 = { 0 };
+					AEMtx33Concat(&fheart_transform1, &fheart_rotate1, &fheart_scale1);
+					AEMtx33Concat(&fheart_transform1, &fheart_translate1, &fheart_transform1);
+					AEGfxSetTransform(fheart_transform1.m);
+					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+
+					//second heart from the left
+					AEGfxTextureSet(fheart, 0, 0);
+					AEMtx33 fheart_scale2 = { 0 };
+					AEMtx33Scale(&fheart_scale2, scaling, scaling);
+					AEMtx33 fheart_rotate2 = { 0 };
+					AEMtx33Rot(&fheart_rotate2, 0);
+					AEMtx33 fheart_translate2 = { 0 };
+					AEMtx33Trans(&fheart_translate2, 0, 325);
+					AEMtx33 fheart_transform2 = { 0 };
+					AEMtx33Concat(&fheart_transform2, &fheart_rotate2, &fheart_scale2);
+					AEMtx33Concat(&fheart_transform2, &fheart_translate2, &fheart_transform2);
+					AEGfxSetTransform(fheart_transform2.m);
+					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+
+					//third heart from the left
+					AEGfxTextureSet(fheart, 0, 0);
+					AEMtx33 fheart_scale3 = { 0 };
+					AEMtx33Scale(&fheart_scale3, scaling, scaling);
+					AEMtx33 fheart_rotate3 = { 0 };
+					AEMtx33Rot(&fheart_rotate3, 0);
+					AEMtx33 fheart_translate3 = { 0 };
+					AEMtx33Trans(&fheart_translate3, 52, 325);
+					AEMtx33 fheart_transform3 = { 0 };
+					AEMtx33Concat(&fheart_transform3, &fheart_rotate3, &fheart_scale3);
+					AEMtx33Concat(&fheart_transform3, &fheart_translate3, &fheart_transform3);
+					AEGfxSetTransform(fheart_transform3.m);
+					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+				}
+				else if (live == 2)
+				{
+					//second heart from the left
+					AEGfxTextureSet(fheart, 0, 0);
+					AEMtx33 fheart_scale2 = { 0 };
+					AEMtx33Scale(&fheart_scale2, scaling, scaling);
+					AEMtx33 fheart_rotate2 = { 0 };
+					AEMtx33Rot(&fheart_rotate2, 0);
+					AEMtx33 fheart_translate2 = { 0 };
+					AEMtx33Trans(&fheart_translate2, 0, 325);
+					AEMtx33 fheart_transform2 = { 0 };
+					AEMtx33Concat(&fheart_transform2, &fheart_rotate2, &fheart_scale2);
+					AEMtx33Concat(&fheart_transform2, &fheart_translate2, &fheart_transform2);
+					AEGfxSetTransform(fheart_transform2.m);
+					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+
+					//third heart from the left
+					AEGfxTextureSet(fheart, 0, 0);
+					AEMtx33 fheart_scale3 = { 0 };
+					AEMtx33Scale(&fheart_scale3, scaling, scaling);
+					AEMtx33 fheart_rotate3 = { 0 };
+					AEMtx33Rot(&fheart_rotate3, 0);
+					AEMtx33 fheart_translate3 = { 0 };
+					AEMtx33Trans(&fheart_translate3, 52, 325);
+					AEMtx33 fheart_transform3 = { 0 };
+					AEMtx33Concat(&fheart_transform3, &fheart_rotate3, &fheart_scale3);
+					AEMtx33Concat(&fheart_transform3, &fheart_translate3, &fheart_transform3);
+					AEGfxSetTransform(fheart_transform3.m);
+					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+				}
+				else if (live == 1)
+				{
+					//third heart from the left
+					AEGfxTextureSet(fheart, 0, 0);
+					AEMtx33 fheart_scale3 = { 0 };
+					AEMtx33Scale(&fheart_scale3, scaling, scaling);
+					AEMtx33 fheart_rotate3 = { 0 };
+					AEMtx33Rot(&fheart_rotate3, 0);
+					AEMtx33 fheart_translate3 = { 0 };
+					AEMtx33Trans(&fheart_translate3, 52, 325);
+					AEMtx33 fheart_transform3 = { 0 };
+					AEMtx33Concat(&fheart_transform3, &fheart_rotate3, &fheart_scale3);
+					AEMtx33Concat(&fheart_transform3, &fheart_translate3, &fheart_transform3);
+					AEGfxSetTransform(fheart_transform3.m);
+					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
+				}
+			}		
 		}
 
 		// Informing the system about the loop's end
@@ -490,11 +754,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			gGameRunning = 0;
 	}
 
+	AEGfxMeshFree(uprightmesh);
 	AEGfxMeshFree(pMesh);
 	AEGfxMeshFree(pblack);
 
+
+	AEGfxTextureUnload(eheart);
+	AEGfxTextureUnload(fheart);
 	AEGfxTextureUnload(pTex);
 	AEGfxTextureUnload(pblacktex);
+	AEGfxTextureUnload(planetTex);
 
 	// free the system
 	AESysExit();

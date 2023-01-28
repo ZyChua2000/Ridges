@@ -43,4 +43,17 @@ namespace utilities {
 	float getAngle(float x1, float y1, float x2, float y2) {
 		return AEACos((x1 - x2) / sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2))));
 	}
+
+
+
+	int WithinCircle(float radius, float click_x, float click_y, float center_x, float center_y)
+	{
+
+		if (((click_x - center_x) * (click_x - center_x) + (click_y - center_y) * (click_y - center_y)) < radius * radius)
+		{
+
+			return 1;
+		}
+		return 0;
+	}
 }
