@@ -9,7 +9,18 @@ int state = 0;
 struct entity {
 	double x;
 	double y;
+	
 };
+
+struct player_stats{ //STRUCT FOR PLAYER RELATED 
+	float speed; // Speed for player
+	AEVec2 pos{ 0,0 }; // player position
+	AEVec2 direction{ 0,0 }; //player direction
+	float slashX;
+	float slashY;
+	float slashRot;// reminder to throw in slash as well
+};
+
 
 float charScaleX = 100;
 int width = 1200, height = 700, scaling = 50;
@@ -124,12 +135,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	//Rotate Init
 	float i{ 0 };
+
+	//main player init 
+	player_stats character;
+	character.speed = 150.f;
+	player_stats &player = character; // player is now alias for character
 	
 	//Movement Init
-	AEVec2 player_pos{ 0, 0 }; // player position
-	AEVec2 player_direction{ 0,0 }; //player direction
+	//AEVec2 player_pos{ 0, 0 }; // player position
+	//AEVec2 player_direction{ 0,0 }; //player direction
 	
-	float speed{ 150.f };
+	//float speed{ 150.f };
 
 	// Game Loop
 	while (gGameRunning)
@@ -147,7 +163,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			state ^= 1;
 		}
 
-		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player_pos.x, player_pos.y);
+		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player.pos.x, player.pos.y);
 		blackhole.x -= cos(Angle) / 5;
 		blackhole.y -= sin(Angle) / 5;
 		
@@ -155,12 +171,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		
 		//std::cout << x << std::endl << std::endl << y;
 
-		cursorAngle = utilities::getAngle(player_pos.x + 600, player_pos.y, x, -(y - 350));
+		cursorAngle = utilities::getAngle(player.pos.x + 600, player.pos.y, x, -(y - 350));
 
-		player_direction.x = 0;// set y direction to 0 initially, if key is released x direction is set back to 0
-		player_direction.y = 0;// set y direction to 0 initially, if key is released y direction is set back to 0
+		player.direction.x = 0;// set y direction to 0 initially, if key is released x direction is set back to 0
+		player.direction.y = 0;// set y direction to 0 initially, if key is released y direction is set back to 0
 
-		if (-(y - 350) > player_pos.y) {
+		if (-(y - 350) > player.pos.y) {
 			cursorAngle = -cursorAngle;
 		}
 
@@ -179,30 +195,30 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		if (AEInputCheckCurr(AEVK_Q))
 		{
-			//std::cout << "diu" << std::endl;
+			
 			i -= 0.02;
 			std::cout << " rotating" << std::endl;
 		}
 		
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 		{
-			player_direction.y = 1;// this is direction , positive y direction
+			player.direction.y = 1;// this is direction , positive y direction
 			std::cout << "W key" << std::endl;
 		}
 		if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 		{
-			player_direction.y = -1;// this is direction , negative y direction
+			player.direction.y = -1;// this is direction , negative y direction
 			std::cout << "S key" << std::endl;
 		}
 		if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 		{
-			player_direction.x = -1;// this is direction , negative x direction
+			player.direction.x = -1;// this is direction , negative x direction
 			std::cout << "A key" << std::endl;
 			charScaleX = 100;
 		}
 		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 		{
-			player_direction.x = 1;// this is direction , positive y direction
+			player.direction.x = 1;// this is direction , positive y direction
 			std::cout << "D key" << std::endl;
 			charScaleX = -100;
 		}
@@ -222,61 +238,61 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		//COLLISION
 
-		if ((player_pos.y - 50) <= 175 && (player_pos.y + 50) >= 65 && (player_pos.x - 50) <= 175 && (player_pos.x + 50) >= 65) {
+		if ((player.pos.y - 50) <= 175 && (player.pos.y + 50) >= 65 && (player.pos.x - 50) <= 175 && (player.pos.x + 50) >= 65) {
 			//player_direction.x = -player_direction.x;
 
 
 
-			float player_bottom = player_pos.y + 50;
+			float player_bottom = player.pos.y + 50;
 			float tiles_bottom = 120 + 50;
-			float player_right = player_pos.x + 50;
+			float player_right = player.pos.x + 50;
 			float tiles_right = 120 + 50;
 
-			float b_collision = tiles_bottom - player_pos.y;
+			float b_collision = tiles_bottom - player.pos.y;
 			float t_collision = player_bottom - 120;
 			float l_collision = player_right - 120;
-			float r_collision = tiles_right - player_pos.x;
+			float r_collision = tiles_right - player.pos.x;
 
 			if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
 				//Top collision
 				std::cout << "collide top" << std::endl;
-				if (player_direction.y == 1) {
+				if (player.direction.y == 1) {
 					std::cout << "move top" << std::endl;
-					player_direction.y = 0;
+					player.direction.y = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.y = -1;
-					player_pos.y += player_direction.y;
+					player.direction.y = -1;
+					player.pos.y += player.direction.y;
 				}
 			}
 
 			if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
 				//bottom collision
 				std::cout << "collide botton" << std::endl;
-				if (player_direction.y == -1) {
+				if (player.direction.y == -1) {
 					std::cout << "move top" << std::endl;
-					player_direction.y = 0;
+					player.direction.y = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.y = 1;
-					player_pos.y += player_direction.y;
+					player.direction.y = 1;
+					player.pos.y += player.direction.y;
 				}
 			}
 
 			if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
 				//Left collision
 				std::cout << "collide left" << std::endl;
-				if (player_direction.x == 1)
+				if (player.direction.x == 1)
 				{
 					std::cout << "move top" << std::endl;
-					player_direction.x = 0;
+					player.direction.x = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.x = -1;
-					player_pos.x += player_direction.x;
+					player.direction.x = -1;
+					player.pos.x += player.direction.x;
 				}
 
 			}
@@ -284,14 +300,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
 				//Right collision
 				std::cout << "collide right" << std::endl;
-				if (player_direction.x == -1) {
+				if (player.direction.x == -1) {
 					std::cout << "move top" << std::endl;
-					player_direction.x = 0;
+					player.direction.x = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.x = 1;
-					player_pos.x += player_direction.x;
+					player.direction.x = 1;
+					player.pos.x += player.direction.x;
 				}
 
 			}
@@ -304,16 +320,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 		// add velo to player_pos
-		if (player_direction.x != 0 || player_direction.y != 0) //if player direction is not 0, as you cannot normalize 0.
+		if (player.direction.x != 0 || player.direction.y != 0) //if player direction is not 0, as you cannot normalize 0.
 		{
-			AEVec2 temp_velo{ player_direction.x, player_direction.y };
-			AEVec2Normalize(&player_direction, &temp_velo); // normalize
-			player_direction.x *= speed; // magnitude/speed of velo.x
-			player_direction.y *= speed; // magnitude/speed of velo.y
+			AEVec2 temp_velo{ player.direction.x, player.direction.y };
+			AEVec2Normalize(&player.direction, &temp_velo); // normalize
+			player.direction.x *= player.speed; // magnitude/speed of velo.x
+			player.direction.y *= player.speed; // magnitude/speed of velo.y
 		}
 
-		player_pos.x += player_direction.x * 0.016; // 0.016 is delta time temp value
-		player_pos.y += player_direction.y * 0.016;
+		player.pos.x += player.direction.x * 0.016; // 0.016 is delta time temp value
+		player.pos.y += player.direction.y * 0.016;
 
 		if (AEInputCheckTriggered(AEVK_E) == 1) {
 			blackhole.x += 5 * cos(Angle);
@@ -341,7 +357,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEMtx33Rot(&rotate, i);
 		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
 		AEMtx33 translate = { 0 };
-		AEMtx33Trans(&translate, player_pos.x, player_pos.y); // - pos y to match with mouse and player coordinate 
+		AEMtx33Trans(&translate, player.pos.x, player.pos.y); // - pos y to match with mouse and player coordinate 
 		// Concat the matrices (TRS) 
 		AEMtx33 transform = { 0 };
 		AEMtx33Concat(&transform, &rotate, &scale);
@@ -398,29 +414,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
 		if (AEInputCheckCurr(AEVK_LBUTTON)) {
-			float slashX;
+			/*float slashX;
 			float slashY;
-			float slashRot;
+			float slashRot;*/
 			switch (direction) {
 			case 1: //right
-				slashX = 50;
-				slashY = 0;
-				slashRot = 0;
+				player.slashX = 50;
+				player.slashY = 0;
+				player.slashRot = 0;
 				break;
 			case 2: //up
-				slashY = 50;
-				slashX = 0;
-				slashRot = PI / 2;
+				player.slashY = 50;
+				player.slashX = 0;
+				player.slashRot = PI / 2;
 				break;
 			case 3: //left
-				slashX = -50;
-				slashY = 0;
-				slashRot = PI;
+				player.slashX = -50;
+				player.slashY = 0;
+				player.slashRot = PI;
 				break;
 			case 4: //down
-				slashY = -50;
-				slashX = 0;
-				slashRot = -PI / 2;
+				player.slashY = -50;
+				player.slashX = 0;
+				player.slashRot = -PI / 2;
 				break;
 			default:
 				break;
@@ -433,10 +449,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AEMtx33Scale(&scale, 100.f, 100.f);
 			// Create a rotation matrix that rotates by 45 degrees 
 			AEMtx33 rotate = { 0 };
-			AEMtx33Rot(&rotate, slashRot);
+			AEMtx33Rot(&rotate, player.slashRot);
 			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
 			AEMtx33 translate = { 0 };
-			AEMtx33Trans(&translate, player_pos.x + slashX, player_pos.y + slashY); // - for pos y to match player and mouse coordinate
+			AEMtx33Trans(&translate, player.pos.x + player.slashX, player.pos.y + player.slashY); // - for pos y to match player and mouse coordinate
 			// Concat the matrices (TRS) 
 			AEMtx33 transform = { 0 };
 			AEMtx33Concat(&transform, &rotate, &scale);
@@ -460,7 +476,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			char w[20] = "W";
 			char s[20] = "S";
 			char d[20] = "D";
-			char playerpos[100] = { player_pos.x,player_pos.y };
+			char playerpos[100] = { player.pos.x,player.pos.y };
 			AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
 			AEGfxPrint(font, input, -0.99f, 0.65f, 1.5f, 1.0f, 0.2f, 0.2f);
 			char mouse_xy_buffer[50] = " "; // buffer
@@ -472,9 +488,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AEGfxPrint(font, w, -0.99f, 0.60f, 1.0f, 1.0f, 0.2f, 0.2f);
 			AEGfxPrint(font, s, -0.99f, 0.50f, 1.0f, 1.0f, 0.2f, 0.2f);
 			AEGfxPrint(font, d, -0.99f, 0.45f, 1.0f, 1.0f, 0.2f, 0.2f);
-			sprintf_s(playerpos, "Player Position X: %d", int(player_pos.x));
+			sprintf_s(playerpos, "Player Position X: %d", int(player.pos.x));
 			AEGfxPrint(font, playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 0.2f, 0.2f);
-			sprintf_s(playerpos, "Player Position Y: %d", int(player_pos.y));
+			sprintf_s(playerpos, "Player Position Y: %d", int(player.pos.y));
 			AEGfxPrint(font, playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 0.2f, 0.2f);
 
 
