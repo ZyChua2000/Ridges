@@ -169,8 +169,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	player_stats &player = character; // player is now alias for character
 	
 	//Movement Init
-	AEVec2 player_pos{ 0, 0 }; // player position
-	AEVec2 player_direction{ 0,0 }; //player direction
+	//AEVec2 player_pos{ 0, 0 }; // player position
+	//AEVec2 player_direction{ 0,0 }; //player direction
 	
 	float speed{ 400.f };
 
@@ -210,7 +210,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 
 
-		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player_pos.x, player_pos.y);
+		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player.pos.x, player.pos.y);
 		blackhole.x -= cos(Angle) / 5;
 		blackhole.y -= sin(Angle) / 5;
 		
@@ -287,20 +287,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		//COLLISION
 
-		if ((player_pos.y - 30) <= 55 && (player_pos.y + 30) >= -55 && (player_pos.x - 30) <= -65 && (player_pos.x + 30) >= -175) {
+		if ((player.pos.y - 30) <= 55 && (player.pos.y + 30) >= -55 && (player.pos.x - 30) <= -65 && (player.pos.x + 30) >= -175) {
 			//player_direction.x = -player_direction.x;
 
 
 
-			float player_bottom = player_pos.y + 50;
+			float player_bottom = player.pos.y + 50;
 			float tiles_bottom = 0 + 50;
-			float player_right = player_pos.x + 50;
+			float player_right = player.pos.x + 50;
 			float tiles_right = -120 + 50;
 
-			float b_collision = tiles_bottom - player_pos.y;
+			float b_collision = tiles_bottom - player.pos.y;
 			float t_collision = player_bottom - 0;
 			float l_collision = player_right + 120;
-			float r_collision = tiles_right - player_pos.x;
+			float r_collision = tiles_right - player.pos.x;
 
 			if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
 				//Top collision
