@@ -4,6 +4,8 @@
 #include "AEEngine.h"
 #include "Utilities.h"
 #include "iostream"
+#include "fstream"
+#include <filesystem>;
 
 int state = 0;
 struct entity {
@@ -11,7 +13,13 @@ struct entity {
 	double y;
 };
 
-float charScaleX = 100;
+
+struct mapTiles {
+	int TextureX;
+	int TextureY;
+};
+
+float charScaleX = 60;
 int width = 1200, height = 700, scaling = 50;
 
 char strx[11] = "X position";
@@ -27,6 +35,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+	
 
 
 	int gGameRunning = 1;
@@ -41,6 +50,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// reset the system modules
 	AESysReset();
+
+
+	//Initialise map texture numbers.
+	std::ifstream mapInput{ "Assets/map1.txt" };
+	mapTiles maps[20][12];
+	for (int j = 0; j < 12; j++) {
+		for (int i = 0; i < 20; i++) {
+
+			// input texture
+			mapInput >> maps[i][j].TextureX;
+			mapInput >> maps[i][j].TextureY;
+		}
+	}
+
+	mapInput.close();
 
 	AEGfxVertexList* pMesh = 0;
 
@@ -62,13 +86,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	AEGfxMeshStart();
 
-	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFF00FF, 16.0f / 192, 16.0f / 176,
-		0.5f, -0.5f, 0xFFFFFF00, 0.0f, 16.0f / 176,
-		-0.5f, 0.5f, 0xFF00FFFF, 16.0f / 192, 0.0f);
+	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / 192, 16.0f / 176,
+		-0.5f, -0.5f, 0xFFFFFF00, 0.0f, 16.0f / 176,
+		0.5f, 0.5f, 0xFF00FFFF, 16.0f / 192, 0.0f);
 
-	AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 16.0f / 176,
-		0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
+	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 16.0f / 176,
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
 
 	spriteMesh = AEGfxMeshEnd();
 
@@ -87,7 +111,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	uprightmesh = AEGfxMeshEnd();
 
-	AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
+	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
 	AEGfxVertexList* pblack = 0;
 	AEGfxMeshStart();
 
@@ -98,14 +122,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
-	AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
-	AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
-	AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
-	AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
-	AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
-	AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
-	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
-	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
+	AEGfxTexture* pblacktex = AEGfxTextureLoad("Assets/blackhole.png");
+	AEGfxTexture* sTex = AEGfxTextureLoad("Assets/slash.png");
+	AEGfxTexture* cTex = AEGfxTextureLoad("Assets/bluee.jpg");
+	AEGfxTexture* planetTex = AEGfxTextureLoad("Assets/PlanetTexture.png");
+	AEGfxTexture* fheart = AEGfxTextureLoad("Assets/full_heart.png");
+	AEGfxTexture* eheart = AEGfxTextureLoad("Assets/empty_heart.png");
+	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
 	pblack = AEGfxMeshEnd();
 
 	s32 x{ 0 }, y{ 0 }; //init xy pos
@@ -129,7 +153,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEVec2 player_pos{ 0, 0 }; // player position
 	AEVec2 player_direction{ 0,0 }; //player direction
 	
-	float speed{ 150.f };
+	float speed{ 400.f };
 
 	// Game Loop
 	while (gGameRunning)
@@ -139,8 +163,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		// Handling Input
 		AEInputUpdate();
-		
-
 		// Your own update logic goes here
 		if (AEInputCheckTriggered(AEVK_F3)) {
 
@@ -198,13 +220,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		{
 			player_direction.x = -1;// this is direction , negative x direction
 			std::cout << "A key" << std::endl;
-			charScaleX = 100;
+			charScaleX = -60;
 		}
 		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 		{
 			player_direction.x = 1;// this is direction , positive y direction
 			std::cout << "D key" << std::endl;
-			charScaleX = -100;
+			charScaleX = 60;
 		}
 
 		// add velo to player_pos
@@ -331,11 +353,38 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		AEGfxSetTransparency(1.0f);
+
+		// Drawing overall map
+		for (int j = 0; j < 12; j++) {
+			for (int i = 0; i < 20; i++) {
+				// Set the texture to spriteSheet
+				AEGfxTextureSet(pTex, 16.f / 192 * maps[i][j].TextureX, 16.f / 176 * maps[i][j].TextureY);
+				// Create a scale matrix that scales by 100 x and y 
+				AEMtx33 scale = { 0 };
+				AEMtx33Scale(&scale, 60.f, 60.f);
+				// Create a rotation matrix that rotates by 45 degrees 
+				AEMtx33 rotate = { 0 };
+				AEMtx33Rot(&rotate, 0);
+				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
+				AEMtx33 translate = { 0 };
+				AEMtx33Trans(&translate, -570 + i * 60, 320 - j * 60); 
+				// Concat the matrices (TRS) 
+				AEMtx33 transform = { 0 };
+				AEMtx33Concat(&transform, &rotate, &scale);
+				AEMtx33Concat(&transform, &translate, &transform);
+				// Choose the transform to use 
+				AEGfxSetTransform(transform.m);
+				// Actually drawing the mesh
+				AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
+			}
+		}
+
+
 		// Set the texture to pTex 
 		AEGfxTextureSet(pTex, 16.f/192, 16.f/176 * 8);
 		AEMtx33 scale = { 0 };
 		// Create a scale matrix that scales by 100 x and y 
-		AEMtx33Scale(&scale, charScaleX , 100.f);
+		AEMtx33Scale(&scale, charScaleX , 60.f);
 		// Create a rotation matrix that rotates by 45 degrees 
 		AEMtx33 rotate = { 0 };
 		AEMtx33Rot(&rotate, i);
@@ -747,8 +796,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 					AEGfxSetTransform(fheart_transform3.m);
 					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
 				}
-			}		
+			}
 		}
+
 
 		// Informing the system about the loop's end
 		AESysFrameEnd();
