@@ -5,7 +5,7 @@
 #include "Utilities.h"
 #include "iostream"
 #include "fstream"
-#include <filesystem>;
+
 
 int state = 0;
 struct entity {
@@ -13,6 +13,10 @@ struct entity {
 	double y;
 };
 
+
+int mapEditor = 0;
+int mapX = 0;
+int mapY = 0;
 
 struct mapTiles {
 	int TextureX;
@@ -50,7 +54,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// reset the system modules
 	AESysReset();
-
 
 	//Initialise map texture numbers.
 	std::ifstream mapInput{ "Assets/map1.txt" };
@@ -169,6 +172,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			state ^= 1;
 		}
 
+		if (AEInputCheckTriggered(AEVK_9)) {
+			mapEditor = 1;
+		}
+
+		if (AEInputCheckTriggered(AEVK_8)) {
+			std::ofstream mapOutput{ "Assets/maptest.txt" };
+			for (int j = 0; j < 12; j++) {
+				for (int i = 0; i < 20; i++) {
+
+					// input texture
+					mapOutput << maps[i][j].TextureX << " ";
+					mapOutput << maps[i][j].TextureY << " ";
+
+					if (i == 19) {
+						mapOutput << "\n";
+					}
+				}
+			}
+			mapOutput.close();
+		}
+
+
 		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player_pos.x, player_pos.y);
 		blackhole.x -= cos(Angle) / 5;
 		blackhole.y -= sin(Angle) / 5;
@@ -229,6 +254,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			charScaleX = 60;
 		}
 
+
+
 		// add velo to player_pos
 
 		//if (player_direction.x != 0 || player_direction.y != 0) //if player direction is not 0, as you cannot normalize 0.
@@ -244,19 +271,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		//COLLISION
 
-		if ((player_pos.y - 50) <= 175 && (player_pos.y + 50) >= 65 && (player_pos.x - 50) <= 175 && (player_pos.x + 50) >= 65) {
+		if ((player_pos.y - 30) <= 55 && (player_pos.y + 30) >= -55 && (player_pos.x - 30) <= -65 && (player_pos.x + 30) >= -175) {
 			//player_direction.x = -player_direction.x;
 
 
 
 			float player_bottom = player_pos.y + 50;
-			float tiles_bottom = 120 + 50;
+			float tiles_bottom = 0 + 50;
 			float player_right = player_pos.x + 50;
-			float tiles_right = 120 + 50;
+			float tiles_right = -120 + 50;
 
 			float b_collision = tiles_bottom - player_pos.y;
-			float t_collision = player_bottom - 120;
-			float l_collision = player_right - 120;
+			float t_collision = player_bottom - 0;
+			float l_collision = player_right + 120;
 			float r_collision = tiles_right - player_pos.x;
 
 			if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
@@ -357,6 +384,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Drawing overall map
 		for (int j = 0; j < 12; j++) {
 			for (int i = 0; i < 20; i++) {
+				// Tell the engine to get ready to draw something with texture. 
+				AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+				// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+				// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+				AEGfxSetTransparency(1.0f);
 				// Set the texture to spriteSheet
 				AEGfxTextureSet(pTex, 16.f / 192 * maps[i][j].TextureX, 16.f / 176 * maps[i][j].TextureY);
 				// Create a scale matrix that scales by 100 x and y 
@@ -376,6 +410,61 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 				AEGfxSetTransform(transform.m);
 				// Actually drawing the mesh
 				AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
+			}
+		}
+
+		if (mapEditor == 1) {
+			if (AEInputCheckTriggered(AEVK_K) && mapY < 12) {
+				mapY += 1;
+			}
+			if (AEInputCheckTriggered(AEVK_I) && mapY > 0) {
+				mapY -= 1;
+			}
+			if (AEInputCheckTriggered(AEVK_J) && mapX > 0) {
+				mapX -= 1;
+			}
+			if (AEInputCheckTriggered(AEVK_L) && mapX < 20) {
+				mapX += 1;
+			}
+
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxSetTransparency(1.0f);
+			// Set the texture to spriteSheet
+			AEGfxTextureSet(pTex, 16.f / 192 * mapX, 16.f / 176 * mapY);
+			// Create a scale matrix that scales by 100 x and y 
+			AEMtx33 scale = { 0 };
+			AEMtx33Scale(&scale, 60.f, 60.f);
+			// Create a rotation matrix that rotates by 45 degrees 
+			AEMtx33 rotate = { 0 };
+			AEMtx33Rot(&rotate, 0);
+			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
+			AEMtx33 translate = { 0 };
+			AEMtx33Trans(&translate, 570, 320);
+			// Concat the matrices (TRS) 
+			AEMtx33 transform = { 0 };
+			AEMtx33Concat(&transform, &rotate, &scale);
+			AEMtx33Concat(&transform, &translate, &transform);
+			// Choose the transform to use 
+			AEGfxSetTransform(transform.m);
+			// Actually drawing the mesh
+			AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
+
+			char mapSelect[20] = "Selection";
+			AEGfxPrint(font, mapSelect, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
+
+
+			for (int j = 0; j < 12; j++) {
+				for (int i = 0; i < 20; i++) {
+					if (x >= i * 60 && x <= (i + 1) * 60 && y >= j * 60 && y <= (j + 1) * 60 && AEInputCheckTriggered(AEVK_LBUTTON)) {
+						maps[i][j].TextureX = mapX;
+						maps[i][j].TextureY = mapY;
+					}
+				}
 			}
 		}
 
