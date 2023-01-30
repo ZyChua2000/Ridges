@@ -13,12 +13,12 @@ struct entity {
 };
 
 struct player_stats{ //STRUCT FOR PLAYER RELATED 
-	float speed; // Speed for player
+	float speed{ 0 }; // Speed for player
 	AEVec2 pos{ 0,0 }; // player position
 	AEVec2 direction{ 0,0 }; //player direction
-	float slashX;
-	float slashY;
-	float slashRot;
+	float slashX{ 0 };
+	float slashY{ 0 };
+	float slashRot{ 0 };
 };
 
 
