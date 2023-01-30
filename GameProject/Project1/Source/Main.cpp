@@ -500,6 +500,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			}
 		}
 
+		if (AEInputCheckTriggered(AEVK_9))
+		{
+			enable = 0;
+			live = 3, counter = 10;
+			std::cout << "Reset lives and counter" << '\n';
+		}
+
 		if (AEInputCheckTriggered(AEVK_0))
 		{
 			enable = 1;
