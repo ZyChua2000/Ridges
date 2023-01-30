@@ -4,14 +4,38 @@
 #include "AEEngine.h"
 #include "Utilities.h"
 #include "iostream"
+#include "fstream"
+
 
 int state = 0;
 struct entity {
 	double x;
 	double y;
+	
 };
 
-float charScaleX = 100;
+struct player_stats{ //STRUCT FOR PLAYER RELATED 
+	float speed{ 0 }; // Speed for player
+	AEVec2 pos{ 0,0 }; // player position
+	AEVec2 direction{ 0,0 }; //player direction
+	float slashX{ 0 };
+	float slashY{ 0 };
+	float slashRot{ 0 };
+};
+
+int blackholestate = 0;
+
+
+int mapEditor = 0;
+int mapX = 0;
+int mapY = 0;
+
+struct mapTiles {
+	int TextureX;
+	int TextureY;
+};
+
+float charScaleX = 60;
 int width = 1200, height = 700, scaling = 50;
 
 char strx[11] = "X position";
@@ -27,6 +51,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+	
 
 
 	int gGameRunning = 1;
@@ -37,10 +62,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AESysInit(hInstance, nCmdShow, width, height, 1, 60, true, NULL);
 
 	// Changing the window title
-	AESysSetWindowTitle("Game Name");
+	AESysSetWindowTitle("Dungeon Redemption");
 
 	// reset the system modules
 	AESysReset();
+
+	//Initialise map texture numbers.
+	std::ifstream mapInput{ "Assets/map1.txt" }; //for ZY
+	//std::ifstream mapInput{ "../Assets/map1.txt" }; 
+	mapTiles maps[20][12];
+	for (int j = 0; j < 12; j++) {
+		for (int i = 0; i < 20; i++) {
+
+			// input texture
+			mapInput >> maps[i][j].TextureX;
+			mapInput >> maps[i][j].TextureY;
+		}
+	}
+
+	mapInput.close();
 
 	AEGfxVertexList* pMesh = 0;
 
@@ -62,13 +102,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	AEGfxMeshStart();
 
-	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFF00FF, 16.0f / 192, 16.0f / 176,
-		0.5f, -0.5f, 0xFFFFFF00, 0.0f, 16.0f / 176,
-		-0.5f, 0.5f, 0xFF00FFFF, 16.0f / 192, 0.0f);
+	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / 192, 16.0f / 176,
+		-0.5f, -0.5f, 0xFFFFFF00, 0.0f, 16.0f / 176,
+		0.5f, 0.5f, 0xFF00FFFF, 16.0f / 192, 0.0f);
 
-	AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 16.0f / 176,
-		0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
+	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 16.0f / 176,
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
 
 	spriteMesh = AEGfxMeshEnd();
 
@@ -87,7 +127,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	uprightmesh = AEGfxMeshEnd();
 
-	AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
+	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png"); //for ZY
+	//AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	AEGfxVertexList* pblack = 0;
 	AEGfxMeshStart();
 
@@ -98,14 +139,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
-	AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
-	AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
-	AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
-	AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
-	AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
-	AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
-	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
-	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
+	AEGfxTexture* pblacktex = AEGfxTextureLoad("Assets/blackhole.png"); //for ZY
+	AEGfxTexture* sTex = AEGfxTextureLoad("Assets/slash.png"); //for ZY
+	AEGfxTexture* cTex = AEGfxTextureLoad("Assets/bluee.jpg"); //for ZY
+	AEGfxTexture* planetTex = AEGfxTextureLoad("Assets/PlanetTexture.png"); //for ZY
+	AEGfxTexture* fheart = AEGfxTextureLoad("Assets/full_heart.png"); //for ZY
+	AEGfxTexture* eheart = AEGfxTextureLoad("Assets/empty_heart.png"); //for ZY
+	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12); //for ZY
+	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30); //for ZY
+	//AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
+	//AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
+	//AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
+	//AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
+	//AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
+	//AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
+	//s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	//s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
 	pblack = AEGfxMeshEnd();
 
 	s32 x{ 0 }, y{ 0 }; //init xy pos
@@ -124,12 +173,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	//Rotate Init
 	float i{ 0 };
+
+	//main player init 
+	player_stats character;
+	character.speed = 150.f;
+	player_stats &player = character; // player is now alias for character
 	
 	//Movement Init
-	AEVec2 player_pos{ 0, 0 }; // player position
-	AEVec2 player_direction{ 0,0 }; //player direction
+	//AEVec2 player_pos{ 0, 0 }; // player position
+	//AEVec2 player_direction{ 0,0 }; //player direction
 	
-	float speed{ 150.f };
+	float speed{ 400.f };
 
 	// Game Loop
 	while (gGameRunning)
@@ -139,28 +193,55 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		// Handling Input
 		AEInputUpdate();
-		
-
 		// Your own update logic goes here
 		if (AEInputCheckTriggered(AEVK_F3)) {
 
 			state ^= 1;
 		}
 
-		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player_pos.x, player_pos.y);
-		blackhole.x -= cos(Angle) / 5;
-		blackhole.y -= sin(Angle) / 5;
+		if (AEInputCheckTriggered(AEVK_9)) {
+			mapEditor = 1;
+		}
+
+		if (AEInputCheckTriggered(AEVK_1)) {
+			blackholestate = 1;
+		}
+
+		if (AEInputCheckTriggered(AEVK_8)) {
+			std::ofstream mapOutput{ "Assets/maptest.txt" }; //for ZY
+			//std::ofstream mapOutput{ "../Assets/maptest.txt" };
+			for (int j = 0; j < 12; j++) {
+				for (int i = 0; i < 20; i++) {
+
+					// input texture
+					mapOutput << maps[i][j].TextureX << " ";
+					mapOutput << maps[i][j].TextureY << " ";
+
+					if (i == 19) {
+						mapOutput << "\n";
+					}
+				}
+			}
+			mapOutput.close();
+		}
+
+
+		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player.pos.x, player.pos.y);
+		if (blackholestate == 1) {
+			blackhole.x -= cos(Angle) / 5;
+			blackhole.y -= sin(Angle) / 5;
+		}
 		
 		AEInputGetCursorPosition(&x, &y); // check cursor pos
 		
 		//std::cout << x << std::endl << std::endl << y;
 
-		cursorAngle = utilities::getAngle(player_pos.x + 600, player_pos.y, x, -(y - 350));
+		cursorAngle = utilities::getAngle(player.pos.x + 600, player.pos.y, x, -(y - 350));
 
-		player_direction.x = 0;// set y direction to 0 initially, if key is released x direction is set back to 0
-		player_direction.y = 0;// set y direction to 0 initially, if key is released y direction is set back to 0
+		player.direction.x = 0;// set y direction to 0 initially, if key is released x direction is set back to 0
+		player.direction.y = 0;// set y direction to 0 initially, if key is released y direction is set back to 0
 
-		if (-(y - 350) > player_pos.y) {
+		if (-(y - 350) > player.pos.y) {
 			cursorAngle = -cursorAngle;
 		}
 
@@ -179,33 +260,35 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		if (AEInputCheckCurr(AEVK_Q))
 		{
-			//std::cout << "diu" << std::endl;
+			
 			i -= 0.02;
 			std::cout << " rotating" << std::endl;
 		}
 		
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 		{
-			player_direction.y = 1;// this is direction , positive y direction
+			player.direction.y = 1;// this is direction , positive y direction
 			std::cout << "W key" << std::endl;
 		}
 		if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 		{
-			player_direction.y = -1;// this is direction , negative y direction
+			player.direction.y = -1;// this is direction , negative y direction
 			std::cout << "S key" << std::endl;
 		}
 		if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 		{
-			player_direction.x = -1;// this is direction , negative x direction
+			player.direction.x = -1;// this is direction , negative x direction
 			std::cout << "A key" << std::endl;
-			charScaleX = 100;
+			charScaleX = -60;
 		}
 		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 		{
-			player_direction.x = 1;// this is direction , positive y direction
+			player.direction.x = 1;// this is direction , positive y direction
 			std::cout << "D key" << std::endl;
-			charScaleX = -100;
+			charScaleX = 60;
 		}
+
+
 
 		// add velo to player_pos
 
@@ -222,61 +305,61 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		//COLLISION
 
-		if ((player_pos.y - 50) <= 175 && (player_pos.y + 50) >= 65 && (player_pos.x - 50) <= 175 && (player_pos.x + 50) >= 65) {
+		if ((player.pos.y - 30) <= 55 && (player.pos.y + 30) >= -55 && (player.pos.x - 30) <= -65 && (player.pos.x + 30) >= -175) {
 			//player_direction.x = -player_direction.x;
 
 
 
-			float player_bottom = player_pos.y + 50;
-			float tiles_bottom = 120 + 50;
-			float player_right = player_pos.x + 50;
-			float tiles_right = 120 + 50;
+			float player_bottom = player.pos.y + 50;
+			float tiles_bottom = 0 + 50;
+			float player_right = player.pos.x + 50;
+			float tiles_right = -120 + 50;
 
-			float b_collision = tiles_bottom - player_pos.y;
-			float t_collision = player_bottom - 120;
-			float l_collision = player_right - 120;
-			float r_collision = tiles_right - player_pos.x;
+			float b_collision = tiles_bottom - player.pos.y;
+			float t_collision = player_bottom - 0;
+			float l_collision = player_right + 120;
+			float r_collision = tiles_right - player.pos.x;
 
 			if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
 				//Top collision
 				std::cout << "collide top" << std::endl;
-				if (player_direction.y == 1) {
+				if (player.direction.y == 1) {
 					std::cout << "move top" << std::endl;
-					player_direction.y = 0;
+					player.direction.y = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.y = -1;
-					player_pos.y += player_direction.y;
+					player.direction.y = -1;
+					player.pos.y += player.direction.y;
 				}
 			}
 
 			if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
 				//bottom collision
 				std::cout << "collide botton" << std::endl;
-				if (player_direction.y == -1) {
+				if (player.direction.y == -1) {
 					std::cout << "move top" << std::endl;
-					player_direction.y = 0;
+					player.direction.y = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.y = 1;
-					player_pos.y += player_direction.y;
+					player.direction.y = 1;
+					player.pos.y += player.direction.y;
 				}
 			}
 
 			if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
 				//Left collision
 				std::cout << "collide left" << std::endl;
-				if (player_direction.x == 1)
+				if (player.direction.x == 1)
 				{
 					std::cout << "move top" << std::endl;
-					player_direction.x = 0;
+					player.direction.x = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.x = -1;
-					player_pos.x += player_direction.x;
+					player.direction.x = -1;
+					player.pos.x += player.direction.x;
 				}
 
 			}
@@ -284,14 +367,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
 				//Right collision
 				std::cout << "collide right" << std::endl;
-				if (player_direction.x == -1) {
+				if (player.direction.x == -1) {
 					std::cout << "move top" << std::endl;
-					player_direction.x = 0;
+					player.direction.x = 0;
 				}
 				else {
 					std::cout << "move bot" << std::endl;
-					player_direction.x = 1;
-					player_pos.x += player_direction.x;
+					player.direction.x = 1;
+					player.pos.x += player.direction.x;
 				}
 
 			}
@@ -304,18 +387,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 		// add velo to player_pos
-		if (player_direction.x != 0 || player_direction.y != 0) //if player direction is not 0, as you cannot normalize 0.
+		if (player.direction.x != 0 || player.direction.y != 0) //if player direction is not 0, as you cannot normalize 0.
 		{
-			AEVec2 temp_velo{ player_direction.x, player_direction.y };
-			AEVec2Normalize(&player_direction, &temp_velo); // normalize
-			player_direction.x *= speed; // magnitude/speed of velo.x
-			player_direction.y *= speed; // magnitude/speed of velo.y
+			AEVec2 temp_velo{ player.direction.x, player.direction.y };
+			AEVec2Normalize(&player.direction, &temp_velo); // normalize
+			player.direction.x *= player.speed; // magnitude/speed of velo.x
+			player.direction.y *= player.speed; // magnitude/speed of velo.y
 		}
 
-		player_pos.x += player_direction.x * 0.016; // 0.016 is delta time temp value
-		player_pos.y += player_direction.y * 0.016;
+		player.pos.x += player.direction.x * 0.016; // 0.016 is delta time temp value
+		player.pos.y += player.direction.y * 0.016;
 
-		if (AEInputCheckTriggered(AEVK_E) == 1) {
+		if (AEInputCheckTriggered(AEVK_E) == 1 && blackholestate==1) {
 			blackhole.x += 5 * cos(Angle);
 			blackhole.y += 5 * sin(Angle);
 		}
@@ -331,17 +414,106 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		AEGfxSetTransparency(1.0f);
+
+		// Drawing overall map
+		for (int j = 0; j < 12; j++) {
+			for (int i = 0; i < 20; i++) {
+				// Tell the engine to get ready to draw something with texture. 
+				AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+				// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+				// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+				AEGfxSetTransparency(1.0f);
+				// Set the texture to spriteSheet
+				AEGfxTextureSet(pTex, 16.f / 192 * maps[i][j].TextureX, 16.f / 176 * maps[i][j].TextureY);
+				// Create a scale matrix that scales by 100 x and y 
+				AEMtx33 scale = { 0 };
+				AEMtx33Scale(&scale, 60.f, 60.f);
+				// Create a rotation matrix that rotates by 45 degrees 
+				AEMtx33 rotate = { 0 };
+				AEMtx33Rot(&rotate, 0);
+				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
+				AEMtx33 translate = { 0 };
+				AEMtx33Trans(&translate, -570 + i * 60, 320 - j * 60); 
+				// Concat the matrices (TRS) 
+				AEMtx33 transform = { 0 };
+				AEMtx33Concat(&transform, &rotate, &scale);
+				AEMtx33Concat(&transform, &translate, &transform);
+				// Choose the transform to use 
+				AEGfxSetTransform(transform.m);
+				// Actually drawing the mesh
+				AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
+			}
+		}
+
+		if (mapEditor == 1) {
+			if (AEInputCheckTriggered(AEVK_K) && mapY < 12) {
+				mapY += 1;
+			}
+			if (AEInputCheckTriggered(AEVK_I) && mapY > 0) {
+				mapY -= 1;
+			}
+			if (AEInputCheckTriggered(AEVK_J) && mapX > 0) {
+				mapX -= 1;
+			}
+			if (AEInputCheckTriggered(AEVK_L) && mapX < 20) {
+				mapX += 1;
+			}
+
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxSetTransparency(1.0f);
+			// Set the texture to spriteSheet
+			AEGfxTextureSet(pTex, 16.f / 192 * mapX, 16.f / 176 * mapY);
+			// Create a scale matrix that scales by 100 x and y 
+			AEMtx33 scale = { 0 };
+			AEMtx33Scale(&scale, 60.f, 60.f);
+			// Create a rotation matrix that rotates by 45 degrees 
+			AEMtx33 rotate = { 0 };
+			AEMtx33Rot(&rotate, 0);
+			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
+			AEMtx33 translate = { 0 };
+			AEMtx33Trans(&translate, 570, 320);
+			// Concat the matrices (TRS) 
+			AEMtx33 transform = { 0 };
+			AEMtx33Concat(&transform, &rotate, &scale);
+			AEMtx33Concat(&transform, &translate, &transform);
+			// Choose the transform to use 
+			AEGfxSetTransform(transform.m);
+			// Actually drawing the mesh
+			AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
+
+			char mapSelect[20] = "Selection";
+			AEGfxPrint(font, mapSelect, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
+
+
+			for (int j = 0; j < 12; j++) {
+				for (int i = 0; i < 20; i++) {
+					if (x >= i * 60 && x <= (i + 1) * 60 && y >= j * 60 && y <= (j + 1) * 60 && AEInputCheckTriggered(AEVK_LBUTTON)) {
+						maps[i][j].TextureX = mapX;
+						maps[i][j].TextureY = mapY;
+					}
+				}
+			}
+		}
+
+
 		// Set the texture to pTex 
 		AEGfxTextureSet(pTex, 16.f/192, 16.f/176 * 8);
 		AEMtx33 scale = { 0 };
 		// Create a scale matrix that scales by 100 x and y 
-		AEMtx33Scale(&scale, charScaleX , 100.f);
+		AEMtx33Scale(&scale, charScaleX , 60.f);
 		// Create a rotation matrix that rotates by 45 degrees 
 		AEMtx33 rotate = { 0 };
 		AEMtx33Rot(&rotate, i);
 		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
 		AEMtx33 translate = { 0 };
-		AEMtx33Trans(&translate, player_pos.x, player_pos.y); // - pos y to match with mouse and player coordinate 
+		AEMtx33Trans(&translate, player.pos.x, player.pos.y); // - pos y to match with mouse and player coordinate 
 		// Concat the matrices (TRS) 
 		AEMtx33 transform = { 0 };
 		AEMtx33Concat(&transform, &rotate, &scale);
@@ -350,77 +522,59 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxSetTransform(transform.m);
 		// Actually drawing the mesh
 		AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
-
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTransparency(1.0f);
-		// Set the texture to pTex 
-		AEGfxTextureSet(pblacktex, 0, 0);
-		// Create a scale matrix that scales by 100 x and y 
-		AEMtx33 scale2 = { 0 };
-		AEMtx33Scale(&scale2, 100.f, 100.f);
-		// Create a rotation matrix that rotates by 45 degrees 
-		AEMtx33 rotate2 = { 0 };
-		AEMtx33Rot(&rotate2, 0);
-		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
-		AEMtx33 translate2 = { 0 };
-		AEMtx33Trans(&translate2, blackhole.x, blackhole.y);
-		// Concat the matrices (TRS) 
-		AEMtx33 transform2 = { 0 };
-		AEMtx33Concat(&transform2, &rotate2, &scale2);
-		AEMtx33Concat(&transform2, &translate2, &transform2);
-		// Choose the transform to use 
-		AEGfxSetTransform(transform2.m);
-		// Actually drawing the mesh
-		AEGfxMeshDraw(pblack, AE_GFX_MDM_TRIANGLES);
-		AEGfxTextureSet(cTex, 0, 0);
-		//Create a scale matrix that scales by 100 x and y 
-		AEMtx33 scale3 = { 0 };
-		AEMtx33Scale(&scale3, 100.f, 100.f);
-		//Create a scale matrix that scales by 100 x and y
-		AEMtx33 rotate3 = { 0 };
-		AEMtx33Rot(&rotate3, 0);
-		//Create a rotation matrix that rotates by 45 degrees
-		//CHANGE DUB AND BUD BY INPUT CHANGING EACH BUD AND DUB
-		AEMtx33 translate3 = { 0 };
-		AEMtx33Trans(&translate3, 120.0f, 120.f);
-		//concaat the matrices (TRS)
-		AEMtx33 transform3 = { 0 };
-		AEMtx33Concat(&transform3, &rotate3, &scale3);
-		AEMtx33Concat(&transform3, &translate3, &transform3);
-		//choose the transform to use
-		AEGfxSetTransform(transform3.m);
-		//Actually drawing the mesh 
-		AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+		if (blackholestate == 1) {
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxSetTransparency(1.0f);
+			// Set the texture to pTex 
+			AEGfxTextureSet(pblacktex, 0, 0);
+			// Create a scale matrix that scales by 100 x and y 
+			AEMtx33 scale2 = { 0 };
+			AEMtx33Scale(&scale2, 100.f, 100.f);
+			// Create a rotation matrix that rotates by 45 degrees 
+			AEMtx33 rotate2 = { 0 };
+			AEMtx33Rot(&rotate2, 0);
+			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
+			AEMtx33 translate2 = { 0 };
+			AEMtx33Trans(&translate2, blackhole.x, blackhole.y);
+			// Concat the matrices (TRS) 
+			AEMtx33 transform2 = { 0 };
+			AEMtx33Concat(&transform2, &rotate2, &scale2);
+			AEMtx33Concat(&transform2, &translate2, &transform2);
+			// Choose the transform to use 
+			AEGfxSetTransform(transform2.m);
+			// Actually drawing the mesh
+			AEGfxMeshDraw(pblack, AE_GFX_MDM_TRIANGLES);
+		}
 
 		if (AEInputCheckCurr(AEVK_LBUTTON)) {
-			float slashX;
+			/*float slashX;
 			float slashY;
-			float slashRot;
+			float slashRot;*/
 			switch (direction) {
 			case 1: //right
-				slashX = 50;
-				slashY = 0;
-				slashRot = 0;
+				player.slashX = 50;
+				player.slashY = 0;
+				player.slashRot = 0;
 				break;
 			case 2: //up
-				slashY = 50;
-				slashX = 0;
-				slashRot = PI / 2;
+				player.slashY = 50;
+				player.slashX = 0;
+				player.slashRot = PI / 2;
 				break;
 			case 3: //left
-				slashX = -50;
-				slashY = 0;
-				slashRot = PI;
+				player.slashX = -50;
+				player.slashY = 0;
+				player.slashRot = PI;
 				break;
 			case 4: //down
-				slashY = -50;
-				slashX = 0;
-				slashRot = -PI / 2;
+				player.slashY = -50;
+				player.slashX = 0;
+				player.slashRot = -PI / 2;
 				break;
 			default:
 				break;
@@ -433,10 +587,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AEMtx33Scale(&scale, 100.f, 100.f);
 			// Create a rotation matrix that rotates by 45 degrees 
 			AEMtx33 rotate = { 0 };
-			AEMtx33Rot(&rotate, slashRot);
+			AEMtx33Rot(&rotate, player.slashRot);
 			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
 			AEMtx33 translate = { 0 };
-			AEMtx33Trans(&translate, player_pos.x + slashX, player_pos.y + slashY); // - for pos y to match player and mouse coordinate
+			AEMtx33Trans(&translate, player.pos.x + player.slashX, player.pos.y + player.slashY); // - for pos y to match player and mouse coordinate
 			// Concat the matrices (TRS) 
 			AEMtx33 transform = { 0 };
 			AEMtx33Concat(&transform, &rotate, &scale);
@@ -460,7 +614,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			char w[20] = "W";
 			char s[20] = "S";
 			char d[20] = "D";
-			char playerpos[100] = { player_pos.x,player_pos.y };
+			char playerpos[100] = { player.pos.x,player.pos.y };
 			AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
 			AEGfxPrint(font, input, -0.99f, 0.65f, 1.5f, 1.0f, 0.2f, 0.2f);
 			char mouse_xy_buffer[50] = " "; // buffer
@@ -472,9 +626,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			AEGfxPrint(font, w, -0.99f, 0.60f, 1.0f, 1.0f, 0.2f, 0.2f);
 			AEGfxPrint(font, s, -0.99f, 0.50f, 1.0f, 1.0f, 0.2f, 0.2f);
 			AEGfxPrint(font, d, -0.99f, 0.45f, 1.0f, 1.0f, 0.2f, 0.2f);
-			sprintf_s(playerpos, "Player Position X: %d", int(player_pos.x));
+			sprintf_s(playerpos, "Player Position X: %d", int(player.pos.x));
 			AEGfxPrint(font, playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 0.2f, 0.2f);
-			sprintf_s(playerpos, "Player Position Y: %d", int(player_pos.y));
+			sprintf_s(playerpos, "Player Position Y: %d", int(player.pos.y));
 			AEGfxPrint(font, playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 0.2f, 0.2f);
 
 
@@ -754,8 +908,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 					AEGfxSetTransform(fheart_transform3.m);
 					AEGfxMeshDraw(uprightmesh, AE_GFX_MDM_TRIANGLES);
 				}
-			}		
+			}
 		}
+
 
 		// Informing the system about the loop's end
 		AESysFrameEnd();
@@ -769,6 +924,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEGfxMeshFree(uprightmesh);
 	AEGfxMeshFree(pMesh);
 	AEGfxMeshFree(pblack);
+	AEGfxMeshFree(spriteMesh);
 
 
 	AEGfxTextureUnload(eheart);
