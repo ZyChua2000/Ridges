@@ -13,6 +13,8 @@ struct entity {
 	double y;
 };
 
+int blackholestate = 0;
+
 
 int mapEditor = 0;
 int mapX = 0;
@@ -176,6 +178,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			mapEditor = 1;
 		}
 
+		if (AEInputCheckTriggered(AEVK_1)) {
+			blackholestate = 1;
+		}
+
 		if (AEInputCheckTriggered(AEVK_8)) {
 			std::ofstream mapOutput{ "Assets/maptest.txt" };
 			for (int j = 0; j < 12; j++) {
@@ -195,8 +201,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 		float Angle = utilities::getAngle(blackhole.x, blackhole.y, player_pos.x, player_pos.y);
-		blackhole.x -= cos(Angle) / 5;
-		blackhole.y -= sin(Angle) / 5;
+		if (blackholestate == 1) {
+			blackhole.x -= cos(Angle) / 5;
+			blackhole.y -= sin(Angle) / 5;
+		}
 		
 		AEInputGetCursorPosition(&x, &y); // check cursor pos
 		
@@ -364,7 +372,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		player_pos.x += player_direction.x * 0.016; // 0.016 is delta time temp value
 		player_pos.y += player_direction.y * 0.016;
 
-		if (AEInputCheckTriggered(AEVK_E) == 1) {
+		if (AEInputCheckTriggered(AEVK_E) == 1 && blackholestate==1) {
 			blackhole.x += 5 * cos(Angle);
 			blackhole.y += 5 * sin(Angle);
 		}
@@ -488,52 +496,34 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxSetTransform(transform.m);
 		// Actually drawing the mesh
 		AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
-
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTransparency(1.0f);
-		// Set the texture to pTex 
-		AEGfxTextureSet(pblacktex, 0, 0);
-		// Create a scale matrix that scales by 100 x and y 
-		AEMtx33 scale2 = { 0 };
-		AEMtx33Scale(&scale2, 100.f, 100.f);
-		// Create a rotation matrix that rotates by 45 degrees 
-		AEMtx33 rotate2 = { 0 };
-		AEMtx33Rot(&rotate2, 0);
-		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
-		AEMtx33 translate2 = { 0 };
-		AEMtx33Trans(&translate2, blackhole.x, blackhole.y);
-		// Concat the matrices (TRS) 
-		AEMtx33 transform2 = { 0 };
-		AEMtx33Concat(&transform2, &rotate2, &scale2);
-		AEMtx33Concat(&transform2, &translate2, &transform2);
-		// Choose the transform to use 
-		AEGfxSetTransform(transform2.m);
-		// Actually drawing the mesh
-		AEGfxMeshDraw(pblack, AE_GFX_MDM_TRIANGLES);
-		AEGfxTextureSet(cTex, 0, 0);
-		//Create a scale matrix that scales by 100 x and y 
-		AEMtx33 scale3 = { 0 };
-		AEMtx33Scale(&scale3, 100.f, 100.f);
-		//Create a scale matrix that scales by 100 x and y
-		AEMtx33 rotate3 = { 0 };
-		AEMtx33Rot(&rotate3, 0);
-		//Create a rotation matrix that rotates by 45 degrees
-		//CHANGE DUB AND BUD BY INPUT CHANGING EACH BUD AND DUB
-		AEMtx33 translate3 = { 0 };
-		AEMtx33Trans(&translate3, 120.0f, 120.f);
-		//concaat the matrices (TRS)
-		AEMtx33 transform3 = { 0 };
-		AEMtx33Concat(&transform3, &rotate3, &scale3);
-		AEMtx33Concat(&transform3, &translate3, &transform3);
-		//choose the transform to use
-		AEGfxSetTransform(transform3.m);
-		//Actually drawing the mesh 
-		AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+		if (blackholestate == 1) {
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxSetTransparency(1.0f);
+			// Set the texture to pTex 
+			AEGfxTextureSet(pblacktex, 0, 0);
+			// Create a scale matrix that scales by 100 x and y 
+			AEMtx33 scale2 = { 0 };
+			AEMtx33Scale(&scale2, 100.f, 100.f);
+			// Create a rotation matrix that rotates by 45 degrees 
+			AEMtx33 rotate2 = { 0 };
+			AEMtx33Rot(&rotate2, 0);
+			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis 
+			AEMtx33 translate2 = { 0 };
+			AEMtx33Trans(&translate2, blackhole.x, blackhole.y);
+			// Concat the matrices (TRS) 
+			AEMtx33 transform2 = { 0 };
+			AEMtx33Concat(&transform2, &rotate2, &scale2);
+			AEMtx33Concat(&transform2, &translate2, &transform2);
+			// Choose the transform to use 
+			AEGfxSetTransform(transform2.m);
+			// Actually drawing the mesh
+			AEGfxMeshDraw(pblack, AE_GFX_MDM_TRIANGLES);
+		}
 
 		if (AEInputCheckCurr(AEVK_LBUTTON)) {
 			float slashX;
