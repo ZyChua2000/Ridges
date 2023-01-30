@@ -62,14 +62,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AESysInit(hInstance, nCmdShow, width, height, 1, 60, true, NULL);
 
 	// Changing the window title
-	AESysSetWindowTitle("Game Name");
+	AESysSetWindowTitle("Dungeon Redemption");
 
 	// reset the system modules
 	AESysReset();
 
 	//Initialise map texture numbers.
-	//std::ifstream mapInput{ "Assets/map1.txt" }; //for ZY
-	std::ifstream mapInput{ "../Assets/map1.txt" }; 
+	std::ifstream mapInput{ "Assets/map1.txt" }; //for ZY
+	//std::ifstream mapInput{ "../Assets/map1.txt" }; 
 	mapTiles maps[20][12];
 	for (int j = 0; j < 12; j++) {
 		for (int i = 0; i < 20; i++) {
@@ -127,8 +127,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	uprightmesh = AEGfxMeshEnd();
 
-	//AEGfxTexture* pTex = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png"); //for ZY
-	AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
+	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png"); //for ZY
+	//AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	AEGfxVertexList* pblack = 0;
 	AEGfxMeshStart();
 
@@ -139,22 +139,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
-	//AEGfxTexture* pblacktex = AEGfxTextureLoad("Assets/blackhole.png"); //for ZY
-	//AEGfxTexture* sTex = AEGfxTextureLoad("Assets/slash.png"); //for ZY
-	//AEGfxTexture* cTex = AEGfxTextureLoad("Assets/bluee.jpg"); //for ZY
-	//AEGfxTexture* planetTex = AEGfxTextureLoad("Assets/PlanetTexture.png"); //for ZY
-	//AEGfxTexture* fheart = AEGfxTextureLoad("Assets/full_heart.png"); //for ZY
-	//AEGfxTexture* eheart = AEGfxTextureLoad("Assets/empty_heart.png"); //for ZY
-	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12); //for ZY
-	//s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30); //for ZY
-	AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
-	AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
-	AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
-	AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
-	AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
-	AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
-	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
-	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
+	AEGfxTexture* pblacktex = AEGfxTextureLoad("Assets/blackhole.png"); //for ZY
+	AEGfxTexture* sTex = AEGfxTextureLoad("Assets/slash.png"); //for ZY
+	AEGfxTexture* cTex = AEGfxTextureLoad("Assets/bluee.jpg"); //for ZY
+	AEGfxTexture* planetTex = AEGfxTextureLoad("Assets/PlanetTexture.png"); //for ZY
+	AEGfxTexture* fheart = AEGfxTextureLoad("Assets/full_heart.png"); //for ZY
+	AEGfxTexture* eheart = AEGfxTextureLoad("Assets/empty_heart.png"); //for ZY
+	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12); //for ZY
+	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30); //for ZY
+	//AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
+	//AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
+	//AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
+	//AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
+	//AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
+	//AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
+	//s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	//s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
 	pblack = AEGfxMeshEnd();
 
 	s32 x{ 0 }, y{ 0 }; //init xy pos
@@ -208,8 +208,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 
 		if (AEInputCheckTriggered(AEVK_8)) {
-			//std::ofstream mapOutput{ "Assets / maptest.txt" }; //for ZY
-			std::ofstream mapOutput{ "../Assets/maptest.txt" };
+			std::ofstream mapOutput{ "Assets/maptest.txt" }; //for ZY
+			//std::ofstream mapOutput{ "../Assets/maptest.txt" };
 			for (int j = 0; j < 12; j++) {
 				for (int i = 0; i < 20; i++) {
 
@@ -917,6 +917,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AEGfxMeshFree(uprightmesh);
 	AEGfxMeshFree(pMesh);
 	AEGfxMeshFree(pblack);
+	AEGfxMeshFree(spriteMesh);
 
 
 	AEGfxTextureUnload(eheart);
