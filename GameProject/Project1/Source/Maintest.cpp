@@ -1,10 +1,38 @@
-// ---------------------------------------------------------------------------
-// includes
+/******************************************************************************/
+/*!
+\file		Main.cpp
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	February 02, 2023
+\brief		This source file contains the main function, entry point of the
+program.
 
-#include "AEEngine.h"
-#include "Utilities.h"
-#include "iostream"
-#include "fstream"
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
+
+#include "main.h"
+#include <memory>
+#include <iostream>
+
+// ---------------------------------------------------------------------------
+// Globals
+float	 g_dt;
+double	 g_appTime;
+
+u32	gAEGameStateInit = GS_MAINMENU;           //!< Initial GameState
+u32 gAEGameStateCurr = GS_MAINMENU;;           //!< Current GameState
+u32 gAEGameStatePrev = GS_MAINMENU;;           //!< Previous GameState
+u32 gAEGameStateNext = GS_MAINMENU;;           //!< Next GameState
+
+void (*AEGameStateLoad)(void) =nullptr;    //!< Function pointer for load
+void (*AEGameStateInit)(void) =nullptr;    //!< Function pointer for init
+void (*AEGameStateUpdate)(void) =nullptr;  //!< Function pointer for update
+void (*AEGameStateDraw)(void) =nullptr;    //!< Function pointer for draw
+void (*AEGameStateFree)(void) = nullptr;    //!< Function pointer for free
+void (*AEGameStateUnload)(void)= nullptr;  //!< Function pointer for unload
 
 
 int state = 0;
@@ -44,19 +72,26 @@ s32 mx, my;
 
 	
 
+	//SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+	UNREFERENCED_PARAMETER(prevInstanceH);
+	UNREFERENCED_PARAMETER(command_line);
+	std::cout << "Test";
+	//// Enable run-time memory check for debug builds.
+	//#if defined(DEBUG) | defined(_DEBUG)
+		//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	//#endif
 
-	int gGameRunning = 1;
+	//int * pi = new int;
+	//delete pi;
 
-	// Initialization of your own variables go here
-
-	// Using custom window procedure
-	AESysInit(hInstance, nCmdShow, width, height, 1, 60, true, NULL);
+	// Initialize the system
+	AESysInit(instanceH, show, 1600, 900, 1, 60, false, NULL);
 
 	// Changing the window title
 	AESysSetWindowTitle("Dungeon Redemption");
 
-	// reset the system modules
-	AESysReset();
+	//set background color
+	AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
 	//Initialise map texture numbers.
 	std::ifstream mapInput{ "Assets/map1.txt" }; //for ZY
@@ -65,11 +100,7 @@ s32 mx, my;
 	for (int j = 0; j < 12; j++) {
 		for (int i = 0; i < 20; i++) {
 
-			// input texture
-			mapInput >> maps[i][j].TextureX;
-			mapInput >> maps[i][j].TextureY;
-		}
-	}
+	AEGameStateMgrInit(gAEGameStateInit);
 
 	mapInput.close();
 
@@ -179,8 +210,8 @@ s32 mx, my;
 	// Game Loop
 	while (gGameRunning)
 	{
-		// Informing the system about the loop's start
-		AESysFrameStart();
+		// reset the system modules
+		AESysReset();
 
 		// Handling Input
 		AEInputUpdate();
@@ -255,8 +286,13 @@ s32 mx, my;
 			i -= 0.02;
 			std::cout << " rotating" << std::endl;
 		}
-		
-		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
+		else
+			gAEGameStateNext = gAEGameStateCurr = gAEGameStatePrev;
+
+		// Initialize the gamestate
+		AEGameStateInit();
+
+		while (gAEGameStateCurr == gAEGameStateNext)
 		{
 			player.direction.y = 1;// this is direction , positive y direction
 			std::cout << "W key" << std::endl;
@@ -279,7 +315,10 @@ s32 mx, my;
 			charScaleX = 60;
 		}
 
+		AEGameStateFree();
 
+		if (gAEGameStateNext != GS_RESTART)
+			AEGameStateUnload();
 
 		// add velo to player_pos
 
