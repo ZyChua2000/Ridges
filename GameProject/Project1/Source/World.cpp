@@ -195,7 +195,8 @@ void GS_World_Load(void) {
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
 
 	Character->pMesh = AEGfxMeshEnd();
-	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	//Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	Character->pTexture = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	Character->type = TYPE_CHARACTER;
 
 	GameObj* NPC;
@@ -242,13 +243,16 @@ void GS_World_Load(void) {
 	GameObj* Slash;
 	Slash = sGameObjList + sGameObjNum++;
 	Slash->pMesh = Effects->pMesh;
-	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
+	Slash->pTexture = AEGfxTextureLoad("../Assets/slash.png");
+	//Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
 	Slash->type = TYPE_SLASH;
 	Slash->refMesh = true;
 
-	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
-	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
+	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
+	//	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
 	FontList[FontListNum++] = counterfont;
 }
 
@@ -265,7 +269,8 @@ void GS_World_Init(void) {
 
 	//Initialise map texture numbers.
 
-	std::ifstream mapInput{ "Assets/map1.txt" };
+	//std::ifstream mapInput{ "Assets/map1.txt" };
+	std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 			AEVec2 Pos = { -(AEGetWindowWidth() - SPRITE_SCALE) / 2 + i * SPRITE_SCALE ,
@@ -384,7 +389,8 @@ void GS_World_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		std::ofstream mapOutput{ "Assets/maptest.txt" };
+		//std::ofstream mapOutput{ "Assets/maptest.txt" };
+		std::ofstream mapOutput{ "../Assets/maptest.txt" };
 		for (int j = 0; j < 12; j++) {
 			for (int i = 0; i < 20; i++) {
 				staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
@@ -761,7 +767,7 @@ void GS_World_Draw(void) {
 	This function frees all the instances created for the World level.
 */
 /******************************************************************************/
-void GS_Worldw_Free(void) {
+void GS_World_Free(void) {
 	// kill all object instances in the array using "gameObjInstDestroy"
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;

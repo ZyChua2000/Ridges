@@ -5,7 +5,7 @@
 
 /******************************************************************************/
 /*!
-\file		World2.cpp
+\file		World.cpp
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
 \date   	February 02, 2023
@@ -176,7 +176,8 @@ void GS_World2_Load(void) {
 
 
 	//Initialise map texture numbers.
-	std::ifstream mapInput{ "Assets/map1.txt" };
+	//std::ifstream mapInput{ "Assets/map1.txt" };
+	std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < 12; j++) {
 		for (int i = 0; i < 20; i++) {
 
@@ -251,23 +252,41 @@ void GS_World2_Load(void) {
 	bObj->pMesh = AEGfxMeshEnd();
 
 
-	AEGfxTexture* pTex = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	//AEGfxTexture* pTex = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	//TextureList[TextureListNum++] = pTex;
+	//AEGfxTexture* pblacktex = AEGfxTextureLoad("Assets/blackhole.png");
+	//TextureList[TextureListNum++] = pblacktex;
+	//AEGfxTexture* sTex = AEGfxTextureLoad("Assets/slash.png");
+	//TextureList[TextureListNum++] = sTex;
+	//AEGfxTexture* cTex = AEGfxTextureLoad("Assets/bluee.jpg");
+	//TextureList[TextureListNum++] = cTex;
+	//AEGfxTexture* planetTex = AEGfxTextureLoad("Assets/PlanetTexture.png");
+	//TextureList[TextureListNum++] = planetTex;
+	//AEGfxTexture* fheart = AEGfxTextureLoad("Assets/full_heart.png");
+	//TextureList[TextureListNum++] = fheart;
+	//AEGfxTexture* eheart = AEGfxTextureLoad("Assets/empty_heart.png");
+	//TextureList[TextureListNum++] = eheart;
+	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	//FontList[FontListNum++] = font;
+	//s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
+	//FontList[FontListNum++] = counterfont;
+	AEGfxTexture* pTex = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	TextureList[TextureListNum++] = pTex;
-	AEGfxTexture* pblacktex = AEGfxTextureLoad("Assets/blackhole.png");
+	AEGfxTexture* pblacktex = AEGfxTextureLoad("../Assets/blackhole.png");
 	TextureList[TextureListNum++] = pblacktex;
-	AEGfxTexture* sTex = AEGfxTextureLoad("Assets/slash.png");
+	AEGfxTexture* sTex = AEGfxTextureLoad("../Assets/slash.png");
 	TextureList[TextureListNum++] = sTex;
-	AEGfxTexture* cTex = AEGfxTextureLoad("Assets/bluee.jpg");
+	AEGfxTexture* cTex = AEGfxTextureLoad("../Assets/bluee.jpg");
 	TextureList[TextureListNum++] = cTex;
-	AEGfxTexture* planetTex = AEGfxTextureLoad("Assets/PlanetTexture.png");
+	AEGfxTexture* planetTex = AEGfxTextureLoad("../Assets/PlanetTexture.png");
 	TextureList[TextureListNum++] = planetTex;
-	AEGfxTexture* fheart = AEGfxTextureLoad("Assets/full_heart.png");
+	AEGfxTexture* fheart = AEGfxTextureLoad("../Assets/full_heart.png");
 	TextureList[TextureListNum++] = fheart;
-	AEGfxTexture* eheart = AEGfxTextureLoad("Assets/empty_heart.png");
+	AEGfxTexture* eheart = AEGfxTextureLoad("../Assets/empty_heart.png");
 	TextureList[TextureListNum++] = eheart;
-	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
-	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
+	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
 	FontList[FontListNum++] = counterfont;
 
 }
@@ -309,7 +328,8 @@ void GS_World2_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_8)) {
-		std::ofstream mapOutput{ "Assets/maptest.txt" };
+		//std::ofstream mapOutput{ "../Assets/maptest.txt" };
+		std::ofstream mapOutput{ "../Assets/maptest.txt" };
 		for (int j = 0; j < 12; j++) {
 			for (int i = 0; i < 20; i++) {
 
