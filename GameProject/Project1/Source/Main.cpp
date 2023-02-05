@@ -43,7 +43,7 @@ void (*AEGameStateUnload)(void)= nullptr;  //!< Function pointer for unload
 int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_line, int show)
 {
 
-	//SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	UNREFERENCED_PARAMETER(prevInstanceH);
 	UNREFERENCED_PARAMETER(command_line);
 	std::cout << "Test";
@@ -68,6 +68,8 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 		AEGameStateDraw= GS_MainMenu_Draw, AEGameStateFree= GS_MainMenu_Free, AEGameStateUnload= GS_MainMenu_Unload);
 	AEGameStateMgrAdd(GS_WORLD, AEGameStateLoad = GS_World_Load, AEGameStateInit = GS_World_Init, AEGameStateUpdate = GS_World_Update,
 		AEGameStateDraw = GS_World_Draw, AEGameStateFree = GS_World_Free, AEGameStateUnload = GS_World_Unload);
+	AEGameStateMgrAdd(GS_WORLD2, AEGameStateLoad = GS_World2_Load, AEGameStateInit = GS_World2_Init, AEGameStateUpdate = GS_World2_Update,
+		AEGameStateDraw = GS_World2_Draw, AEGameStateFree = GS_World2_Free, AEGameStateUnload = GS_World2_Unload);
 	//AEGameStateMgrAdd(GS_BOSSLEVEL, &GS_BossLevel_Load, &GS_BossLevel_Init, &GS_BossLevel_Update, &GS_BossLevel_Draw, &GS_BossLevel_Free, &GS_BossLevel_Unload);
 
 	AEGameStateMgrInit(gAEGameStateInit);

@@ -29,6 +29,7 @@ extern double	g_appTime;
 #include "Mainmenu.h"
 #include "BossLevel.h"
 #include "World.h"
+#include "World2.h"
 #include "Utilities.h"
 
 #endif
