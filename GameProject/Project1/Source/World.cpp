@@ -27,21 +27,24 @@ const unsigned int	FONT_NUM_MAX = 10;					// The total number of different game 
 const unsigned int	STATIC_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
 
 const float         BOUNDING_RECT_SIZE = 1.0f;     // this is the normalized bounding rectangle (width and height) sizes - AABB collision data
-const float			PLAYER_SPEED = 400.f;
-const float			NPC_SPEED = 200.f;
+const float			PLAYER_SPEED = 5.f;
+const float			NPC_SPEED = 2.5f;
+
 const int			TEXTURE_MAXWIDTH = 192;
 const int			TEXTURE_MAXHEIGHT = 176;
 const float			TEXTURE_CELLSIZE = 16;
+
 const int			SPRITE_SCALE = 80;
 bool				SLASH_ACTIVATE = false;
 
 const int			MAP_CELL_WIDTH = 20;
 const int			MAP_CELL_HEIGHT = 12;
+
 unsigned int		state = 0;
 unsigned int		mapeditor = 0;
 
-s32					mouseX;
-s32					mouseY;
+float				mouseX;
+float				mouseY;
 
 // -----------------------------------------------------------------------------
 enum TYPE
@@ -53,6 +56,7 @@ enum TYPE
 	TYPE_MAP,
 	TYPE_EFFECTS,
 	TYPE_SLASH,
+	TYPE_REF,
 
 	TYPE_NUM
 };
@@ -195,8 +199,8 @@ void GS_World_Load(void) {
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
 
 	Character->pMesh = AEGfxMeshEnd();
-	//Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
-	Character->pTexture = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
+	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	//Character->pTexture = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	Character->type = TYPE_CHARACTER;
 
 	GameObj* NPC;
@@ -230,7 +234,7 @@ void GS_World_Load(void) {
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
 		-0.5f, -0.5f, 0xFFFFFF00, 0.0f, 1.0f,
 		0.5f, 0.5f, 0xFF00FFFF, 1.0f, 0.0f);
-
+	
 	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
@@ -243,16 +247,23 @@ void GS_World_Load(void) {
 	GameObj* Slash;
 	Slash = sGameObjList + sGameObjNum++;
 	Slash->pMesh = Effects->pMesh;
-	Slash->pTexture = AEGfxTextureLoad("../Assets/slash.png");
-	//Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
+	//Slash->pTexture = AEGfxTextureLoad("../Assets/slash.png");
+	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
 	Slash->type = TYPE_SLASH;
 	Slash->refMesh = true;
 
-	s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
-	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	GameObj* RefLine;
+	RefLine = sGameObjList + sGameObjNum++;
+	RefLine->pMesh = Effects->pMesh;
+	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
+	RefLine->type = TYPE_REF;
+	RefLine->refMesh = true;
+
+	//s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
-	s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
-	//	s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
+	//s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
+		s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
 	FontList[FontListNum++] = counterfont;
 }
 
@@ -264,27 +275,35 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
-	Player = gameObjInstCreate(TYPE_CHARACTER, SPRITE_SCALE, 0, 0, 0);
+	Player = gameObjInstCreate(TYPE_CHARACTER, 1, 0, 0, 0);
 	Player->TextureMap = { 1,8 };
 
 	//Initialise map texture numbers.
 
-	//std::ifstream mapInput{ "Assets/map1.txt" };
-	std::ifstream mapInput{ "../Assets/map1.txt" };
+	std::ifstream mapInput{ "Assets/map1.txt" };
+	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { -(AEGetWindowWidth() - SPRITE_SCALE) / 2 + i * SPRITE_SCALE ,
-							(AEGetWindowHeight() - SPRITE_SCALE) / 2 - j * SPRITE_SCALE };
-			staticObjInstCreate(TYPE_MAP, SPRITE_SCALE, &Pos, 0);
+			AEVec2 Pos = { (float)i - MAP_CELL_WIDTH/2 + 0.5 , -((float)j - MAP_CELL_HEIGHT/2 + 0.5)   };
+			staticObjInstCreate(TYPE_MAP, 1, &Pos, 0);
 			staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
 			// input texture
 			mapInput >> pInst->TextureMap.x;
 			mapInput >> pInst->TextureMap.y;
+
 		}
 	}
 	mapInput.close();
 
-	AEVec2 Pos = { AEGetWindowWidth() / 2 - SPRITE_SCALE / 2,AEGetWindowHeight() / 2 - SPRITE_SCALE / 2 };
+	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
+		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
+			AEVec2 Pos = { (float)i - MAP_CELL_WIDTH / 2 + 0.5 , -((float)j - MAP_CELL_HEIGHT / 2 + 0.5) };
+			staticObjInstCreate(TYPE_REF, 1, &Pos, 0);
+
+		}
+	}
+
+	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
 }
@@ -326,19 +345,28 @@ void GS_World_Update(void) {
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
 		Player->velCurr.x = -1;// this is direction , negative x direction
-		Player->scale = -SPRITE_SCALE;
+		Player->scale = -1;
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
 		Player->velCurr.x = 1;// this is direction , positive y direction
-		Player->scale = SPRITE_SCALE;
+		Player->scale = 1;
 	}
 
 	int slashDir = 3;
-	AEInputGetCursorPosition(&mouseX, &mouseY);
-	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x + AEGetWindowWidth() / 2, Player->posCurr.y, mouseX, -(mouseY - AEGetWindowHeight() / 2));
+	// Normalising mouse to 0,0 at the center
+	s32 mouseIntX, mouseIntY;
+	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
+	mouseX = mouseIntX;
+	mouseY = mouseIntY;
+	mouseY = -mouseY + AEGetWindowHeight() / 2;
+	mouseX -= AEGetWindowWidth() / 2;
+	mouseX /= SPRITE_SCALE;
+	mouseY /= SPRITE_SCALE;
 
-	if (-(mouseY - AEGetWindowHeight() / 2) > Player->posCurr.y) {
+	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX, mouseY );
+
+	if (mouseY / 2 > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 	if (angleMousetoPlayer <= -(PI * 3 / 4) || angleMousetoPlayer > (PI * 3 / 4)) {
@@ -359,7 +387,7 @@ void GS_World_Update(void) {
 	}
 
 	if (mapeditor == 1) {
-		mapEditorObj->scale = SPRITE_SCALE;
+		mapEditorObj->scale = 1;
 
 
 		if (AEInputCheckTriggered(AEVK_K) && mapEditorObj->TextureMap.y < 12) {
@@ -376,7 +404,7 @@ void GS_World_Update(void) {
 		}
 		for (int j = 0; j < 12; j++) {
 			for (int i = 0; i < 20; i++) {
-				if (mouseX >= i * 80 && mouseX <= (i + 1) * 80 && mouseY >= j * SPRITE_SCALE && mouseY <= (j + 1) * SPRITE_SCALE && AEInputCheckTriggered(AEVK_LBUTTON)) {
+				if (mouseX + MAP_CELL_WIDTH/2 >= i && mouseX + MAP_CELL_WIDTH/2 <= (i + 1) && -mouseY + MAP_CELL_HEIGHT / 2 >= j  && -mouseY + MAP_CELL_HEIGHT / 2 <= (j + 1) && AEInputCheckTriggered(AEVK_LBUTTON)) {
 					staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
 					pInst->TextureMap = mapEditorObj->TextureMap;
 				}
@@ -529,25 +557,25 @@ void GS_World_Update(void) {
 		AEVec2 Pos = Player->posCurr;
 		Pos.x += Player->velCurr.x * 0.25f;
 		Pos.y += Player->velCurr.y * 0.25f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, SPRITE_SCALE, &Pos, 0);
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
 		switch (slashDir) {
 		case 1: //right
-			slashObj->posCurr.x += 50;
+			slashObj->posCurr.x += 0.8;
 			slashObj->posCurr.y += 0;
 			slashObj->dirCurr = 0;
 			break;
 		case 2: //up
-			slashObj->posCurr.y += 50;
+			slashObj->posCurr.y += 0.8;
 			slashObj->posCurr.x += 0;
 			slashObj->dirCurr = PI / 2;
 			break;
 		case 3: //left
-			slashObj->posCurr.x += -50;
+			slashObj->posCurr.x += -0.8;
 			slashObj->posCurr.y += 0;
 			slashObj->dirCurr = PI;
 			break;
 		case 4: //down
-			slashObj->posCurr.y += -50;
+			slashObj->posCurr.y += -0.8;
 			slashObj->posCurr.x += 0;
 			slashObj->dirCurr = -PI / 2;
 			break;
@@ -610,11 +638,11 @@ void GS_World_Update(void) {
 		else {
 			scaleY = pInst->scale;
 		}
-		AEMtx33Scale(&scale, pInst->scale, scaleY);
+		AEMtx33Scale(&scale, pInst->scale* SPRITE_SCALE, scaleY* SPRITE_SCALE);
 		// Compute the rotation matrix 
 		AEMtx33Rot(&rot, pInst->dirCurr);
 		// Compute the translation matrix
-		AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
+		AEMtx33Trans(&trans, pInst->posCurr.x * SPRITE_SCALE, pInst->posCurr.y* SPRITE_SCALE);
 		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 		AEMtx33Concat(&pInst->transform, &rot, &scale);
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
@@ -634,11 +662,11 @@ void GS_World_Update(void) {
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-		AEMtx33Scale(&scale, pInst->scale, pInst->scale);
+		AEMtx33Scale(&scale, pInst->scale * SPRITE_SCALE, pInst->scale* SPRITE_SCALE);
 		// Compute the rotation matrix 
 		AEMtx33Rot(&rot, pInst->dirCurr);
 		// Compute the translation matrix
-		AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
+		AEMtx33Trans(&trans, pInst->posCurr.x * SPRITE_SCALE, pInst->posCurr.y * SPRITE_SCALE);
 		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 		AEMtx33Concat(&pInst->transform, &rot, &scale);
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
@@ -667,11 +695,19 @@ void GS_World_Draw(void) {
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
 
-		// skip non-active object
+		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
+		if (pInst->pObject->type == TYPE_REF) {
+			continue;
+		}
 		// for any sprite textures
-		AEGfxSetTransparency(1.0f - pInst->Alpha);
+		if (pInst->pObject->type == TYPE_SLASH) {
+			AEGfxSetTransparency(1.0f - pInst->Alpha);
+		}
+		else {
+			AEGfxSetTransparency(1.0f);
+		}
 		if (pInst->pObject->type == TYPE_MAP) {
 
 			AEGfxTextureSet(pInst->pObject->pTexture,
@@ -685,6 +721,24 @@ void GS_World_Draw(void) {
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+	}
+
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+
+		// skip non-active object and reference boxes
+		if (pInst->flag != FLAG_ACTIVE)
+			continue;
+		if (pInst->pObject->type == TYPE_REF && mapeditor == 1) {
+			AEGfxSetTransparency(1.0f );
+			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+			// Set the current object instance's transform matrix using "AEGfxSetTransform"
+			AEGfxSetTransform(pInst->transform.m);
+			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+		}
+		// for any sprite textures
 	}
 
 	AEGfxSetTransparency(1.0f);
@@ -724,17 +778,17 @@ void GS_World_Draw(void) {
 		AEGfxPrint(FontList[0], debug, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
 		AEGfxPrint(FontList[0], input, -0.99f, 0.65f, 1.5f, 1.0f, 0.2f, 0.2f);
 		char mouse_xy_buffer[50] = " "; // buffer
-		sprintf_s(mouse_xy_buffer, "Mouse Position X: %d", mouseX);
+		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.4f", mouseX);
 		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 0.2f, 0.2f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %d", mouseY);
+		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.4f", mouseY);
 		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 0.2f, 0.2f);
 		AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 1.0f, 0.2f, 0.2f);
 		AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 1.0f, 0.2f, 0.2f);
 		AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 1.0f, 0.2f, 0.2f);
 		AEGfxPrint(FontList[0], d, -0.99f, 0.45f, 1.0f, 1.0f, 0.2f, 0.2f);
-		sprintf_s(playerpos, "Player Position X: %d", int(Player->posCurr.x));
+		sprintf_s(playerpos, "Player Position X: %.4f", (Player->posCurr.x));
 		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 0.2f, 0.2f);
-		sprintf_s(playerpos, "Player Position Y: %d", int(Player->posCurr.y));
+		sprintf_s(playerpos, "Player Position Y: %.4f", (Player->posCurr.y));
 		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 0.2f, 0.2f);
 
 
