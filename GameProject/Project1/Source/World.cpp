@@ -321,7 +321,7 @@ void GS_World_Update(void) {
 	// =====================================
 	// User Input
 	// =====================================
-
+	AEGfxSetCamPosition(Player->posCurr.x*80, Player->posCurr.y*80);
 	//Debugging mode
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		state ^= 1;
@@ -671,7 +671,11 @@ void GS_World_Update(void) {
 		AEMtx33Concat(&pInst->transform, &rot, &scale);
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
 
+		
+
+		
 	}
+	
 }
 
 /******************************************************************************/
