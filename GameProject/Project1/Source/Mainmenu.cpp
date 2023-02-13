@@ -16,7 +16,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <iostream>
 
 // ---------------------------------------------------------------------------
-
+AEGfxVertexList* BoxMesh;
 /******************************************************************************/
 /*!
 	"Load" function of this state
@@ -26,7 +26,17 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 */
 /******************************************************************************/
 void GS_MainMenu_Load(void) {
-	;
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(2.f, 1.f, 0xFFFF00FF, 16.0f / 192, 16.0f / 176,
+		-2.f, -1.f, 0xFFFFFF00, 0.0f, 16.0f / 176,
+		-2.f, 1.f, 0xFF00FFFF, 16.0f / 192, 0.0f);
+
+	AEGfxTriAdd(2.f, 1.f, 0xFFFFFFFF, 0.0f, 16.0f / 176,
+		2.f, -1.f, 0xFFFFFFFF, 0.0f, 0.0f,
+		-2.f, -1.f, 0xFFFFFFFF, 16.0f / 192, 0.0f);
+
+	BoxMesh = AEGfxMeshEnd();
 }
 
 /******************************************************************************/
@@ -49,6 +59,7 @@ void GS_MainMenu_Init(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
+	AEGfxSetBackgroundColor(1, 0, 0);
 	if (AEInputCheckTriggered(AEVK_1)) {
 		gGameStateNext = GS_WORLD;
 	}
@@ -62,7 +73,16 @@ void GS_MainMenu_Update(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Draw(void) {
-	;
+	AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
+	// Tell the engine to get ready to draw something with texture. 
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+	AEGfxSetTransparency(1.0f);
+	AEGfxSetTransform(BoxMesh->trans.m);
+	AEGfxMeshDraw(BoxMesh, AE_GFX_MDM_TRIANGLES);
 }
 
 /******************************************************************************/
