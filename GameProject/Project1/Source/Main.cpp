@@ -22,19 +22,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 float	 g_dt;
 double	 g_appTime;
 
-u32	gAEGameStateInit = GS_MAINMENU;           //!< Initial GameState
-u32 gAEGameStateCurr = GS_MAINMENU;;           //!< Current GameState
-u32 gAEGameStatePrev = GS_MAINMENU;;           //!< Previous GameState
-u32 gAEGameStateNext = GS_MAINMENU;;           //!< Next GameState
-
-void (*AEGameStateLoad)(void) =nullptr;    //!< Function pointer for load
-void (*AEGameStateInit)(void) =nullptr;    //!< Function pointer for init
-void (*AEGameStateUpdate)(void) =nullptr;  //!< Function pointer for update
-void (*AEGameStateDraw)(void) =nullptr;    //!< Function pointer for draw
-void (*AEGameStateFree)(void) = nullptr;    //!< Function pointer for free
-void (*AEGameStateUnload)(void)= nullptr;  //!< Function pointer for unload
-
-
 /******************************************************************************/
 /*!
 	Starting point of the application
@@ -46,7 +33,6 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	UNREFERENCED_PARAMETER(prevInstanceH);
 	UNREFERENCED_PARAMETER(command_line);
-	std::cout << "Test";
 	//// Enable run-time memory check for debug builds.
 	//#if defined(DEBUG) | defined(_DEBUG)
 		//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
@@ -64,59 +50,52 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	//set background color
 	AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
-	AEGameStateMgrAdd(GS_MAINMENU, AEGameStateLoad=GS_MainMenu_Load, AEGameStateInit= GS_MainMenu_Init, AEGameStateUpdate= GS_MainMenu_Update, 
-		AEGameStateDraw= GS_MainMenu_Draw, AEGameStateFree= GS_MainMenu_Free, AEGameStateUnload= GS_MainMenu_Unload);
-	AEGameStateMgrAdd(GS_WORLD, AEGameStateLoad = GS_World_Load, AEGameStateInit = GS_World_Init, AEGameStateUpdate = GS_World_Update,
-		AEGameStateDraw = GS_World_Draw, AEGameStateFree = GS_World_Free, AEGameStateUnload = GS_World_Unload);
+	GameStateMgrInit(GS_MAINMENU);
 
-	//AEGameStateMgrAdd(GS_BOSSLEVEL, &GS_BossLevel_Load, &GS_BossLevel_Init, &GS_BossLevel_Update, &GS_BossLevel_Draw, &GS_BossLevel_Free, &GS_BossLevel_Unload);
-
-	AEGameStateMgrInit(gAEGameStateInit);
-
-	while (gAEGameStateCurr != GS_QUIT)
+	while (gGameStateCurr != GS_QUIT)
 	{
 		// reset the system modules
 		AESysReset();
 
 		// If not restarting, load the gamestate
-		if (gAEGameStateCurr != GS_RESTART)
+		if (gGameStateCurr != GS_RESTART)
 		{
-			AEGameStateMgrUpdate();
-			AEGameStateLoad();
+			GameStateMgrUpdate();
+			GameStateLoad();
 		}
 		else
-			gAEGameStateNext = gAEGameStateCurr = gAEGameStatePrev;
+			gGameStateNext = gGameStateCurr = gGameStatePrev;
 
 		// Initialize the gamestate
-		AEGameStateInit();
+		GameStateInit();
 
-		while (gAEGameStateCurr == gAEGameStateNext)
+		while (gGameStateCurr == gGameStateNext)
 		{
 			AESysFrameStart();
 
 			AEInputUpdate();
 
-			AEGameStateUpdate();
+			GameStateUpdate();
 
-			AEGameStateDraw();
+			GameStateDraw();
 
 			AESysFrameEnd();
 
 			// check if forcing the application to quit
 			if ((AESysDoesWindowExist() == false) || AEInputCheckTriggered(AEVK_ESCAPE))
-				gAEGameStateNext = GS_QUIT;
+				gGameStateNext = GS_QUIT;
 
 			g_dt = (f32)AEFrameRateControllerGetFrameTime();
 			g_appTime += g_dt;
 		}
 
-		AEGameStateFree();
+		GameStateFree();
 
-		if (gAEGameStateNext != GS_RESTART)
-			AEGameStateUnload();
+		if (gGameStateNext != GS_RESTART)
+			GameStateUnload();
 
-		gAEGameStatePrev = gAEGameStateCurr;
-		gAEGameStateCurr = gAEGameStateNext;
+		gGameStatePrev = gGameStateCurr;
+		gGameStateCurr = gGameStateNext;
 	}
 
 	// free the system

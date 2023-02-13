@@ -26,6 +26,7 @@ extern double	g_appTime;
 
 #include "AEEngine.h"
 #include "GameStateList.h"
+#include "GSM.h"
 #include "Mainmenu.h"
 #include "BossLevel.h"
 #include "World.h"

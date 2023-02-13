@@ -50,7 +50,7 @@ void GS_MainMenu_Init(void) {
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
 	if (AEInputCheckTriggered(AEVK_1)) {
-		gAEGameStateNext = GS_WORLD;
+		gGameStateNext = GS_WORLD;
 	}
 }
 
