@@ -372,7 +372,7 @@ void GS_World_Update(void) {
 
 	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 
-	if (mouseY + Player->posCurr.y / 2 > Player->posCurr.y) {
+	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 	if (angleMousetoPlayer <= -(PI * 3 / 4) || angleMousetoPlayer > (PI * 3 / 4)) {
@@ -557,6 +557,8 @@ void GS_World_Update(void) {
 		pInst->posCurr.x += pInst->velCurr.x * g_dt;
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
+
+	camX = Player->posCurr.x, camY = Player->posCurr.y;
 
 	if (SLASH_ACTIVATE == true) {
 		AEVec2 Pos = Player->posCurr;
