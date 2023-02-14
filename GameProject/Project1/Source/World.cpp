@@ -363,7 +363,7 @@ void GS_World_Update(void) {
 		Player->scale = 1;
 	}
 
-	int slashDir = 3;
+	int slashDir{ 0 };
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -697,18 +697,17 @@ void GS_World_Draw(void) {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
 	for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
-		if (camX + CAM_CELL_WIDTH / 2 > i && camX - CAM_CELL_WIDTH / 2 - 1 < i) {
 			for (unsigned long j = 0; j < MAP_CELL_HEIGHT; j++) {
-				if (-camY - CAM_CELL_HEIGHT / 2 < j + 1 && -camY + CAM_CELL_HEIGHT / 2 > j) {
+				if (utilities::checkWithinCam(MapObjInstList[i][j]->posCurr, camX, camY)) {
+					continue;
+				}
 					AEGfxSetTransparency(1.0f);
 					AEGfxTextureSet(MapObjInstList[i][j]->pObject->pTexture,
 						TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j]->TextureMap.x,
 						TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j]->TextureMap.y);
 					AEGfxSetTransform(MapObjInstList[i][j]->transform.m);
 					AEGfxMeshDraw(MapObjInstList[i][j]->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-				}
 			}
-		}
 	}
 
 	// map editor object
@@ -731,6 +730,9 @@ void GS_World_Draw(void) {
 		if (pInst->pObject->type == TYPE_REF || pInst->pObject->type == TYPE_MAP) {
 			continue;
 		}
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			continue;
+		}
 		// for any sprite textures
 		if (pInst->pObject->type == TYPE_SLASH) {
 			AEGfxSetTransparency(1.0f - pInst->Alpha);
@@ -745,24 +747,6 @@ void GS_World_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-		// skip non-active object and reference boxes
-		if (pInst->flag != FLAG_ACTIVE)
-			continue;
-		if (pInst->pObject->type == TYPE_REF && mapeditor == 1) {
-			AEGfxSetTransparency(1.0f );
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
-			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-		}
-		// for any sprite textures
-	}
-
 	AEGfxSetTransparency(1.0f);
 
 	// Spawn dynamic entities
@@ -773,6 +757,9 @@ void GS_World_Draw(void) {
 		// skip non-active object
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			continue;
+		}
 		// for any sprite textures
 		if (pInst->pObject->type == TYPE_CHARACTER) {
 			AEGfxTextureSet(pInst->pObject->pTexture,

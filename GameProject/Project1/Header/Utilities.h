@@ -1,4 +1,6 @@
 #pragma once
+extern const int CAM_CELL_WIDTH;
+extern const int CAM_CELL_HEIGHT;
 
 namespace utilities {
 
@@ -75,4 +77,6 @@ namespace utilities {
 	*************************************************************************/
 	int WithinCircle(float radius, float click_x, float click_y, float center_x, float center_y);
 
+
+	bool checkWithinCam(AEVec2 Pos, f32 camX, f32 camY);
 }

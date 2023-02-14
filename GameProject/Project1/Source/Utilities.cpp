@@ -56,4 +56,17 @@ namespace utilities {
 		}
 		return 0;
 	}
+	bool checkWithinCam(AEVec2 Pos, f32 camX, f32 camY) {
+		if (Pos.x-1 > camX + CAM_CELL_WIDTH / 2 ||
+			Pos.x+1 < camX - CAM_CELL_WIDTH / 2 ||
+			Pos.y-1 > camY + CAM_CELL_HEIGHT / 2 ||
+			Pos.y+1 < camY - CAM_CELL_HEIGHT / 2) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 }
+
