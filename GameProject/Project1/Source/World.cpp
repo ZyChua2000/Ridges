@@ -24,7 +24,7 @@ const unsigned int	GAME_OBJ_NUM_MAX = 32;		// The total number of different obje
 const unsigned int	TEXTURE_NUM_MAX = 32;		// The total number of Textures
 const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
 const unsigned int	FONT_NUM_MAX = 10;					// The total number of different game object instances
-const unsigned int	STATIC_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
+const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;		// The total number of different game object instances
 
 const float         BOUNDING_RECT_SIZE = 1.0f;     // this is the normalized bounding rectangle (width and height) sizes - AABB collision data
 const float			PLAYER_SPEED = 5.f;
@@ -37,8 +37,11 @@ const float			TEXTURE_CELLSIZE = 16;
 const int			SPRITE_SCALE = 80;
 bool				SLASH_ACTIVATE = false;
 
-const int			MAP_CELL_WIDTH = 20;
-const int			MAP_CELL_HEIGHT = 12;
+const int			MAP_CELL_WIDTH = 200;
+const int			MAP_CELL_HEIGHT = 100;
+
+const int			CAM_CELL_WIDTH = 20;
+const int			CAM_CELL_HEIGHT = 12;
 
 unsigned int		state = 0;
 unsigned int		mapeditor = 0;
@@ -46,20 +49,11 @@ unsigned int		mapeditor = 0;
 float				mouseX;
 float				mouseY;
 
-// -----------------------------------------------------------------------------
-enum TYPE
-{
-	// list of game object types
-	TYPE_CHARACTER = 0,
-	TYPE_NPCS,
-	TYPE_ITEMS,
-	TYPE_MAP,
-	TYPE_EFFECTS,
-	TYPE_SLASH,
-	TYPE_REF,
+f32					camX;
+f32					camY;
 
-	TYPE_NUM
-};
+// -----------------------------------------------------------------------------ma
+
 
 // -----------------------------------------------------------------------------
 // object flag definition
@@ -71,50 +65,6 @@ const unsigned long FLAG_ACTIVE = 0x00000001;
 	Struct/Class Definitions
 */
 /******************************************************************************/
-
-
-//Game object structure
-struct GameObj
-{
-	unsigned long	type;		// object type
-	AEGfxVertexList* pMesh;		// This will hold the triangles which will form the shape of the object
-	AEGfxTexture* pTexture;
-	bool refMesh;
-	bool refTexture;
-};
-
-struct AABB
-{
-	AEVec2 min;
-	AEVec2 max;
-};
-
-struct staticObjInst
-{
-	GameObj* pObject;	// pointer to the 'original' shape
-	unsigned long		flag;		// bit flag or-ed together
-	float				scale;		// scaling value of the object instance
-	AEVec2				posCurr;	// object current position
-	AEMtx33				transform;	// object transformation matrix: Each frame, 
-	AEVec2				TextureMap;
-	float				dirCurr;
-	float				timetracker;
-	float				Alpha;
-};
-
-struct GameObjInst
-{
-	GameObj* pObject;	// pointer to the 'original' shape
-	unsigned long		flag;		// bit flag or-ed together
-	float				scale;		// scaling value of the object instance
-	AEVec2				posCurr;	// object current position
-	AEVec2				velCurr;	// object current velocity
-	float				dirCurr;	// object current direction
-	AABB				boundingBox;// object bouding box that encapsulates the object
-	AEMtx33				transform;	// object transformation matrix: Each frame, 
-	AEVec2				TextureMap;
-	// calculate the object instance's transformation matrix and save it here
-};
 
 // ---------------------------------------------------------------------------
 
@@ -130,6 +80,9 @@ static unsigned long		sGameObjInstNum;							// The number of used game object i
 static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
 static unsigned long		sStaticObjInstNum;								// The number of used game object instances
 
+static staticObjInst*		MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
+
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
@@ -138,19 +91,6 @@ static GameObjInst* Player;												// Pointer to the "Player" game object in
 static staticObjInst* mapEditorObj;
 
 // ---------------------------------------------------------------------------
-
-// functions to create/destroy a game object instance
-GameObjInst* gameObjInstCreate(unsigned long type, float scale,
-	AEVec2* pPos, AEVec2* pVel, float dir);
-
-void			gameObjInstDestroy(GameObjInst* pInst);
-
-// functions to create/destroy a game object instance
-staticObjInst* staticObjInstCreate(unsigned long type, float scale,
-	AEVec2* pPos, float dir);
-
-void			staticObjInstDestroy(staticObjInst* pInst);
-
 
 /******************************************************************************/
 
@@ -186,7 +126,6 @@ void GS_World_Load(void) {
 
 	GameObj* Character;
 	Character = sGameObjList + sGameObjNum++;
-
 
 	AEGfxMeshStart();
 
@@ -259,12 +198,9 @@ void GS_World_Load(void) {
 	RefLine->type = TYPE_REF;
 	RefLine->refMesh = true;
 
-	//s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
-	//s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
-		s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
-	FontList[FontListNum++] = counterfont;
 }
 
 /******************************************************************************/
@@ -275,29 +211,34 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
-	Player = gameObjInstCreate(TYPE_CHARACTER, 1, 0, 0, 0);
+	AEVec2 PlayerPos = { 12,-31 };
+	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
 	//Initialise map texture numbers.
 
-	std::ifstream mapInput{ "Assets/map1.txt" };
+	std::ifstream mapInput{ "Assets/textureWorld.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i - MAP_CELL_WIDTH/2 + 0.5 , -((float)j - MAP_CELL_HEIGHT/2 + 0.5)   };
+			AEVec2 Pos = { (float)i  + 0.5f , -((float)j  + 0.5f)   };
 			staticObjInstCreate(TYPE_MAP, 1, &Pos, 0);
 			staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
+			MapObjInstList[i][j] = pInst;
 			// input texture
-			mapInput >> pInst->TextureMap.x;
-			mapInput >> pInst->TextureMap.y;
-
+			pInst->TextureMap = { 0,0 };
+			mapInput >> MapObjInstList[i][j]->TextureMap.x;
+			mapInput >> MapObjInstList[i][j]->TextureMap.y;
 		}
 	}
 	mapInput.close();
 
+	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+
+	
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i - MAP_CELL_WIDTH / 2 + 0.5 , -((float)j - MAP_CELL_HEIGHT / 2 + 0.5) };
+			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
 			staticObjInstCreate(TYPE_REF, 1, &Pos, 0);
 
 		}
@@ -316,12 +257,13 @@ void GS_World_Init(void) {
 	the game loop runs for the World state.
 */
 /******************************************************************************/
+
 void GS_World_Update(void) {
 
 	// =====================================
 	// User Input
 	// =====================================
-
+	camX = Player->posCurr.x, camY = Player->posCurr.y;
 	//Debugging mode
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		state ^= 1;
@@ -353,20 +295,16 @@ void GS_World_Update(void) {
 		Player->scale = 1;
 	}
 
-	int slashDir = 3;
+	int slashDir{ 0 };
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
-	mouseX = mouseIntX;
-	mouseY = mouseIntY;
-	mouseY = -mouseY + AEGetWindowHeight() / 2;
-	mouseX -= AEGetWindowWidth() / 2;
-	mouseX /= SPRITE_SCALE;
-	mouseY /= SPRITE_SCALE;
+	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
+	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2)/SPRITE_SCALE;
 
-	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX, mouseY );
+	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 
-	if (mouseY / 2 > Player->posCurr.y) {
+	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 	if (angleMousetoPlayer <= -(PI * 3 / 4) || angleMousetoPlayer > (PI * 3 / 4)) {
@@ -387,10 +325,9 @@ void GS_World_Update(void) {
 	}
 
 	if (mapeditor == 1) {
-		mapEditorObj->scale = 1;
-
-
-		if (AEInputCheckTriggered(AEVK_K) && mapEditorObj->TextureMap.y < 12) {
+		mapEditorObj->scale = 0.7f;
+		mapEditorObj->posCurr = {mouseX + camX + 0.3f, mouseY + camY + 0.3f};
+		if (AEInputCheckTriggered(AEVK_K) && mapEditorObj->TextureMap.y < TEXTURE_MAXHEIGHT / TEXTURE_CELLSIZE) {
 			mapEditorObj->TextureMap.y += 1;
 		}
 		if (AEInputCheckTriggered(AEVK_I) && mapEditorObj->TextureMap.y > 0) {
@@ -399,14 +336,17 @@ void GS_World_Update(void) {
 		if (AEInputCheckTriggered(AEVK_J) && mapEditorObj->TextureMap.x > 0) {
 			mapEditorObj->TextureMap.x -= 1;
 		}
-		if (AEInputCheckTriggered(AEVK_L) && mapEditorObj->TextureMap.x < 20) {
+		if (AEInputCheckTriggered(AEVK_L) && mapEditorObj->TextureMap.x < TEXTURE_MAXWIDTH/TEXTURE_CELLSIZE) {
 			mapEditorObj->TextureMap.x += 1;
 		}
-		for (int j = 0; j < 12; j++) {
-			for (int i = 0; i < 20; i++) {
-				if (mouseX + MAP_CELL_WIDTH/2 >= i && mouseX + MAP_CELL_WIDTH/2 <= (i + 1) && -mouseY + MAP_CELL_HEIGHT / 2 >= j  && -mouseY + MAP_CELL_HEIGHT / 2 <= (j + 1) && AEInputCheckTriggered(AEVK_LBUTTON)) {
-					staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
-					pInst->TextureMap = mapEditorObj->TextureMap;
+		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
+			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
+				if (mouseX + camX>= i		&&
+					mouseX + camX<= i + 1&& 
+					-mouseY - camY >= j  && 
+					-mouseY - camY <= j + 1
+					&& AEInputCheckTriggered(AEVK_LBUTTON)) {
+					MapObjInstList[i][j]->TextureMap = mapEditorObj->TextureMap;
 				}
 			}
 		}
@@ -417,21 +357,12 @@ void GS_World_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		//std::ofstream mapOutput{ "Assets/maptest.txt" };
-		std::ofstream mapOutput{ "../Assets/maptest.txt" };
-		for (int j = 0; j < 12; j++) {
-			for (int i = 0; i < 20; i++) {
-				staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
-				// input texture
-				mapOutput << pInst->TextureMap.x << " ";
-				mapOutput << pInst->TextureMap.y << " ";
+		utilities::exportMapTexture (MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureWorld.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryWorld.txt");
+	}
 
-				if (i == 19) {
-					mapOutput << "\n";
-				}
-			}
-		}
-		mapOutput.close();
+	if (AEInputCheckTriggered(AEVK_7)) {
+		utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 	}
 
 	// ======================================================
@@ -553,6 +484,8 @@ void GS_World_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
+	camX = Player->posCurr.x, camY = Player->posCurr.y;
+
 	if (SLASH_ACTIVATE == true) {
 		AEVec2 Pos = Player->posCurr;
 		Pos.x += Player->velCurr.x * 0.25f;
@@ -560,22 +493,22 @@ void GS_World_Update(void) {
 		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
 		switch (slashDir) {
 		case 1: //right
-			slashObj->posCurr.x += 0.8;
+			slashObj->posCurr.x += 0.8f;
 			slashObj->posCurr.y += 0;
 			slashObj->dirCurr = 0;
 			break;
 		case 2: //up
-			slashObj->posCurr.y += 0.8;
+			slashObj->posCurr.y += 0.8f;
 			slashObj->posCurr.x += 0;
 			slashObj->dirCurr = PI / 2;
 			break;
 		case 3: //left
-			slashObj->posCurr.x += -0.8;
+			slashObj->posCurr.x += -0.8f;
 			slashObj->posCurr.y += 0;
 			slashObj->dirCurr = PI;
 			break;
 		case 4: //down
-			slashObj->posCurr.y += -0.8;
+			slashObj->posCurr.y += -0.8f;
 			slashObj->posCurr.x += 0;
 			slashObj->dirCurr = -PI / 2;
 			break;
@@ -670,8 +603,10 @@ void GS_World_Update(void) {
 		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 		AEMtx33Concat(&pInst->transform, &rot, &scale);
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
-
 	}
+	
+	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+
 }
 
 /******************************************************************************/
@@ -689,8 +624,30 @@ void GS_World_Draw(void) {
 	// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-	// Spawn Static entities
+	for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
+			for (unsigned long j = 0; j < MAP_CELL_HEIGHT; j++) {
+				if (utilities::checkWithinCam(MapObjInstList[i][j]->posCurr, camX, camY)) {
+					continue;
+				}
+					AEGfxSetTransparency(1.0f);
+					AEGfxTextureSet(MapObjInstList[i][j]->pObject->pTexture,
+						TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j]->TextureMap.x,
+						TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j]->TextureMap.y);
+					AEGfxSetTransform(MapObjInstList[i][j]->transform.m);
+					AEGfxMeshDraw(MapObjInstList[i][j]->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
+	}
 
+	// map editor object
+	AEGfxSetTransparency(0.4f);
+	AEGfxTextureSet(mapEditorObj->pObject->pTexture,
+		TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * mapEditorObj->TextureMap.x,
+		TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * mapEditorObj->TextureMap.y);
+	AEGfxSetTransform(mapEditorObj->transform.m);
+	AEGfxMeshDraw(mapEditorObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+
+
+	// Spawn Static entities
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -698,7 +655,10 @@ void GS_World_Draw(void) {
 		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
-		if (pInst->pObject->type == TYPE_REF) {
+		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP) {
+			continue;
+		}
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 			continue;
 		}
 		// for any sprite textures
@@ -708,37 +668,11 @@ void GS_World_Draw(void) {
 		else {
 			AEGfxSetTransparency(1.0f);
 		}
-		if (pInst->pObject->type == TYPE_MAP) {
-
-			AEGfxTextureSet(pInst->pObject->pTexture,
-				TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * pInst->TextureMap.x,
-				TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * pInst->TextureMap.y);
-		}
-		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-		}
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-		// skip non-active object and reference boxes
-		if (pInst->flag != FLAG_ACTIVE)
-			continue;
-		if (pInst->pObject->type == TYPE_REF && mapeditor == 1) {
-			AEGfxSetTransparency(1.0f );
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
-			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-		}
-		// for any sprite textures
 	}
 
 	AEGfxSetTransparency(1.0f);
@@ -751,6 +685,9 @@ void GS_World_Draw(void) {
 		// skip non-active object
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			continue;
+		}
 		// for any sprite textures
 		if (pInst->pObject->type == TYPE_CHARACTER) {
 			AEGfxTextureSet(pInst->pObject->pTexture,
@@ -774,43 +711,52 @@ void GS_World_Draw(void) {
 		char w[20] = "W";
 		char s[20] = "S";
 		char d[20] = "D";
-		char playerpos[100] = { Player->posCurr.x,Player->posCurr.y };
-		AEGfxPrint(FontList[0], debug, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
-		AEGfxPrint(FontList[0], input, -0.99f, 0.65f, 1.5f, 1.0f, 0.2f, 0.2f);
+		char playerpos[100] = {(char) Player->posCurr.x,(char) Player->posCurr.y };
 		char mouse_xy_buffer[50] = " "; // buffer
-		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.4f", mouseX);
-		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 0.2f, 0.2f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.4f", mouseY);
-		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 0.2f, 0.2f);
-		AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 1.0f, 0.2f, 0.2f);
-		AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 1.0f, 0.2f, 0.2f);
-		AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 1.0f, 0.2f, 0.2f);
-		AEGfxPrint(FontList[0], d, -0.99f, 0.45f, 1.0f, 1.0f, 0.2f, 0.2f);
+		char camxy_buffer[50]= " ";
+		AEGfxPrint(FontList[0], debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(FontList[0], input, -0.99f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
+		
+		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.4f", mouseX+camX);
+		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
+		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.4f", mouseY+camY);
+		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(FontList[0], d, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(playerpos, "Player Position X: %.4f", (Player->posCurr.x));
-		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 0.2f, 0.2f);
+		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(playerpos, "Player Position Y: %.4f", (Player->posCurr.y));
-		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 0.2f, 0.2f);
+		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+		sprintf_s(camxy_buffer, "Camera Position X: %.4f", camX);
+		AEGfxPrint(FontList[0], camxy_buffer, -0.99f, 0.30f, 1.0f, 1.0f, 1.0f, 1.0f);
+		sprintf_s(camxy_buffer, "Camera Position Y: %.4f", camY);
+		AEGfxPrint(FontList[0], camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+
 
 
 		if (AEInputCheckCurr(AEVK_W))
 		{
 			sprintf_s(w, "W Pressed");
-			AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
+			AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 		if (AEInputCheckCurr(AEVK_A))
 		{
 			sprintf_s(a, "A Pressed");
-			AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+			AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 		if (AEInputCheckCurr(AEVK_S))
 		{
 			sprintf_s(s, "S Pressed");
-			AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
+			AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 		if (AEInputCheckCurr(AEVK_D))
 		{
 			sprintf_s(s, "D Pressed");
-			AEGfxPrint(FontList[0], s, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
+			AEGfxPrint(FontList[0], s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
 }
@@ -854,6 +800,10 @@ void GS_World_Unload(void) {
 		if ((sGameObjList + i)->refTexture == false)
 			AEGfxTextureUnload((sGameObjList + i)->pTexture);
 	}
+
+	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
+		//AEGfxDestroyFont(FontList[0]);
+	
 }
 
 // ---------------------------------------------------------------------------
