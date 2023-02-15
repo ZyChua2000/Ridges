@@ -1,5 +1,7 @@
-#include "AEEngine.h"
-#include "Utilities.h"
+#include "AEEngine.h" //For AE types
+#include <fstream> //For printing
+#include "Utilities.h" // For externs
+
 
 namespace utilities {
 
@@ -68,5 +70,52 @@ namespace utilities {
 		}
 	}
 
+	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename) {
+		std::ofstream mapOutput{ filename };
+		filename = "Assets/" + filename;
+		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
+			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
+				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i) -> TextureMap.x << " ";
+				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i) -> TextureMap.y << " ";
+
+				if (i == MAP_CELL_WIDTH - 1) {
+					mapOutput << "\n";
+				}
+			}
+		}
+		mapOutput.close();
+	}
+
+	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename) {
+		filename = "Assets/" + filename;
+		std::ofstream mapOutput{ filename };
+		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
+			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
+				int x = (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.x;
+				int y = (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.y;
+
+				if ((x < 6 && y == 4) || (x < 5 && y == 3) || (y < 3 && x == 0))
+				mapOutput << "0" << " ";
+				else
+				mapOutput << "1" << " ";
+
+				if (i == MAP_CELL_WIDTH - 1) {
+					mapOutput << "\n";
+				}
+			}
+		}
+		mapOutput.close();
+	}
+
+	void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
+		filename = "Assets/" + filename;
+		std::ifstream mapInput{ filename };
+		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
+			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
+				mapInput >> *(MapObjInstList + j * MAP_CELL_WIDTH + i);
+			}
+		}
+		mapInput.close();
+	}
 }
 

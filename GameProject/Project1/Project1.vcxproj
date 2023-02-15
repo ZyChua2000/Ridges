@@ -164,14 +164,13 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\BossLevel.h" />
+    <ClInclude Include="Header\GameObjs.h" />
     <ClInclude Include="Header\GameStateList.h" />
     <ClInclude Include="Header\GSM.h" />
     <ClInclude Include="Header\Main.h" />
     <ClInclude Include="Header\Mainmenu.h" />
-    <ClInclude Include="Header\Object.h" />
     <ClInclude Include="Header\Utilities.h" />
     <ClInclude Include="Header\World.h" />
-    <ClInclude Include="Header\World2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

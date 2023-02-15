@@ -1,6 +1,21 @@
 #pragma once
+#include "GameObjs.h" // for game objects
+#include <string>
 extern const int CAM_CELL_WIDTH;
 extern const int CAM_CELL_HEIGHT;
+
+// functions to create/destroy a game object instance
+GameObjInst* gameObjInstCreate(unsigned long type, float scale,
+	AEVec2* pPos, AEVec2* pVel, float dir);
+
+void			gameObjInstDestroy(GameObjInst* pInst);
+
+// functions to create/destroy a game object instance
+staticObjInst* staticObjInstCreate(unsigned long type, float scale,
+	AEVec2* pPos, float dir);
+
+void			staticObjInstDestroy(staticObjInst* pInst);
+
 
 namespace utilities {
 
@@ -79,4 +94,10 @@ namespace utilities {
 
 
 	bool checkWithinCam(AEVec2 Pos, f32 camX, f32 camY);
+
+	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename = "mapText.txt");
+
+	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename = "mapBin.txt");
+
+	void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);
 }

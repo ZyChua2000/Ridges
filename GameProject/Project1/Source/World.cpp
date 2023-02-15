@@ -53,19 +53,7 @@ f32					camX;
 f32					camY;
 
 // -----------------------------------------------------------------------------ma
-enum TYPE
-{
-	// list of game object types
-	TYPE_CHARACTER = 0,
-	TYPE_NPCS,
-	TYPE_ITEMS,
-	TYPE_MAP,
-	TYPE_EFFECTS,
-	TYPE_SLASH,
-	TYPE_REF,
 
-	TYPE_NUM
-};
 
 // -----------------------------------------------------------------------------
 // object flag definition
@@ -77,50 +65,6 @@ const unsigned long FLAG_ACTIVE = 0x00000001;
 	Struct/Class Definitions
 */
 /******************************************************************************/
-
-
-//Game object structure
-struct GameObj
-{
-	unsigned long	type;		// object type
-	AEGfxVertexList* pMesh;		// This will hold the triangles which will form the shape of the object
-	AEGfxTexture* pTexture;
-	bool refMesh;
-	bool refTexture;
-};
-
-struct AABB
-{
-	AEVec2 min;
-	AEVec2 max;
-};
-
-struct staticObjInst
-{
-	GameObj* pObject;	// pointer to the 'original' shape
-	unsigned long		flag;		// bit flag or-ed together
-	float				scale;		// scaling value of the object instance
-	AEVec2				posCurr;	// object current position
-	AEMtx33				transform;	// object transformation matrix: Each frame, 
-	AEVec2				TextureMap;
-	float				dirCurr;
-	float				timetracker;
-	float				Alpha;
-};
-
-struct GameObjInst
-{
-	GameObj* pObject;	// pointer to the 'original' shape
-	unsigned long		flag;		// bit flag or-ed together
-	float				scale;		// scaling value of the object instance
-	AEVec2				posCurr;	// object current position
-	AEVec2				velCurr;	// object current velocity
-	float				dirCurr;	// object current direction
-	AABB				boundingBox;// object bouding box that encapsulates the object
-	AEMtx33				transform;	// object transformation matrix: Each frame, 
-	AEVec2				TextureMap;
-	// calculate the object instance's transformation matrix and save it here
-};
 
 // ---------------------------------------------------------------------------
 
@@ -137,6 +81,7 @@ static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];	// Each eleme
 static unsigned long		sStaticObjInstNum;								// The number of used game object instances
 
 static staticObjInst*		MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
@@ -146,19 +91,6 @@ static GameObjInst* Player;												// Pointer to the "Player" game object in
 static staticObjInst* mapEditorObj;
 
 // ---------------------------------------------------------------------------
-
-// functions to create/destroy a game object instance
-GameObjInst* gameObjInstCreate(unsigned long type, float scale,
-	AEVec2* pPos, AEVec2* pVel, float dir);
-
-void			gameObjInstDestroy(GameObjInst* pInst);
-
-// functions to create/destroy a game object instance
-staticObjInst* staticObjInstCreate(unsigned long type, float scale,
-	AEVec2* pPos, float dir);
-
-void			staticObjInstDestroy(staticObjInst* pInst);
-
 
 /******************************************************************************/
 
@@ -285,7 +217,7 @@ void GS_World_Init(void) {
 
 	//Initialise map texture numbers.
 
-	std::ifstream mapInput{ "Assets/map1.txt" };
+	std::ifstream mapInput{ "Assets/textureWorld.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
@@ -300,15 +232,17 @@ void GS_World_Init(void) {
 		}
 	}
 	mapInput.close();
-	/*
+
+	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+
+	
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i - MAP_CELL_WIDTH / 2 + 0.5 , -((float)j - MAP_CELL_HEIGHT / 2 + 0.5) };
+			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
 			staticObjInstCreate(TYPE_REF, 1, &Pos, 0);
 
 		}
 	}
-	*/
 
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
@@ -423,18 +357,12 @@ void GS_World_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		std::ofstream mapOutput{ "Assets/maptest.txt" };
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				mapOutput << MapObjInstList[i][j]->TextureMap.x << " ";
-				mapOutput << MapObjInstList[i][j]->TextureMap.y << " ";
+		utilities::exportMapTexture (MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureWorld.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryWorld.txt");
+	}
 
-				if (i == MAP_CELL_WIDTH-1) {
-					mapOutput << "\n";
-				}
-			}
-		}
-		mapOutput.close();
+	if (AEInputCheckTriggered(AEVK_7)) {
+		utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 	}
 
 	// ======================================================
@@ -727,7 +655,7 @@ void GS_World_Draw(void) {
 		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
-		if (pInst->pObject->type == TYPE_REF || pInst->pObject->type == TYPE_MAP) {
+		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP) {
 			continue;
 		}
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
