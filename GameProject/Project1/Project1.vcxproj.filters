@@ -30,9 +30,6 @@
     <ClCompile Include="Source\World.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\World2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\GSM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

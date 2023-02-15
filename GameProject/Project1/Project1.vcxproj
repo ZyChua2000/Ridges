@@ -161,7 +161,6 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClCompile Include="Source\Mainmenu.cpp" />
     <ClCompile Include="Source\Utilities.cpp" />
     <ClCompile Include="Source\World.cpp" />
-    <ClCompile Include="Source\World2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\BossLevel.h" />

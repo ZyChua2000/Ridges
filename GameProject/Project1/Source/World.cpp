@@ -24,7 +24,7 @@ const unsigned int	GAME_OBJ_NUM_MAX = 32;		// The total number of different obje
 const unsigned int	TEXTURE_NUM_MAX = 32;		// The total number of Textures
 const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
 const unsigned int	FONT_NUM_MAX = 10;					// The total number of different game object instances
-const unsigned int	STATIC_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
+const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;		// The total number of different game object instances
 
 const float         BOUNDING_RECT_SIZE = 1.0f;     // this is the normalized bounding rectangle (width and height) sizes - AABB collision data
 const float			PLAYER_SPEED = 5.f;
@@ -37,8 +37,8 @@ const float			TEXTURE_CELLSIZE = 16;
 const int			SPRITE_SCALE = 80;
 bool				SLASH_ACTIVATE = false;
 
-const int			MAP_CELL_WIDTH = 30;
-const int			MAP_CELL_HEIGHT = 24;
+const int			MAP_CELL_WIDTH = 200;
+const int			MAP_CELL_HEIGHT = 100;
 
 const int			CAM_CELL_WIDTH = 20;
 const int			CAM_CELL_HEIGHT = 12;
@@ -52,7 +52,7 @@ float				mouseY;
 f32					camX;
 f32					camY;
 
-// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------ma
 enum TYPE
 {
 	// list of game object types
@@ -195,7 +195,6 @@ void GS_World_Load(void) {
 	GameObj* Character;
 	Character = sGameObjList + sGameObjNum++;
 
-
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / 192, 16.0f / 176,
@@ -267,12 +266,9 @@ void GS_World_Load(void) {
 	RefLine->type = TYPE_REF;
 	RefLine->refMesh = true;
 
-	//s8 font = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 12);
+	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
-	//s8 counterfont = AEGfxCreateFont("../Assets/OpenSans-Regular.ttf", 30);
-		s8 counterfont = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 30);
-	FontList[FontListNum++] = counterfont;
 }
 
 /******************************************************************************/
@@ -283,7 +279,8 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
-	Player = gameObjInstCreate(TYPE_CHARACTER, 1, 0, 0, 0);
+	AEVec2 PlayerPos = { 12,-31 };
+	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
 	//Initialise map texture numbers.
@@ -292,7 +289,7 @@ void GS_World_Init(void) {
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i  + 0.5 , -((float)j  + 0.5)   };
+			AEVec2 Pos = { (float)i  + 0.5f , -((float)j  + 0.5f)   };
 			staticObjInstCreate(TYPE_MAP, 1, &Pos, 0);
 			staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
 			MapObjInstList[i][j] = pInst;
@@ -326,6 +323,7 @@ void GS_World_Init(void) {
 	the game loop runs for the World state.
 */
 /******************************************************************************/
+
 void GS_World_Update(void) {
 
 	// =====================================
@@ -567,22 +565,22 @@ void GS_World_Update(void) {
 		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
 		switch (slashDir) {
 		case 1: //right
-			slashObj->posCurr.x += 0.8;
+			slashObj->posCurr.x += 0.8f;
 			slashObj->posCurr.y += 0;
 			slashObj->dirCurr = 0;
 			break;
 		case 2: //up
-			slashObj->posCurr.y += 0.8;
+			slashObj->posCurr.y += 0.8f;
 			slashObj->posCurr.x += 0;
 			slashObj->dirCurr = PI / 2;
 			break;
 		case 3: //left
-			slashObj->posCurr.x += -0.8;
+			slashObj->posCurr.x += -0.8f;
 			slashObj->posCurr.y += 0;
 			slashObj->dirCurr = PI;
 			break;
 		case 4: //down
-			slashObj->posCurr.y += -0.8;
+			slashObj->posCurr.y += -0.8f;
 			slashObj->posCurr.x += 0;
 			slashObj->dirCurr = -PI / 2;
 			break;
@@ -785,7 +783,7 @@ void GS_World_Draw(void) {
 		char w[20] = "W";
 		char s[20] = "S";
 		char d[20] = "D";
-		char playerpos[100] = { Player->posCurr.x,Player->posCurr.y };
+		char playerpos[100] = {(char) Player->posCurr.x,(char) Player->posCurr.y };
 		AEGfxPrint(FontList[0], debug, -0.99f, 0.90f, 1.5f, 1.0f, 0.2f, 0.2f);
 		AEGfxPrint(FontList[0], input, -0.99f, 0.65f, 1.5f, 1.0f, 0.2f, 0.2f);
 		char mouse_xy_buffer[50] = " "; // buffer
@@ -866,6 +864,10 @@ void GS_World_Unload(void) {
 		if ((sGameObjList + i)->refTexture == false)
 			AEGfxTextureUnload((sGameObjList + i)->pTexture);
 	}
+
+	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
+		//AEGfxDestroyFont(FontList[0]);
+	
 }
 
 // ---------------------------------------------------------------------------
