@@ -267,8 +267,8 @@ void GS_World_Load(void) {
 	RefLine->refMesh = true;
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	FontList[FontListNum++] = font;
+	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	//FontList[FontListNum++] = font;
 }
 
 /******************************************************************************/
