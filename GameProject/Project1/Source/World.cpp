@@ -43,14 +43,15 @@ const int			MAP_CELL_HEIGHT = 100;
 const int			CAM_CELL_WIDTH = 20;
 const int			CAM_CELL_HEIGHT = 12;
 
-unsigned int		state = 0;
+extern unsigned int		state = 0;
 unsigned int		mapeditor = 0;
 
-float				mouseX;
-float				mouseY;
+ float				mouseX;
+ float				mouseY;
 
-f32					camX;
-f32					camY;
+ f32					camX;
+  f32					camY;
+ 
 
 // -----------------------------------------------------------------------------ma
 
