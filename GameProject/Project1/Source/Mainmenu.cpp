@@ -27,7 +27,9 @@ enum TYPE_BUTTON
 	TYPE_PLAY = 0,
 	TYPE_EXIT,
 	TYPE_CREDIT,
-	TYPE_INSTR
+	TYPE_INSTR,
+
+	
 };
 
 struct MenuObj
@@ -41,8 +43,9 @@ struct MenuObjInst
 	MenuObj* pObject;
 	unsigned long flag;
 	float scale;
-	float	dirCurr;
 	AEVec2 posCurr;
+	float	dirCurr;
+	
 	AEMtx33				transform;
 	
 	
@@ -53,6 +56,7 @@ struct MenuObjInst
 const unsigned int	MENU_OBJ_NUM_MAX = 32;
 const unsigned int	MENU_OBJ_INST_NUM_MAX = 2048;
 const unsigned long FLAG_ACTIVE = 0x00000001;
+
 
 static MenuObj				sMenuObjList[MENU_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
 static unsigned long		sMenuObjNum;
@@ -93,6 +97,8 @@ void GS_MainMenu_Load(void) {
 	pObj->pMesh = AEGfxMeshEnd();
 
     font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+
+	pPlay = nullptr;
 	
 }
 
@@ -109,7 +115,7 @@ void GS_MainMenu_Init(void) {
 	AEVec2Set(&Playpos, 0, 0);
 	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos,0.0f);
 	pPlay = sMenuObjInstList + sMenuObjInstNum++;
-	AE_ASSERT(pPlay);
+	//AE_ASSERT(pPlay);
 	//bTex = AEGfxTextureLoad("Assets/bluee.jpg");
 }
 
@@ -164,6 +170,8 @@ void GS_MainMenu_Update(void) {
 		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 		AEMtx33Concat(&pInst->transform, &trans, &rot);
 		AEMtx33Concat(&pInst->transform, &pInst->transform, &scale);
+
+		
 	}
 
 	
@@ -177,6 +185,14 @@ void GS_MainMenu_Update(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Draw(void) {
+	
+	
+
+
+	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+	AEGfxTextureSet(NULL, 0, 0);
+
+	AEGfxSetTransparency(1.0f);
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
 		MenuObjInst* pInst = sMenuObjInstList + i;
@@ -191,6 +207,22 @@ void GS_MainMenu_Draw(void) {
 		// Actually drawing the mesh
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		
+	}
+
+	if (state == 1)
+	{
+		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+		char debug[20] = "Debug Screen";
+
+		char mouse_xy_buffer[50] = " "; // buffer
+		AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
+		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mX);
+		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
+		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mY);
+		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+
 	}
 	
 	//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -222,22 +254,7 @@ void GS_MainMenu_Draw(void) {
 	
 	// Choose the transform to use 
 	//AEGfxSetTransform(transform.m);
-	if (state == 1)
-	{
-		
-		
-		char debug[20] = "Debug Screen";
-
-		char mouse_xy_buffer[50] = " "; // buffer
-		AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mX);
-		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mY);
-		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
-
-
-
-	}
+	
 }
 
 /******************************************************************************/
@@ -285,7 +302,7 @@ MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos,flo
 	AEVec2 zero;
 	AEVec2Zero(&zero);
 
-	AE_ASSERT_PARM(type < sMenuObjNum);
+	//AE_ASSERT_PARM(type < sMenuObjNum);
 
 	// loop through the object instance list to find a non-used object instance
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
