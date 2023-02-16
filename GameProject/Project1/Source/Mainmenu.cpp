@@ -216,6 +216,7 @@ void GS_MainMenu_Draw(void) {
 
 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//AEGfxTextureSet(NULL, 0, 0);
 
