@@ -19,7 +19,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 AEGfxTexture* bTex;
 
-int state = 0;
+int debugstate = 0;
 float mX, mY;
 
 enum TYPE_BUTTON
@@ -36,6 +36,9 @@ struct MenuObj
 {
 	unsigned long type;
 	AEGfxVertexList* pMesh;
+	AEGfxTexture* pTexture;
+	bool refMesh;
+	bool refTexture;
 };
 
 struct MenuObjInst
@@ -64,6 +67,7 @@ static MenuObjInst			sMenuObjInstList[MENU_OBJ_INST_NUM_MAX];	// Each element in
 static unsigned long		sMenuObjInstNum;
 
 static MenuObjInst* pPlay;
+static MenuObjInst* pExit;
 
 const float ButtonSize = 30;
 
@@ -80,25 +84,27 @@ void menuObjInstDestroy(MenuObjInst* pInst);
 */
 /******************************************************************************/
 void GS_MainMenu_Load(void) {
-	MenuObj* pObj;
+	MenuObj* Play;
 
-	pObj = sMenuObjList + sMenuObjNum++;
-	pObj->type = TYPE_PLAY;
+	Play = sMenuObjList + sMenuObjNum++;
+	Play->type = TYPE_PLAY;
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(-2.f, 1.5f, 0x00FF00, 0.f, 0.f,
 		-2.f, 0.f, 0x00FF00, 0.0f, 1.0f ,
-		2.f, 1.5f, 0x00FF00, 1.f, 1.0f);
+		2.f, 1.5f, 0x00FF00, 1.f, 0.0f);
 
 	AEGfxTriAdd(2.f, 0.f, 0x00FF00, 1.0f, 1.0f,
 		-2.f, 0.f, 0x00FF00, 0.0f, 1.f,
 		2.f, 1.5f, 0x00FF00, 1.f, 0.0f);
 
-	pObj->pMesh = AEGfxMeshEnd();
+	Play->pMesh = AEGfxMeshEnd();
+	Play->pTexture = AEGfxTextureLoad("Assets/StartButton.png");
+	Play->refMesh = true;
+	Play->refTexture = true;
 
     font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 
-	pPlay = nullptr;
 	
 }
 
@@ -113,8 +119,13 @@ void GS_MainMenu_Init(void) {
 	AEGfxSetBackgroundColor(0, 0, 0);
 	AEVec2 Playpos;
 	AEVec2Set(&Playpos, 0, 0);
-	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos,0.0f);
+	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 120 height 50
 	pPlay = sMenuObjInstList + sMenuObjInstNum++;
+
+	AEVec2 Exitpos;
+	AEVec2Set(&Exitpos, 0, 70);
+	pExit = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Exitpos, 0.0f);
+	pExit = sMenuObjInstList + sMenuObjInstNum++;
 	//AE_ASSERT(pPlay);
 	//bTex = AEGfxTextureLoad("Assets/bluee.jpg");
 }
@@ -135,16 +146,22 @@ void GS_MainMenu_Update(void) {
 	mX = float (mouseX);
 	mY = float (mouseY);
 
-
+	pPlay = nullptr;
+	
 	if (AEInputCheckTriggered(AEVK_F3)) {
-		state ^= 1;
+		debugstate ^= 1;
 
 	}
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 420.f, 200.f, 50.f) == 1)
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 350.f, 120.f, 50.f) == 1)
 		{
 			gGameStateNext = GS_WORLD;
+		}
+
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 420.f, 120.f, 50.f) == 1)
+		{
+			gGameStateNext = GS_QUIT;
 		}
 		//gGameStateNext = GS_WORLD;
 	}
@@ -170,6 +187,7 @@ void GS_MainMenu_Update(void) {
 		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 		AEMtx33Concat(&pInst->transform, &trans, &rot);
 		AEMtx33Concat(&pInst->transform, &pInst->transform, &scale);
+	
 
 		
 	}
@@ -189,8 +207,9 @@ void GS_MainMenu_Draw(void) {
 	
 
 
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxTextureSet(NULL, 0, 0);
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	//AEGfxTextureSet(NULL, 0, 0);
 
 	AEGfxSetTransparency(1.0f);
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
@@ -201,15 +220,23 @@ void GS_MainMenu_Draw(void) {
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-
+		
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
+		AEGfxTextureSet(pInst->pObject->pTexture, 50, 50);
 		AEGfxSetTransform(pInst->transform.m);
+		
 		// Actually drawing the mesh
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		
 	}
 
-	if (state == 1)
+
+	
+
+	//Exit/////////////////////////////////////////
+
+	
+	if (debugstate == 1)
 	{
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
@@ -224,36 +251,6 @@ void GS_MainMenu_Draw(void) {
 
 
 	}
-	
-	//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	//// Set the tint to white, so that the sprite can // display the full range of colors (default is black).
-	//AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-	//// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-	//AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-	//AEGfxSetTransparency(1.0f);
-	//// Set the texture to pTex 
-	//AEGfxTextureSet(bTex, NULL, NULL);
-	//AEMtx33Scale(&scale, 100.f, (100.f));
-	//
-
-	//AEMtx33Rot(&rotate, 0);
-	//
-	//// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-	//
-	//AEMtx33Trans(&translate, 0.f, 0.f);
-	//// Concat the matrices (TRS) 
-	//AEMtx33Concat(&transform, &rotate, &scale);
-	//AEMtx33Concat(&transform, &translate, &transform);
-	//// Choose the transform to use 
-	//AEGfxSetTransform(transform.m);
-	//// Actually drawing the mesh
-	//AEGfxMeshDraw(BoxMesh, AE_GFX_MDM_TRIANGLES);
-
-	//Exit/////////////////////////////////////////
-
-	
-	// Choose the transform to use 
-	//AEGfxSetTransform(transform.m);
 	
 }
 
@@ -281,11 +278,11 @@ void GS_MainMenu_Free(void) {
 /******************************************************************************/
 void GS_MainMenu_Unload(void) {
 	
-	for (unsigned long i = 0; i < MENU_OBJ_NUM_MAX; i++)
-	{
-		if ((sMenuObjList + i)->pMesh == nullptr)
-			continue;
-		AEGfxMeshFree((sMenuObjList + i)->pMesh);
+	for (unsigned int i = 0; i < sMenuObjNum; i++) {
+		if ((sMenuObjList + i)->refMesh == false)
+			AEGfxMeshFree((sMenuObjList + i)->pMesh);
+		if ((sMenuObjList + i)->refTexture == false)
+			AEGfxTextureUnload((sMenuObjList + i)->pTexture);
 	}
 	AEGfxDestroyFont(font);
 	//AEGfxTextureUnload(bTex);
