@@ -132,7 +132,7 @@ void GS_MainMenu_Init(void) {
 	pExit = sMenuObjInstList + sMenuObjInstNum++;
 	AEVec2 Playpos;
 	AEVec2Set(&Playpos, 0, 70);
-	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 120 height 50
+	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 105 height 35
 	pPlay = sMenuObjInstList + sMenuObjInstNum++;
 	//AE_ASSERT(pPlay);
 	//bTex = AEGfxTextureLoad("Assets/bluee.jpg");
@@ -162,12 +162,12 @@ void GS_MainMenu_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 350.f, 120.f, 50.f) == 1)
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 300.f, 105.f, 35.f) == 1)
 		{
 			gGameStateNext = GS_WORLD;
 		}
 
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 420.f, 120.f, 50.f) == 1)
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 370.f, 105.f, 35.f) == 1)
 		{
 			gGameStateNext = GS_QUIT;
 		}
