@@ -69,7 +69,7 @@ static unsigned long		sMenuObjInstNum;
 static MenuObjInst* pPlay;
 static MenuObjInst* pExit;
 
-const float ButtonSize = 30;
+const float ButtonSize = 5;
 
 static s8 font;
 
@@ -90,19 +90,26 @@ void GS_MainMenu_Load(void) {
 	Play->type = TYPE_PLAY;
 	AEGfxMeshStart();
 
-	AEGfxTriAdd(-2.f, 1.5f, 0x00FF00, 0.f, 0.f,
-		-2.f, 0.f, 0x00FF00, 0.0f, 1.0f ,
-		2.f, 1.5f, 0x00FF00, 1.f, 0.0f);
+	AEGfxTriAdd(-15.f, 30.f, 0x00FF00, 0.f, 0.f,
+		-15.f, 0.f, 0x00FF00, 0.0f, 1.0f ,
+		15.f, 30.f, 0x00FF00, 1.f, 0.0f);
 
-	AEGfxTriAdd(2.f, 0.f, 0x00FF00, 1.0f, 1.0f,
-		-2.f, 0.f, 0x00FF00, 0.0f, 1.f,
-		2.f, 1.5f, 0x00FF00, 1.f, 0.0f);
+	AEGfxTriAdd(15.f, 0.f, 0x00FF00, 1.0f, 1.0f,
+		-15.f, 0.f, 0x00FF00, 0.0f, 1.f,
+		15.f, 30.f, 0x00FF00, 1.f, 0.0f);
 
 	Play->pMesh = AEGfxMeshEnd();
 	Play->pTexture = AEGfxTextureLoad("Assets/StartButton.png");
 	Play->refMesh = true;
 	Play->refTexture = true;
 
+	MenuObj* Exit;
+	Exit = sMenuObjList + sMenuObjNum++;
+	Exit->pMesh = Play->pMesh;
+	Exit->type = TYPE_EXIT;
+	Exit->pTexture = AEGfxTextureLoad("Assets/ExitButton.png");
+	Exit->refMesh = true;
+	Exit->refTexture = true;
     font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 
 	
@@ -117,15 +124,16 @@ void GS_MainMenu_Load(void) {
 /******************************************************************************/
 void GS_MainMenu_Init(void) {
 	AEGfxSetBackgroundColor(0, 0, 0);
-	AEVec2 Playpos;
-	AEVec2Set(&Playpos, 0, 0);
-	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 120 height 50
-	pPlay = sMenuObjInstList + sMenuObjInstNum++;
+	
 
 	AEVec2 Exitpos;
-	AEVec2Set(&Exitpos, 0, 70);
-	pExit = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Exitpos, 0.0f);
+	AEVec2Set(&Exitpos, 0, 0);
+	pExit = menuObjInstCreate(TYPE_EXIT, ButtonSize, &Exitpos, 0.0f);
 	pExit = sMenuObjInstList + sMenuObjInstNum++;
+	AEVec2 Playpos;
+	AEVec2Set(&Playpos, 0, 70);
+	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 120 height 50
+	pPlay = sMenuObjInstList + sMenuObjInstNum++;
 	//AE_ASSERT(pPlay);
 	//bTex = AEGfxTextureLoad("Assets/bluee.jpg");
 }
@@ -222,7 +230,7 @@ void GS_MainMenu_Draw(void) {
 
 		
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
-		AEGfxTextureSet(pInst->pObject->pTexture, 50, 50);
+		AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		AEGfxSetTransform(pInst->transform.m);
 		
 		// Actually drawing the mesh
