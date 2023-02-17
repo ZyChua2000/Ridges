@@ -53,13 +53,10 @@
     <ClInclude Include="Header\World.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header\Object.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Header\World2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Header\GSM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\GameObjs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
