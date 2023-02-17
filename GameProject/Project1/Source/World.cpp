@@ -245,7 +245,14 @@ void GS_World_Init(void) {
 	}
 	mapInput.close();
 
-	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+	std::ifstream binInput{ "Assets/binaryWorld.txt" };
+	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
+		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
+			binInput >> binaryMap[j][i];
+		}
+	}
+	binInput.close();
 
 
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -383,7 +390,14 @@ void GS_World_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
-		utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+		std::ifstream binInput{ "Assets/binaryWorld.txt" };
+		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
+			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
+				binInput >> binaryMap[j][i];
+			}
+		}
+		binInput.close();
 	}
 
 	// ======================================================

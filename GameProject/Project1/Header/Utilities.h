@@ -147,5 +147,5 @@ namespace utilities {
 	\param[in] filename
 		Filename to import texture from.
 	*************************************************************************/
-	void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);
+	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
 }

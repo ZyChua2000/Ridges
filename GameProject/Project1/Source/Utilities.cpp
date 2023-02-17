@@ -106,7 +106,7 @@ namespace utilities {
 		mapOutput.close();
 	}
 
-	void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
+	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ifstream mapInput{ filename };
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -115,6 +115,6 @@ namespace utilities {
 			}
 		}
 		mapInput.close();
-	}
+	}*/
 }
 
