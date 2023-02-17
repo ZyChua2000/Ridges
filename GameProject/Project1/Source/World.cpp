@@ -54,7 +54,10 @@ f32					camY;
 
 int				pHealth = 3;
 
-
+const int	COLLISION_LEFT = 0x00000001;	//0001
+const int	COLLISION_RIGHT = 0x00000002;	//0010
+const int	COLLISION_TOP = 0x00000004;	//0100
+const int	COLLISION_BOTTOM = 0x00000008;	//1000
 // -----------------------------------------------------------------------------ma
 
 
@@ -94,11 +97,15 @@ static GameObjInst* Player;												// Pointer to the "Player" game object in
 static staticObjInst* mapEditorObj;
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 
+
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
 
 
+int CheckInstanceBinaryMapCollision(float PosX, float PosY,
+	float scaleX, float scaleY);
 
 
 /******************************************************************************/
@@ -275,6 +282,10 @@ void GS_World_Init(void) {
 	Health[0]->TextureMap = { 0,11 };
 	Health[1]->TextureMap = { 0,11 };
 	Health[2]->TextureMap = { 0,11 };
+
+	
+
+	
 }
 
 
@@ -521,7 +532,11 @@ void GS_World_Update(void) {
 			}
 		}
 	}
+	
+		
 
+		
+	
 
 	// ======================================================
 	//	-- Positions of the instances are updated here with the already computed velocity (above)
@@ -613,6 +628,13 @@ void GS_World_Update(void) {
 		}
 
 	}
+	/*if (CheckInstanceBinaryMapCollision(Player->posCurr.x, Player->posCurr.y,
+		SPRITE_SCALE, SPRITE_SCALE) == 1)
+	{
+		Player->posCurr.x = Player->posCurr.x;
+		Player->posCurr.y = Player->posCurr.y;
+		std::cout << "collided" << std::endl;
+	}*/
 
 
 	// =====================================
@@ -805,6 +827,10 @@ void GS_World_Draw(void) {
 		sprintf_s(camxy_buffer, "Camera Position Y: %.4f", camY);
 		AEGfxPrint(FontList[0], camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
 
+		char Collision[2400] = " ";
+		sprintf_s(Collision, "Collided: %d", binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))]);
+		AEGfxPrint(FontList[0], Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
+		
 
 
 
@@ -1007,3 +1033,56 @@ void staticObjInstDestroy(staticObjInst* pInst)
 	sStaticObjInstNum--; //Decrement the number of game object instance
 	pInst->flag = 0;
 }
+
+//int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
+//{
+//	int Flag = 0;
+//	int x1, y1, x2, y2;
+//
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 2;	//To reach the right side
+//	y1 = PosY + scaleY / 4;	//To go up 1 / 4 of the height
+//
+//	//- hotspot 2
+//	x2 = PosX + scaleX / 2;	//To reach the right side
+//	y2 = PosY - scaleY / 4;	//To go down 1 / 4 of the height
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_RIGHT;
+//	}
+//
+//	//-hotspot 1
+//	x1 = PosX - scaleX / 2;
+//	y1 = PosY - scaleY / 4;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 2;
+//	y2 = PosY + scaleY / 4;
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_LEFT;
+//	}
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 4;
+//	y1 = PosY + scaleY / 2;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 4;
+//	y2 = PosY + scaleY / 2;
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_TOP;
+//	}
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 4;
+//	y1 = PosY - scaleY / 2;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 4;
+//	y2 = PosY - scaleY / 2;
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_BOTTOM;
+//	}
+//	return Flag;
+//}
+
