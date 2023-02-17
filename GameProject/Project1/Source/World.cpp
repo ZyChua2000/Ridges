@@ -211,8 +211,8 @@ void GS_World_Load(void) {
 	Health->refMesh = true;
 	Health->refTexture = true;
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	//FontList[FontListNum++] = font;
+	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	FontList[FontListNum++] = font;
 }
 
 /******************************************************************************/
@@ -865,7 +865,7 @@ void GS_World_Unload(void) {
 	}
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-		//AEGfxDestroyFont(FontList[0]);
+		AEGfxDestroyFont(FontList[0]);
 
 }
 
