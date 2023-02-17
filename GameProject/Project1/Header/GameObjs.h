@@ -45,12 +45,18 @@ struct GameObjInst
 
 	void deducthealth(int damage=1)
 	{
-		health -= damage;
+		if (health > 0)
+		{
+			health -= damage;
+		}
 	}
 
 	void recoverhealth(int recover=1)
 	{
-		health += recover;
+		if (health < 3)
+		{
+			health += recover;
+		}
 	}
 };
 enum TYPE

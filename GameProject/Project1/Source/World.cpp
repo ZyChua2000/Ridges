@@ -260,7 +260,7 @@ void GS_World_Init(void) {
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
 
-	//Initialise player health.
+	//Initialise player health. Printing of hearts.
 	Player->health = 3;
 	Health[0] = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
 	Health[1] = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
@@ -398,12 +398,12 @@ void GS_World_Update(void) {
 		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
 		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
 	}
-	// 
 
 	// ====================
 	// check for collision
 	// ====================
 
+	//if pickup potion then add player health
 	if (AEInputCheckTriggered(AEVK_R))
 	{
 		Player->recoverhealth();
@@ -418,6 +418,7 @@ void GS_World_Update(void) {
 		}
 	}
 
+	//if player receive damage from collision or from mob, player decrease health
 	if (AEInputCheckTriggered(AEVK_T))
 	{
 		Player->deducthealth();
@@ -534,6 +535,7 @@ void GS_World_Update(void) {
 	}
 
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
+
 	//player health following viewport
 	Health[0]->posCurr = { (float)camX + 7.5f , (float)camY + 5.1f };
 	Health[1]->posCurr = { (float)camX + 8.5f , (float)camY + 5.1f };
