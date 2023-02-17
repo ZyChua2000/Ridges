@@ -39,7 +39,19 @@ struct GameObjInst
 	AABB				boundingBox;// object bouding box that encapsulates the object
 	AEMtx33				transform;	// object transformation matrix: Each frame, 
 	AEVec2				TextureMap;
+
+	int					health;
 	// calculate the object instance's transformation matrix and save it here
+
+	void deducthealth(int damage=1)
+	{
+		health -= damage;
+	}
+
+	void recoverhealth(int recover=1)
+	{
+		health += recover;
+	}
 };
 enum TYPE
 {
@@ -52,6 +64,7 @@ enum TYPE
 	TYPE_SLASH,
 	TYPE_REF,
 	TYPE_HEALTH,
+
 
 	TYPE_NUM
 };

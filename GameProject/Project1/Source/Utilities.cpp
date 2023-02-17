@@ -53,7 +53,6 @@ namespace utilities {
 
 		if (((click_x - center_x) * (click_x - center_x) + (click_y - center_y) * (click_y - center_y)) < radius * radius)
 		{
-
 			return 1;
 		}
 		return 0;
