@@ -262,9 +262,9 @@ void GS_World_Init(void) {
 
 	//Initialise player health. Printing of hearts.
 	Player->health = 3;
-	Health[0] = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
-	Health[1] = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
-	Health[2] = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
+	Health[0] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	Health[1] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	Health[2] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	Health[0]->TextureMap = { 0,11 };
 	Health[1]->TextureMap = { 0,11 };
 	Health[2]->TextureMap = { 0,11 };
@@ -366,7 +366,7 @@ void GS_World_Update(void) {
 					mouseX + camX <= i + 1 &&
 					-mouseY - camY >= j &&
 					-mouseY - camY <= j + 1
-					&& AEInputCheckTriggered(AEVK_LBUTTON)) {
+					&& AEInputCheckCurr(AEVK_LBUTTON)) {
 					MapObjInstList[i][j]->TextureMap = mapEditorObj->TextureMap;
 				}
 			}
@@ -537,9 +537,9 @@ void GS_World_Update(void) {
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
 
 	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.5f , (float)camY + 5.1f };
-	Health[1]->posCurr = { (float)camX + 8.5f , (float)camY + 5.1f };
-	Health[2]->posCurr = { (float)camX + 9.5f , (float)camY + 5.1f };
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	if (SLASH_ACTIVATE == true) {
 		AEVec2 Pos = Player->posCurr;
@@ -610,9 +610,6 @@ void GS_World_Update(void) {
 		GameObjInst* pInst = sGameObjInstList + i;
 		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
 
-		UNREFERENCED_PARAMETER(trans);
-		UNREFERENCED_PARAMETER(rot);
-		UNREFERENCED_PARAMETER(scale);
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
@@ -641,10 +638,6 @@ void GS_World_Update(void) {
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
 		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
-
-		UNREFERENCED_PARAMETER(trans);
-		UNREFERENCED_PARAMETER(rot);
-		UNREFERENCED_PARAMETER(scale);
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
