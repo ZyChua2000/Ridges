@@ -50,7 +50,9 @@ unsigned int		mapeditor = 0;
  float				mouseY;
 
  f32					camX;
-  f32					camY;
+ f32					camY;
+
+ int				pHealth = 3;
  
 
 // -----------------------------------------------------------------------------ma
@@ -90,6 +92,7 @@ static unsigned long		FontListNum;								// The number of used fonts
 // pointer to the ship object
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;
+static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 
 // ---------------------------------------------------------------------------
 
@@ -199,9 +202,45 @@ void GS_World_Load(void) {
 	RefLine->type = TYPE_REF;
 	RefLine->refMesh = true;
 
+	//Creating and drawing for full heart
+	GameObj* fHealth;
+	fHealth = sGameObjList + sGameObjNum++;
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
+		-0.5f, -0.5f, 0xFFFFFF00, 0.0f, 1.0f,
+		0.5f, 0.5f, 0xFF00FFFF, 1.0f, 0.0f);
+
+	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+
+	fHealth->pMesh = AEGfxMeshEnd();
+	fHealth->pTexture = AEGfxTextureLoad("Assets/full_heart.png");
+	fHealth->type = TYPE_HEALTH;
+	fHealth->refMesh = true;
+
+	////Creating and drawing for empty heart
+	GameObj* eHealth;
+	eHealth = sGameObjList + sGameObjNum++;
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
+		-0.5f, -0.5f, 0xFFFFFF00, 0.0f, 1.0f,
+		0.5f, 0.5f, 0xFF00FFFF, 1.0f, 0.0f);
+
+	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+
+	eHealth->pMesh = AEGfxMeshEnd();
+	eHealth->pTexture = AEGfxTextureLoad("Assets/empty_heart.png");
+	eHealth->type = TYPE_HEALTH;
+	eHealth->refMesh = true;
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	FontList[FontListNum++] = font;
+	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	//FontList[FontListNum++] = font;
 }
 
 /******************************************************************************/
@@ -248,6 +287,12 @@ void GS_World_Init(void) {
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
+
+	//Initialise player health.
+	AEVec2 position = { 0.f , 0.f };
+	Health[0] = staticObjInstCreate(TYPE_HEALTH, 1, &position, 0);
+	Health[1] = staticObjInstCreate(TYPE_HEALTH, 1, &position, 0);
+	Health[2] = staticObjInstCreate(TYPE_HEALTH, 1, &position, 0);
 }
 
 
@@ -274,6 +319,10 @@ void GS_World_Update(void) {
 		mapeditor ^= 1;
 	}
 
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.5f , (float)camY + 5.1f };
+	Health[1]->posCurr = { (float)camX + 8.5f , (float)camY + 5.1f };
+	Health[2]->posCurr = { (float)camX + 9.5f , (float)camY + 5.1f };
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
