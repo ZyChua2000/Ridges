@@ -837,7 +837,7 @@ void GS_World_Draw(void) {
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-	AEGfxSetTintColor(1.0f, 0.0f, 1.0f, 1.0f);
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 	AEGfxTextureSet(DarkRoom, 0, 0);
