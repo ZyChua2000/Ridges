@@ -4,6 +4,11 @@
 extern const int CAM_CELL_WIDTH;
 extern const int CAM_CELL_HEIGHT;
 
+extern const int MAX_MOBS;
+extern const int MAX_CHESTS;
+extern const int MAX_LEVERS;
+
+
 // functions to create/destroy a game object instance
 GameObjInst* gameObjInstCreate(unsigned long type, float scale,
 	AEVec2* pPos, AEVec2* pVel, float dir);
@@ -16,6 +21,26 @@ staticObjInst* staticObjInstCreate(unsigned long type, float scale,
 
 void			staticObjInstDestroy(staticObjInst* pInst);
 
+
+struct saveData {
+	int playerHealth;
+	AEVec2 playerPosition;
+	int playerItems;
+
+	// Array of mobs
+	int mobsLife;
+	AEVec2 mobPosition;
+
+	// Array of chests
+	bool chestOpened;
+
+	// Array of levers
+	bool leverOpened;
+
+	int puzzleCompleted[4];
+
+	float elapsedTime;
+};
 
 namespace utilities {
 
@@ -148,4 +173,8 @@ namespace utilities {
 		Filename to import texture from.
 	*************************************************************************/
 	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
+
+	void saveGame(saveData data);
+
+	void loadData(saveData data);
 }

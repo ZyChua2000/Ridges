@@ -26,6 +26,10 @@ const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of differe
 const unsigned int	FONT_NUM_MAX = 10;					// The total number of different game object instances
 const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;		// The total number of different game object instances
 
+const unsigned int	MAX_MOBS;
+const unsigned int	MAX_CHESTS;
+const unsigned int	MAX_LEVERS = 3;
+
 const float         BOUNDING_RECT_SIZE = 1.0f;     // this is the normalized bounding rectangle (width and height) sizes - AABB collision data
 const float			PLAYER_SPEED = 5.f;
 const float			NPC_SPEED = 2.5f;
@@ -35,24 +39,22 @@ const int			TEXTURE_MAXHEIGHT = 192;
 const float			TEXTURE_CELLSIZE = 16;
 
 const int			SPRITE_SCALE = 80;
-bool				SLASH_ACTIVATE = false;
+static bool			SLASH_ACTIVATE = false;
 
-const int			MAP_CELL_WIDTH = 200;
-const int			MAP_CELL_HEIGHT = 100;
+static const int	MAP_CELL_WIDTH = 200;
+static const int	MAP_CELL_HEIGHT = 100;
 
 const int			CAM_CELL_WIDTH = 20;
 const int			CAM_CELL_HEIGHT = 12;
 
 extern unsigned int		state = 0;
-unsigned int		mapeditor = 0;
+static unsigned int		mapeditor = 0;
 
-float				mouseX;
-float				mouseY;
+static float				mouseX;
+static float				mouseY;
 
-f32					camX;
-f32					camY;
-
-int				pHealth = 3;
+static f32					camX;
+static f32					camY;
 
 const int	COLLISION_LEFT = 0x00000001;	//0001
 const int	COLLISION_RIGHT = 0x00000002;	//0010
@@ -92,10 +94,11 @@ static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
-// pointer to the ship object
+// pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
+static staticObjInst* Levers[3];
 
 
 
@@ -134,6 +137,8 @@ void GS_World_Load(void) {
 
 	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
+
+	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
 	GameObj* Character;
 	Character = sGameObjList + sGameObjNum++;
@@ -177,9 +182,6 @@ void GS_World_Load(void) {
 	Map->refMesh = true;
 	Map->refTexture = true;
 
-
-	GameObj* Effects;
-	Effects = sGameObjList + sGameObjNum++;
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -190,22 +192,16 @@ void GS_World_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	Effects->pMesh = AEGfxMeshEnd();
-	Effects->pTexture = Character->pTexture;
-	Effects->type = TYPE_EFFECTS;
-	Effects->refTexture = true;
-
 	GameObj* Slash;
 	Slash = sGameObjList + sGameObjNum++;
-	Slash->pMesh = Effects->pMesh;
+	Slash->pMesh = AEGfxMeshEnd();
 	//Slash->pTexture = AEGfxTextureLoad("../Assets/slash.png");
 	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
 	Slash->type = TYPE_SLASH;
-	Slash->refMesh = true;
 
 	GameObj* RefLine;
 	RefLine = sGameObjList + sGameObjNum++;
-	RefLine->pMesh = Effects->pMesh;
+	RefLine->pMesh = Slash->pMesh;
 	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
 	RefLine->type = TYPE_REF;
 	RefLine->refMesh = true;
@@ -217,6 +213,15 @@ void GS_World_Load(void) {
 	Health->type = TYPE_HEALTH;
 	Health->refMesh = true;
 	Health->refTexture = true;
+
+	GameObj* Lever;
+	Lever = sGameObjList + sGameObjNum++;
+	Lever->pMesh = Character->pMesh;
+	Lever->pTexture = Character->pTexture;
+	Lever->type = TYPE_LEVERS;
+	Lever->refMesh = true;
+	Lever->refTexture = true;
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
@@ -230,12 +235,12 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
+	//Initialise Player
 	AEVec2 PlayerPos = { 12,-31 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
-	//Initialise map texture numbers.
-
+	//Initialise map textures
 	std::ifstream mapInput{ "Assets/textureWorld.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -252,6 +257,7 @@ void GS_World_Init(void) {
 	}
 	mapInput.close();
 
+	// Initialise map binary
 	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 	std::ifstream binInput{ "Assets/binaryWorld.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
@@ -261,7 +267,7 @@ void GS_World_Init(void) {
 	}
 	binInput.close();
 
-
+	// Initialise reference objects for mesh editor
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
@@ -273,17 +279,20 @@ void GS_World_Init(void) {
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
-
 	//Initialise player health. Printing of hearts.
 	Player->health = 3;
-	Health[0] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	Health[1] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	Health[2] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	Health[0]->TextureMap = { 0,11 };
-	Health[1]->TextureMap = { 0,11 };
-	Health[2]->TextureMap = { 0,11 };
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		Health[i]->TextureMap = { 0,11 };
+	}
 
-	
+	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-37} ,{ 66.5f - (1.0f / 16), -35 } ,{ 43.5f - (1.0f/16), -30}};
+
+	//Initialise Levers in level
+	for (int i = 0; i < 3; i++) {
+		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
+		Levers[i]->TextureMap = {2,11 };
+	}
 
 	
 }
@@ -330,8 +339,43 @@ void GS_World_Update(void) {
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
-		Player->velCurr.x = 1;// this is direction , positive y direction
+		Player->velCurr.x = 1;// this is direction , positive x direction
 		Player->scale = 1;
+	}
+
+	if (AEInputCheckTriggered(AEVK_E)) {
+
+		//Interaction with levers
+		for (int i = 0; i < 3; i++) {
+			if (Player->calculateDistance(*Levers[i]) < 1) {
+				//Switch lever to face down
+				Levers[i]->TextureMap = { 3,11 };
+				Levers[i]->posCurr.x -= 0.2f;
+				//Remove gates: Change texture & Binary map
+				switch (i) {
+				case 0:
+					for (int i = 17; i < 22; i++) {
+						MapObjInstList[i][39]->TextureMap = { 0,4 };
+						binaryMap[i][39] = 0;
+					}
+					break;
+				case 1:
+					for (int i = 56; i < 59; i++) {
+						MapObjInstList[81][i]->TextureMap = { 0,4 };
+						binaryMap[81][i] = 0;
+					}
+					MapObjInstList[81][56]->TextureMap = { 2,4 };
+					break;
+					//WIP for 3rd gate
+				case 2:
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		//Interaction with chests
 	}
 
 	int slashDir{ 0 };
@@ -745,14 +789,16 @@ void GS_World_Draw(void) {
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 			continue;
 		}
-		// for any sprite textures
+		// for any transparent textures
 		if (pInst->pObject->type == TYPE_SLASH) {
 			AEGfxSetTransparency(1.0f - pInst->Alpha);
 		}
 		else {
 			AEGfxSetTransparency(1.0f);
 		}
-		if (pInst->pObject->type == TYPE_HEALTH)
+		// For any types using spritesheet
+		if (pInst->pObject->type == TYPE_HEALTH ||
+			pInst->pObject->type == TYPE_LEVERS)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
