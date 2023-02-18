@@ -15,58 +15,37 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
+#include "Globals.h"
 
 /*!
 	Defines
 */
 /******************************************************************************/
-const unsigned int	GAME_OBJ_NUM_MAX = 32;		// The total number of different objects (Shapes)
-const unsigned int	TEXTURE_NUM_MAX = 32;		// The total number of Textures
-const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
-const unsigned int	FONT_NUM_MAX = 10;					// The total number of different game object instances
-const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;		// The total number of different game object instances
+static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
+static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
+static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
+static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 50000;	// The total number of static game object instances
 
-const unsigned int	MAX_MOBS;
-const unsigned int	MAX_CHESTS;
-const unsigned int	MAX_LEVERS = 3;
+static const unsigned int	MAX_MOBS;							// The total number of mobs
+static const unsigned int	MAX_CHESTS;							// The total number of chests
+static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 
-const float         BOUNDING_RECT_SIZE = 1.0f;     // this is the normalized bounding rectangle (width and height) sizes - AABB collision data
-const float			PLAYER_SPEED = 5.f;
-const float			NPC_SPEED = 2.5f;
+static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
-const int			TEXTURE_MAXWIDTH = 192;
-const int			TEXTURE_MAXHEIGHT = 192;
-const float			TEXTURE_CELLSIZE = 16;
+static const int			MAP_CELL_WIDTH = 200;				// Total number of cell widths
+static const int			MAP_CELL_HEIGHT = 100;				// Total number of cell heights
 
-const int			SPRITE_SCALE = 80;
-static bool			SLASH_ACTIVATE = false;
+static unsigned int			state = 0;							// Debugging state
+static unsigned int			mapeditor = 0;						// Map edtior state
 
-static const int	MAP_CELL_WIDTH = 200;
-static const int	MAP_CELL_HEIGHT = 100;
-
-const int			CAM_CELL_WIDTH = 20;
-const int			CAM_CELL_HEIGHT = 12;
-
-extern unsigned int		state = 0;
-static unsigned int		mapeditor = 0;
-
-static float				mouseX;
-static float				mouseY;
-
-static f32					camX;
-static f32					camY;
-
-const int	COLLISION_LEFT = 0x00000001;	//0001
-const int	COLLISION_RIGHT = 0x00000002;	//0010
-const int	COLLISION_TOP = 0x00000004;	//0100
-const int	COLLISION_BOTTOM = 0x00000008;	//1000
-// -----------------------------------------------------------------------------ma
+// -----------------------------------------------------------------------------
 
 
 // -----------------------------------------------------------------------------
 // object flag definition
 
-const unsigned long FLAG_ACTIVE = 0x00000001;
+static const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object instance is active
 
 /******************************************************************************/
 /*!
@@ -81,24 +60,24 @@ static GameObj				sGameObjList[GAME_OBJ_NUM_MAX];				// Each element in this arr
 static unsigned long		sGameObjNum;								// The number of defined game objects
 
 // list of object instances
-static GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sGameObjInstNum;							// The number of used game object instances
+static GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a dynamic unique game object instance (sprite)
+static unsigned long		sGameObjInstNum;							// The number of used dynamic game object instances
 
 // list of static instances
-static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sStaticObjInstNum;								// The number of used game object instances
+static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
+static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
-static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
-static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
+static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static staticObjInst* mapEditorObj;
+static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers[3];
+static staticObjInst* Levers[3];										// Pointer to each lever object instance
 
 
 
