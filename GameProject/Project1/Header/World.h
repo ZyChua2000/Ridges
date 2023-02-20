@@ -21,7 +21,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	"Load" function of this state
 	This function loads all necessary assets for the World level.
 	It should be called once before the start of the level.
-	It loads assets like textures, meshes and music files etcÅc
+	It loads assets like textures, meshes and music files etcÔøΩc
 */
 /******************************************************************************/
 void GS_World_Load(void);

@@ -13,7 +13,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 
-#include "main.h"
+#include "Main.h"
 #include <memory>
 #include <iostream>
 

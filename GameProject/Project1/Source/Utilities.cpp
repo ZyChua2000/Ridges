@@ -106,7 +106,7 @@ namespace utilities {
 		mapOutput.close();
 	}
 
-	void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
+	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ifstream mapInput{ filename };
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -115,6 +115,62 @@ namespace utilities {
 			}
 		}
 		mapInput.close();
+	}*/
+
+	void saveGame(saveData data) {
+		std::ofstream saveText{ "save.txt" };
+
+		saveText << data.playerHealth << std::endl;
+		saveText << data.playerPosition.x << std::endl;
+		saveText << data.playerPosition.y << std::endl;
+		saveText << data.playerItems << std::endl;
+
+		for (int i = 0; i < MAX_MOBS; i++) {
+			saveText << data.mobPosition.x << std::endl;
+			saveText << data.mobPosition.y << std::endl;
+		}
+
+		for (int i = 0; i < MAX_CHESTS; i++) {
+			saveText << data.chestOpened << std::endl;
+		}
+
+		for (int i = 0; i < MAX_LEVERS; i++) {
+			saveText << data.leverOpened << std::endl;
+		}
+
+		for (int i = 0; i < 4; i++) {
+			saveText << data.puzzleCompleted[i] << std::endl;
+		}
+
+		saveText << data.elapsedTime << std::endl;
+	}
+
+	void loadData(saveData data) {
+		std::ifstream saveText{ "save.txt" };
+
+		saveText >> data.playerHealth;
+		saveText >> data.playerPosition.x;
+		saveText >> data.playerPosition.y;
+		saveText >> data.playerItems;
+
+		for (int i = 0; i < MAX_MOBS; i++) {
+			saveText >> data.mobPosition.x;
+			saveText >> data.mobPosition.y;
+		}
+
+		for (int i = 0; i < MAX_CHESTS; i++) {
+			saveText >> data.chestOpened;
+		}
+
+		for (int i = 0; i < MAX_LEVERS; i++) {
+			saveText >> data.leverOpened;
+		}
+
+		for (int i = 0; i < 4; i++) {
+			saveText >> data.puzzleCompleted[i];
+		}
+
+		saveText >> data.elapsedTime;
 	}
 }
 

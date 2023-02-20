@@ -14,13 +14,12 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 #include "Main.h"
 #include <iostream>
+#define GLOBAL_H
+#include "Globals.h"
 
 // ---------------------------------------------------------------------------
 
-AEGfxTexture* bTex;
-
-int debugstate = 0;
-float mX, mY;
+static int debugstate = 0;
 
 enum TYPE_BUTTON
 {
@@ -48,17 +47,12 @@ struct MenuObjInst
 	float scale;
 	AEVec2 posCurr;
 	float	dirCurr;
-	
 	AEMtx33				transform;
-	
-	
-	
 };
 
-
-const unsigned int	MENU_OBJ_NUM_MAX = 32;
-const unsigned int	MENU_OBJ_INST_NUM_MAX = 2048;
-const unsigned long FLAG_ACTIVE = 0x00000001;
+static const unsigned int	MENU_OBJ_NUM_MAX = 8;
+static const unsigned int	MENU_OBJ_INST_NUM_MAX = 32;
+static const unsigned long	FLAG_ACTIVE = 0x00000001;
 
 
 static MenuObj				sMenuObjList[MENU_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
@@ -69,12 +63,14 @@ static unsigned long		sMenuObjInstNum;
 static MenuObjInst* pPlay;
 static MenuObjInst* pExit;
 
-const float ButtonSize = 5;
+static const float ButtonSize = 5;
 
 static s8 font;
 
 MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void menuObjInstDestroy(MenuObjInst* pInst);
+
+
 /******************************************************************************/
 /*!
 	"Load" function of this state
@@ -134,8 +130,6 @@ void GS_MainMenu_Init(void) {
 	AEVec2Set(&Playpos, 0, 70);
 	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 105 height 35
 	pPlay = sMenuObjInstList + sMenuObjInstNum++;
-	//AE_ASSERT(pPlay);
-	//bTex = AEGfxTextureLoad("Assets/bluee.jpg");
 }
 
 
@@ -148,11 +142,10 @@ void GS_MainMenu_Init(void) {
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
 	
-	s32				mouseX;
-	s32				mouseY;
-	AEInputGetCursorPosition(&mouseX, &mouseY);
-	mX = float (mouseX);
-	mY = float (mouseY);
+	s32 mX, mY;
+	AEInputGetCursorPosition(&mX, &mY);
+	mouseX = float (mX);
+	mouseY = float (mY);
 
 	pPlay = nullptr;
 	
@@ -253,9 +246,9 @@ void GS_MainMenu_Draw(void) {
 
 		char mouse_xy_buffer[50] = " "; // buffer
 		AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mX);
+		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mouseX);
 		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mY);
+		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mouseY);
 		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 
@@ -294,7 +287,6 @@ void GS_MainMenu_Unload(void) {
 			AEGfxTextureUnload((sMenuObjList + i)->pTexture);
 	}
 	AEGfxDestroyFont(font);
-	//AEGfxTextureUnload(bTex);
 }
 
 // ---------------------------------------------------------------------------

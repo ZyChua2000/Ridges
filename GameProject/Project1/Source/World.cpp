@@ -15,54 +15,39 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
+#include "Globals.h"
+#include "Enemy.h"
 
 
 /*!
 	Defines
 */
 /******************************************************************************/
-const unsigned int	GAME_OBJ_NUM_MAX = 32;		// The total number of different objects (Shapes)
-const unsigned int	TEXTURE_NUM_MAX = 32;		// The total number of Textures
-const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of different game object instances
-const unsigned int	FONT_NUM_MAX = 10;					// The total number of different game object instances
-const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;		// The total number of different game object instances
+static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
+static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
+static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
+static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 50000;	// The total number of static game object instances
 
-const float         BOUNDING_RECT_SIZE = 1.0f;     // this is the normalized bounding rectangle (width and height) sizes - AABB collision data
-const float			PLAYER_SPEED = 5.f;
-const float			NPC_SPEED = 2.5f;
+static const unsigned int	MAX_MOBS;							// The total number of mobs
+static const unsigned int	MAX_CHESTS;							// The total number of chests
+static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 
-const int			TEXTURE_MAXWIDTH = 192;
-const int			TEXTURE_MAXHEIGHT = 192;
-const float			TEXTURE_CELLSIZE = 16;
+static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
-const int			SPRITE_SCALE = 80;
-bool				SLASH_ACTIVATE = false;
+static const int			MAP_CELL_WIDTH = 200;				// Total number of cell widths
+static const int			MAP_CELL_HEIGHT = 100;				// Total number of cell heights
 
-const int			MAP_CELL_WIDTH = 200;
-const int			MAP_CELL_HEIGHT = 100;
+static unsigned int			state = 0;							// Debugging state
+static unsigned int			mapeditor = 0;						// Map edtior state
 
-const int			CAM_CELL_WIDTH = 20;
-const int			CAM_CELL_HEIGHT = 12;
-
-extern unsigned int		state = 0;
-unsigned int		mapeditor = 0;
-
-float				mouseX;
-float				mouseY;
-
-f32					camX;
-f32					camY;
-
-int				pHealth = 3;
-
-
-// -----------------------------------------------------------------------------ma
+// -----------------------------------------------------------------------------
 
 
 // -----------------------------------------------------------------------------
 // object flag definition
 
-const unsigned long FLAG_ACTIVE = 0x00000001;
+static const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object instance is active
 
 /******************************************************************************/
 /*!
@@ -77,29 +62,35 @@ static GameObj				sGameObjList[GAME_OBJ_NUM_MAX];				// Each element in this arr
 static unsigned long		sGameObjNum;								// The number of defined game objects
 
 // list of object instances
-static GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sGameObjInstNum;							// The number of used game object instances
+static GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a dynamic unique game object instance (sprite)
+static unsigned long		sGameObjInstNum;							// The number of used dynamic game object instances
 
 // list of static instances
-static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sStaticObjInstNum;								// The number of used game object instances
+static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
+static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
-static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
-static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
+static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
-// pointer to the ship object
+// pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static staticObjInst* mapEditorObj;
+static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
+static staticObjInst* Levers[3];										// Pointer to each enemy object instance
+static GameObjInst* enemy[2];
+
+
 
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
 
 
+int CheckInstanceBinaryMapCollision(float PosX, float PosY,
+	float scaleX, float scaleY);
 
 
 /******************************************************************************/
@@ -128,6 +119,8 @@ void GS_World_Load(void) {
 
 	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
+
+	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
 	GameObj* Character;
 	Character = sGameObjList + sGameObjNum++;
@@ -171,9 +164,13 @@ void GS_World_Load(void) {
 	Map->refMesh = true;
 	Map->refTexture = true;
 
+	
 
-	GameObj* Effects;
-	Effects = sGameObjList + sGameObjNum++;
+	//Enemy*  enemy;
+	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
+	//enemy->pMesh = Character->pMesh;
+	//enemy->pTexture = Character->pTexture;
+
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -184,22 +181,16 @@ void GS_World_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	Effects->pMesh = AEGfxMeshEnd();
-	Effects->pTexture = Character->pTexture;
-	Effects->type = TYPE_EFFECTS;
-	Effects->refTexture = true;
-
 	GameObj* Slash;
 	Slash = sGameObjList + sGameObjNum++;
-	Slash->pMesh = Effects->pMesh;
+	Slash->pMesh = AEGfxMeshEnd();
 	//Slash->pTexture = AEGfxTextureLoad("../Assets/slash.png");
 	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
 	Slash->type = TYPE_SLASH;
-	Slash->refMesh = true;
 
 	GameObj* RefLine;
 	RefLine = sGameObjList + sGameObjNum++;
-	RefLine->pMesh = Effects->pMesh;
+	RefLine->pMesh = Slash->pMesh;
 	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
 	RefLine->type = TYPE_REF;
 	RefLine->refMesh = true;
@@ -211,9 +202,27 @@ void GS_World_Load(void) {
 	Health->type = TYPE_HEALTH;
 	Health->refMesh = true;
 	Health->refTexture = true;
+
+	GameObj* Lever;
+	Lever = sGameObjList + sGameObjNum++;
+	Lever->pMesh = Character->pMesh;
+	Lever->pTexture = Character->pTexture;
+	Lever->type = TYPE_LEVERS;
+	Lever->refMesh = true;
+	Lever->refTexture = true;
+
+	GameObj* Enemy;
+	Enemy = sGameObjList + sGameObjNum++;
+	Enemy->pMesh = Character->pMesh;
+	Enemy->pTexture = Character->pTexture;
+	Enemy->type = TYPE_ENEMY;
+	Enemy->refMesh = true;
+	Enemy->refTexture = true;
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	//FontList[FontListNum++] = font;
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	FontList[FontListNum++] = font;
 }
 
 /******************************************************************************/
@@ -224,12 +233,12 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
+	//Initialise Player
 	AEVec2 PlayerPos = { 12,-31 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
-	//Initialise map texture numbers.
-
+	//Initialise map textures
 	std::ifstream mapInput{ "Assets/textureWorld.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -246,9 +255,17 @@ void GS_World_Init(void) {
 	}
 	mapInput.close();
 
-	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+	// Initialise map binary
+	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+	std::ifstream binInput{ "Assets/binaryWorld.txt" };
+	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
+		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
+			binInput >> binaryMap[j][i];
+		}
+	}
+	binInput.close();
 
-
+	// Initialise reference objects for mesh editor
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
@@ -260,15 +277,29 @@ void GS_World_Init(void) {
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
-
 	//Initialise player health. Printing of hearts.
 	Player->health = 3;
-	Health[0] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	Health[1] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	Health[2] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	Health[0]->TextureMap = { 0,11 };
-	Health[1]->TextureMap = { 0,11 };
-	Health[2]->TextureMap = { 0,11 };
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		Health[i]->TextureMap = { 0,11 };
+	}
+
+	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-37} ,{ 66.5f - (1.0f / 16), -35 } ,{ 43.5f - (1.0f/16), -30}};
+
+	//Initialise Levers in level
+	for (int i = 0; i < 3; i++) {
+		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
+		Levers[i]->TextureMap = {2,11 };
+	}
+
+	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
+
+	//Initialise enemy in level
+	for (int i = 0; i < 2; i++) {
+		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+		enemy[i]->TextureMap = { 0,9 };
+	}
+	
 }
 
 
@@ -313,8 +344,43 @@ void GS_World_Update(void) {
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
-		Player->velCurr.x = 1;// this is direction , positive y direction
+		Player->velCurr.x = 1;// this is direction , positive x direction
 		Player->scale = 1;
+	}
+
+	if (AEInputCheckTriggered(AEVK_E)) {
+
+		//Interaction with levers
+		for (int i = 0; i < 3; i++) {
+			if (Player->calculateDistance(*Levers[i]) < 1) {
+				//Switch lever to face down
+				Levers[i]->TextureMap = { 3,11 };
+				Levers[i]->posCurr.x -= 0.2f;
+				//Remove gates: Change texture & Binary map
+				switch (i) {
+				case 0:
+					for (int i = 17; i < 22; i++) {
+						MapObjInstList[i][39]->TextureMap = { 0,4 };
+						binaryMap[i][39] = 0;
+					}
+					break;
+				case 1:
+					for (int i = 56; i < 59; i++) {
+						MapObjInstList[81][i]->TextureMap = { 0,4 };
+						binaryMap[81][i] = 0;
+					}
+					MapObjInstList[81][56]->TextureMap = { 2,4 };
+					break;
+					//WIP for 3rd gate
+				case 2:
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		//Interaction with chests
 	}
 
 	int slashDir{ 0 };
@@ -384,7 +450,14 @@ void GS_World_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
-		utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+		std::ifstream binInput{ "Assets/binaryWorld.txt" };
+		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
+			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
+				binInput >> binaryMap[j][i];
+			}
+		}
+		binInput.close();
 	}
 
 	// ======================================================
@@ -508,7 +581,11 @@ void GS_World_Update(void) {
 			}
 		}
 	}
+	
+		
 
+		
+	
 
 	// ======================================================
 	//	-- Positions of the instances are updated here with the already computed velocity (above)
@@ -600,6 +677,13 @@ void GS_World_Update(void) {
 		}
 
 	}
+	/*if (CheckInstanceBinaryMapCollision(Player->posCurr.x, Player->posCurr.y,
+		SPRITE_SCALE, SPRITE_SCALE) == 1)
+	{
+		Player->posCurr.x = Player->posCurr.x;
+		Player->posCurr.y = Player->posCurr.y;
+		std::cout << "collided" << std::endl;
+	}*/
 
 
 	// =====================================
@@ -710,14 +794,16 @@ void GS_World_Draw(void) {
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 			continue;
 		}
-		// for any sprite textures
+		// for any transparent textures
 		if (pInst->pObject->type == TYPE_SLASH) {
 			AEGfxSetTransparency(1.0f - pInst->Alpha);
 		}
 		else {
 			AEGfxSetTransparency(1.0f);
 		}
-		if (pInst->pObject->type == TYPE_HEALTH)
+		// For any types using spritesheet
+		if (pInst->pObject->type == TYPE_HEALTH ||
+			pInst->pObject->type == TYPE_LEVERS)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
@@ -743,13 +829,22 @@ void GS_World_Draw(void) {
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			
 			continue;
 		}
 		// for any sprite textures
-		if (pInst->pObject->type == TYPE_CHARACTER) {
+		if (pInst->pObject->type == TYPE_CHARACTER ) {
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+		}
+
+		else if (pInst->pObject->type == TYPE_ENEMY) {
+			std::cout << " ghost is spawnned near cam" << std::endl;
+			AEGfxTextureSet(pInst->pObject->pTexture,
+				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+
 		}
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
@@ -792,6 +887,10 @@ void GS_World_Draw(void) {
 		sprintf_s(camxy_buffer, "Camera Position Y: %.4f", camY);
 		AEGfxPrint(FontList[0], camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
 
+		char Collision[2400] = " ";
+		sprintf_s(Collision, "Collided: %d", binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))]);
+		AEGfxPrint(FontList[0], Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
+		
 
 
 
@@ -994,3 +1093,56 @@ void staticObjInstDestroy(staticObjInst* pInst)
 	sStaticObjInstNum--; //Decrement the number of game object instance
 	pInst->flag = 0;
 }
+
+//int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
+//{
+//	int Flag = 0;
+//	int x1, y1, x2, y2;
+//
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 2;	//To reach the right side
+//	y1 = PosY + scaleY / 4;	//To go up 1 / 4 of the height
+//
+//	//- hotspot 2
+//	x2 = PosX + scaleX / 2;	//To reach the right side
+//	y2 = PosY - scaleY / 4;	//To go down 1 / 4 of the height
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_RIGHT;
+//	}
+//
+//	//-hotspot 1
+//	x1 = PosX - scaleX / 2;
+//	y1 = PosY - scaleY / 4;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 2;
+//	y2 = PosY + scaleY / 4;
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_LEFT;
+//	}
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 4;
+//	y1 = PosY + scaleY / 2;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 4;
+//	y2 = PosY + scaleY / 2;
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_TOP;
+//	}
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 4;
+//	y1 = PosY - scaleY / 2;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 4;
+//	y2 = PosY - scaleY / 2;
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_BOTTOM;
+//	}
+//	return Flag;
+//}
+
