@@ -46,6 +46,7 @@ struct GameObjInst
 	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
 	int					health;		// object's health level
 	int					damage;		// object's damage parameter
+	int					potion;
 
 	// Member functions
 
@@ -88,6 +89,9 @@ struct GameObjInst
 		The calculated distance between the 2 objects
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
+
+
+	void potion_counter(int potion = 1);
 };
 
 // This enum is a list of the different types of game objects
@@ -102,6 +106,7 @@ enum TYPE
 	TYPE_REF,
 	TYPE_HEALTH,
 	TYPE_LEVERS,
+	TYPE_CHEST,
 
 
 	TYPE_NUM

@@ -39,6 +39,7 @@ static const int			MAP_CELL_HEIGHT = 100;				// Total number of cell heights
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
+int							counter = 0;
 // -----------------------------------------------------------------------------
 
 
@@ -78,6 +79,8 @@ static GameObjInst* Player;												// Pointer to the "Player" game object in
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each lever object instance
+static staticObjInst* Chest[1];											// Pointer to each chest object instance
+static staticObjInst* Potion[2];										// Pointer to each potion object instance
 
 
 
@@ -201,9 +204,17 @@ void GS_World_Load(void) {
 	Lever->refMesh = true;
 	Lever->refTexture = true;
 
+	GameObj* Chest;
+	Chest = sGameObjList + sGameObjNum++;
+	Chest->pMesh = Character->pMesh;
+	Chest->pTexture = Character->pTexture;
+	Chest->type = TYPE_CHEST;
+	Chest->refMesh = true;
+	Chest->refTexture = true;
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	FontList[FontListNum++] = font;
+	//s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	//FontList[FontListNum++] = font;
 }
 
 /******************************************************************************/
@@ -273,6 +284,20 @@ void GS_World_Init(void) {
 		Levers[i]->TextureMap = {2,11 };
 	}
 
+	//Initialise Potion in level
+	
+	AEVec2 potionpos[2] = { {18,-35} ,{30,-40} };
+	for (int i = 0; i < 2; i++) {
+		Potion[i] = staticObjInstCreate(TYPE_ITEMS, 1, &potionpos[i], 0);
+		Potion[i]->TextureMap = { 6,9 };
+	}
+
+	//Initialise Chest in level
+	AEVec2 chestpos = {13,-31};
+	for (int i = 0; i < 1; i++) {
+		Chest[i] = staticObjInstCreate(TYPE_CHEST,1, &chestpos, 0);
+		Chest[i]->TextureMap = { 5,7 };
+	}
 	
 }
 
@@ -355,6 +380,30 @@ void GS_World_Update(void) {
 		}
 
 		//Interaction with chests
+		for (int i = 0; i < 1; i++) {
+			if (Player->calculateDistance(*Chest[i]) < 1) 
+			{
+				Chest[i]->TextureMap = { 7,7 };
+			}
+		}
+		//Interaction with potion
+		for (int i = 0; i < 2; i++) {
+			if (Player->calculateDistance(*Potion[i]) < 1)
+			{
+				Potion[i]->TextureMap = { 0,4 };
+				counter++;
+				/*Player->potion_counter();
+				switch (Player->potion)
+				{
+				case 0:
+					Potion[0]->TextureMap = { 6,9 };
+					break;
+				case 1:
+					Potion[1]->TextureMap = { 6,9 };
+					break;
+				}*/
+			}
+		}
 	}
 
 	int slashDir{ 0 };
@@ -480,6 +529,7 @@ void GS_World_Update(void) {
 			break;
 		case 2:
 			Health[0]->TextureMap = { 1, 11 };
+			break;
 		}
 	}
 	
@@ -592,6 +642,22 @@ void GS_World_Update(void) {
 	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
 	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
 	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
+	if (counter == 1)
+	{
+		Potion[0]->TextureMap = { 6,9 };
+		Potion[0]->posCurr = { (float)camX - 9.0f , (float)camY + 5.0f };
+	}
+	if (counter == 2)
+	{
+		Potion[0]->TextureMap = {6,9};
+		Potion[0]->posCurr = { (float)camX - 9.0f , (float)camY + 5.0f };
+		Potion[1]->TextureMap = { 6,9 };
+		Potion[1]->posCurr = { (float)camX - 8.0f , (float)camY + 5.0f };
+	}
+	
+
+	
 
 	if (SLASH_ACTIVATE == true) {
 		AEVec2 Pos = Player->posCurr;
@@ -776,8 +842,8 @@ void GS_World_Draw(void) {
 			AEGfxSetTransparency(1.0f);
 		}
 		// For any types using spritesheet
-		if (pInst->pObject->type == TYPE_HEALTH ||
-			pInst->pObject->type == TYPE_LEVERS)
+		if (pInst->pObject->type == TYPE_HEALTH || pInst->pObject->type == TYPE_LEVERS
+			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject-> type==TYPE_ITEMS)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
