@@ -3,7 +3,7 @@
 #define GLOBAL_H
 const int			SPRITE_SCALE = 80;				// Scale of sprites
 const int			TEXTURE_MAXWIDTH = 192;			// Canvas Width of sprite sheet
-const int			TEXTURE_MAXHEIGHT = 192;		// Canvas Height of sprite sheet
+const int			TEXTURE_MAXHEIGHT = 208;		// Canvas Height of sprite sheet
 const float			TEXTURE_CELLSIZE = 16;			// Number of pixel size for each sprite
 
 const int			COLLISION_LEFT = 0x00000001;	// 0001
