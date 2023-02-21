@@ -203,6 +203,7 @@ void GS_World_Load(void) {
 	Lever->refTexture = true;
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	FontList[FontListNum++] = font;
 }
