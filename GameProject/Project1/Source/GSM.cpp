@@ -79,6 +79,14 @@ void GameStateMgrUpdate()
 		GameStateFree = GS_World_Free;
 		GameStateUnload = GS_World_Unload;
 		break;
+	case GS_MAZE:
+		GameStateLoad = GS_Maze_Load;
+		GameStateInit = GS_Maze_Init;
+		GameStateUpdate = GS_Maze_Update;
+		GameStateDraw = GS_Maze_Draw;
+		GameStateFree = GS_Maze_Free;
+		GameStateUnload = GS_Maze_Unload;
+		break;
 	default:
 		AE_FATAL_ERROR("invalid state!!");
 	}

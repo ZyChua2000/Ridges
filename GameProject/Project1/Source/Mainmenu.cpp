@@ -14,7 +14,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 #include "Main.h"
 #include <iostream>
-#define GLOBAL_H
 #include "Globals.h"
 
 // ---------------------------------------------------------------------------
@@ -142,6 +141,10 @@ void GS_MainMenu_Init(void) {
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
 	
+	if (AEInputCheckTriggered(AEVK_3)) {
+		gGameStateNext = GS_MAZE;
+	}
+
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float (mX);

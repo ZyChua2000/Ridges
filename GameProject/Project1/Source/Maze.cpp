@@ -1,10 +1,10 @@
 /******************************************************************************/
 /*!
-\file		World.cpp
+\file		Maze.cpp
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
-\date   	February 02, 2023
-\brief		This header file contains the functions for the level of World.
+\date   	February 21, 2023
+\brief		This header file contains the functions for the level of Maze.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
@@ -29,8 +29,8 @@ static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of 
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS;							// The total number of mobs
-static const unsigned int	MAX_CHESTS;							// The total number of chests
+static const unsigned int	MAX_MOBS = 4;							// The total number of mobs
+static const unsigned int	MAX_CHESTS = 4;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
@@ -97,12 +97,12 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY,
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the World level.
+	This function loads all necessary assets for the Maze level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
-void GS_World_Load(void) {
+void GS_Maze_Load(void) {
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
 	// No game objects (shapes) at this point
@@ -165,7 +165,7 @@ void GS_World_Load(void) {
 	Map->refMesh = true;
 	Map->refTexture = true;
 
-	
+
 
 	//Enemy*  enemy;
 	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
@@ -229,11 +229,11 @@ void GS_World_Load(void) {
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the World state. It should
+	This function initialises all the values of the Maze state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
-void GS_World_Init(void) {
+void GS_Maze_Init(void) {
 	//Initialise Player
 	AEVec2 PlayerPos = { 12,-8 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
@@ -257,7 +257,7 @@ void GS_World_Init(void) {
 	mapInput.close();
 
 	// Initialise map binary
-	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryMaze.txt");
 	std::ifstream binInput{ "Assets/binaryWorld.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
@@ -285,13 +285,7 @@ void GS_World_Init(void) {
 		Health[i]->TextureMap = { 0,11 };
 	}
 
-	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f/16), -6}};
-
-	//Initialise Levers in level
-	for (int i = 0; i < 3; i++) {
-		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-		Levers[i]->TextureMap = {2,11 };
-	}
+	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -302,7 +296,7 @@ void GS_World_Init(void) {
 		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 		enemy[i]->TextureMap = { 0,9 };
 	}
-	
+
 }
 
 
@@ -310,11 +304,11 @@ void GS_World_Init(void) {
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the World state.
+	the game loop runs for the Maze state.
 */
 /******************************************************************************/
 
-void GS_World_Update(void) {
+void GS_Maze_Update(void) {
 
 	// =====================================
 	// User Input
@@ -447,13 +441,13 @@ void GS_World_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureWorld.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureMaze.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryWorld.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryMaze.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
-		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
+		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryMaze.txt");
 		std::ifstream binInput{ "Assets/binaryWorld.txt" };
 		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
@@ -617,9 +611,9 @@ void GS_World_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
-	// Camera position, stops following character when at edge of world
+	// Camera position, stops following character when at edge of Maze
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
-		CAM_CELL_WIDTH/2 + 0.5 < Player->posCurr.x) {
+		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
 		camX = Player->posCurr.x;
 	}
 	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
@@ -761,7 +755,7 @@ void GS_World_Update(void) {
 	during game loop.
 */
 /******************************************************************************/
-void GS_World_Draw(void) {
+void GS_Maze_Draw(void) {
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
@@ -841,11 +835,11 @@ void GS_World_Draw(void) {
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
-			
+
 			continue;
 		}
 		// for any sprite textures
-		if (pInst->pObject->type == TYPE_CHARACTER ) {
+		if (pInst->pObject->type == TYPE_CHARACTER) {
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
@@ -902,7 +896,7 @@ void GS_World_Draw(void) {
 		char Collision[2400] = " ";
 		sprintf_s(Collision, "Collided: %d", binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))]);
 		AEGfxPrint(FontList[0], Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
-		
+
 
 
 
@@ -932,10 +926,10 @@ void GS_World_Draw(void) {
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the World level.
+	This function frees all the instances created for the Maze level.
 */
 /******************************************************************************/
-void GS_World_Free(void) {
+void GS_Maze_Free(void) {
 	// kill all object instances in the array using "gameObjInstDestroy"
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
@@ -957,10 +951,10 @@ void GS_World_Free(void) {
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	World level.
+	Maze level.
 */
 /******************************************************************************/
-void GS_World_Unload(void) {
+void GS_Maze_Unload(void) {
 	// free all mesh data (shapes) of each object using "AEGfxTriFree"
 	for (unsigned int i = 0; i < sGameObjNum; i++) {
 		if ((sGameObjList + i)->refMesh == false)
@@ -970,7 +964,7 @@ void GS_World_Unload(void) {
 	}
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-		AEGfxDestroyFont(FontList[0]);
+	AEGfxDestroyFont(FontList[0]);
 
 }
 

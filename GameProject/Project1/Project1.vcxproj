@@ -162,6 +162,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClCompile Include="Source\GSM.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Mainmenu.cpp" />
+    <ClCompile Include="Source\Maze.cpp" />
     <ClCompile Include="Source\Utilities.cpp" />
     <ClCompile Include="Source\World.cpp" />
   </ItemGroup>
@@ -174,6 +175,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClInclude Include="Header\GSM.h" />
     <ClInclude Include="Header\Main.h" />
     <ClInclude Include="Header\Mainmenu.h" />
+    <ClInclude Include="Header\Maze.h" />
     <ClInclude Include="Header\Utilities.h" />
     <ClInclude Include="Header\World.h" />
   </ItemGroup>

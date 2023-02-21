@@ -32,6 +32,7 @@ extern double	g_appTime;
 #include "World.h"
 #include "GameObjs.h"
 #include "Utilities.h"
+#include "Maze.h"
 
 
 #endif

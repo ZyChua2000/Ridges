@@ -2,6 +2,11 @@
 #include <fstream> //For printing
 #include "Utilities.h" // For externs
 
+static const int CAM_CELL_WIDTH = 20;
+static const int CAM_CELL_HEIGHT = 12;
+static const int MAX_LEVERS = 3;
+static const int MAX_CHESTS = 4;
+static const int MAX_MOBS = 5;
 
 namespace utilities {
 

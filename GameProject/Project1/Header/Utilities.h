@@ -1,12 +1,6 @@
 #pragma once
 #include "GameObjs.h" // for game objects
 #include <string>
-extern const int CAM_CELL_WIDTH;
-extern const int CAM_CELL_HEIGHT;
-
-extern const unsigned int MAX_MOBS;
-extern const unsigned int MAX_CHESTS;
-extern const unsigned int MAX_LEVERS;
 
 
 // functions to create/destroy a game object instance
