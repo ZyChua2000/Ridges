@@ -14,7 +14,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 #include "Main.h"
 #include <iostream>
-#define GLOBAL_H
 #include "Globals.h"
 
 // ---------------------------------------------------------------------------

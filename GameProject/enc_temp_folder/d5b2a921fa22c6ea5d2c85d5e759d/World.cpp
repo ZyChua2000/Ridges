@@ -463,7 +463,7 @@ void GS_World_Update(void) {
 		std::ifstream binInput{ "Assets/binaryWorld.txt" };
 		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-				binInput >> binaryMap[j][i];
+				binInput >> binaryMap[i][j];
 			}
 		}
 		binInput.close();
@@ -770,7 +770,7 @@ void GS_World_Update(void) {
 	if (AEInputCheckTriggered(AEVK_F)) {
 		static int test = 2;
 		std::ofstream testfile{ "test.txt" };
-		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+		binaryMap[(int)Player->posCurr.x][-(int)Player->posCurr.y] = test++;
 		for (int i = 0; i < 42; i++) {
 			for (int j = 0; j < 124; j++) {
 				testfile << binaryMap[j][i];
