@@ -25,7 +25,7 @@ static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of uniqu
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;	// The total number of static game object instances
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS;							// The total number of mobs
 static const unsigned int	MAX_CHESTS;							// The total number of chests
