@@ -463,7 +463,7 @@ void GS_World_Update(void) {
 		std::ifstream binInput{ "Assets/binaryWorld.txt" };
 		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-				binInput >> binaryMap[j][i];
+				binInput >> binaryMap[i][j];
 			}
 		}
 		binInput.close();
@@ -594,9 +594,7 @@ void GS_World_Update(void) {
 
 
 
-	if (binaryMap[(int)Player->posCurr.x][-(int)Player->posCurr.y] == 1) {
-		std::cout << "colliding";
-	}
+
 
 	// ======================================================
 	//	-- Positions of the instances are updated here with the already computed velocity (above)
@@ -772,7 +770,7 @@ void GS_World_Update(void) {
 	if (AEInputCheckTriggered(AEVK_F)) {
 		static int test = 2;
 		std::ofstream testfile{ "test.txt" };
-		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+		binaryMap[(int)Player->posCurr.x][-(int)Player->posCurr.y] = test++;
 		for (int i = 0; i < 42; i++) {
 			for (int j = 0; j < 124; j++) {
 				testfile << binaryMap[j][i];
@@ -1023,7 +1021,7 @@ void GS_World_Unload(void) {
 	Instance List.
 */
 /******************************************************************************/
-static GameObjInst* gameObjInstCreate(unsigned long type,
+GameObjInst* gameObjInstCreate(unsigned long type,
 	float scale,
 	AEVec2* pPos,
 	AEVec2* pVel,
@@ -1066,7 +1064,7 @@ static GameObjInst* gameObjInstCreate(unsigned long type,
 	Object Instance List.
 */
 /******************************************************************************/
-static void gameObjInstDestroy(GameObjInst* pInst)
+void gameObjInstDestroy(GameObjInst* pInst)
 {
 	// if instance is destroyed before, just return
 	if (pInst->flag == 0)
@@ -1090,7 +1088,7 @@ static void gameObjInstDestroy(GameObjInst* pInst)
 */
 
 /******************************************************************************/
-static staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
+staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
 	AEVec2Zero(&zero);
@@ -1126,7 +1124,7 @@ static staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec
 	Object Instance List.
 */
 /******************************************************************************/
-static void staticObjInstDestroy(staticObjInst* pInst)
+void staticObjInstDestroy(staticObjInst* pInst)
 {
 	// if instance is destroyed before, just return
 	if (pInst->flag == 0)

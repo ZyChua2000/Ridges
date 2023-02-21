@@ -1,5 +1,6 @@
 #pragma once
 #include "GameObjs.h" // for game objects
+#include "Globals.h"
 #include <string>
 
 
