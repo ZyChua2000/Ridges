@@ -11,6 +11,13 @@ struct GameObj
 	bool refTexture = 0;		// True if texture is referencing another object's texture, else false by default
 };
 
+// This struct holds the max and min of the axis of an object for collision purpose
+struct AABB
+{
+	AEVec2 min;
+	AEVec2 max;
+};
+
 // This struct is for objects that are static, meaning they will not be moving
 struct staticObjInst
 {
@@ -23,14 +30,9 @@ struct staticObjInst
 	float				dirCurr;	// object's direction(rotation value)
 	float				timetracker;// object's time of existence
 	float				Alpha;		// object's transparency value
+	AABB				boundingBox;// object bouding box that encapsulates the object
 };
 
-// This struct holds the max and min of the axis of an object for collision purpose
-struct AABB
-{
-	AEVec2 min;
-	AEVec2 max;
-};
 
 // This struct is for dynamic objects, meaning game entities that will be moving
 struct GameObjInst

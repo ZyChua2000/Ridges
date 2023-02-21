@@ -3,7 +3,7 @@
 \file		Maze.cpp
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
-\date   	February 21, 2023
+\date   	February 02, 2023
 \brief		This header file contains the functions for the level of Maze.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
@@ -17,6 +17,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <iostream>
 #include "Globals.h"
 #include "Enemy.h"
+#include "collision.h"
 
 
 /*!
@@ -29,8 +30,8 @@ static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of 
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS = 4;							// The total number of mobs
-static const unsigned int	MAX_CHESTS = 4;							// The total number of chests
+static const unsigned int	MAX_MOBS;							// The total number of mobs
+static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
@@ -42,6 +43,7 @@ static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
+static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 // -----------------------------------------------------------------------------
 
 
@@ -138,7 +140,6 @@ void GS_Maze_Load(void) {
 
 	Character->pMesh = AEGfxMeshEnd();
 	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
-	//Character->pTexture = AEGfxTextureLoad("../Assets/Tilemap/tilemap_packed.png");
 	Character->type = TYPE_CHARACTER;
 
 	GameObj* NPC;
@@ -185,7 +186,6 @@ void GS_Maze_Load(void) {
 	GameObj* Slash;
 	Slash = sGameObjList + sGameObjNum++;
 	Slash->pMesh = AEGfxMeshEnd();
-	//Slash->pTexture = AEGfxTextureLoad("../Assets/slash.png");
 	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
 	Slash->type = TYPE_SLASH;
 
@@ -240,7 +240,7 @@ void GS_Maze_Init(void) {
 	Player->TextureMap = { 1,8 };
 
 	//Initialise map textures
-	std::ifstream mapInput{ "Assets/textureWorld.txt" };
+	std::ifstream mapInput{ "Assets/textureMaze.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
@@ -258,10 +258,10 @@ void GS_Maze_Init(void) {
 
 	// Initialise map binary
 	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryMaze.txt");
-	std::ifstream binInput{ "Assets/binaryWorld.txt" };
+	std::ifstream binInput{ "Assets/binaryMaze.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-			binInput >> binaryMap[j][i];
+			binInput >> binaryMap[i][j];
 		}
 	}
 	binInput.close();
@@ -287,6 +287,12 @@ void GS_Maze_Init(void) {
 
 	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
 
+	//Initialise Levers in level
+	for (int i = 0; i < 3; i++) {
+		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
+		Levers[i]->TextureMap = { 2,11 };
+	}
+
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
 	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
@@ -296,6 +302,10 @@ void GS_Maze_Init(void) {
 		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 		enemy[i]->TextureMap = { 0,9 };
 	}
+
+	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
+	//{ 12,-31 };
+	binaryPlayerPos = { 32,-89 };
 
 }
 
@@ -405,6 +415,7 @@ void GS_Maze_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+		std::cout << angleMousetoPlayer << std::endl;
 		SLASH_ACTIVATE = true;
 	}
 
@@ -448,7 +459,7 @@ void GS_Maze_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_7)) {
 		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryMaze.txt");
-		std::ifstream binInput{ "Assets/binaryWorld.txt" };
+		std::ifstream binInput{ "Assets/binaryMaze.txt" };
 		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
 				binInput >> binaryMap[j][i];
@@ -464,11 +475,87 @@ void GS_Maze_Update(void) {
 	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
 		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
 		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
 		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
 		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
 	}
+
+	for (unsigned long i = 10416; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+		if (pInst->pObject->type != TYPE_SLASH) {
+			continue;
+		}
+		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+	}
+
+	// ======================================================
+	//	-- Positions of the instances are updated here with the already computed velocity (above)
+	// ======================================================
+
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
+		{
+			AEVec2 temp_velo{ pInst->velCurr.x, pInst->velCurr.y };
+			AEVec2Normalize(&pInst->velCurr, &temp_velo); // normalize
+
+			if (pInst->pObject->type == TYPE_CHARACTER) {
+				pInst->velCurr.x *= PLAYER_SPEED; // magnitude/speed of velo.x
+				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
+			}
+			//invert movement for binary map
+			if (pInst->velCurr.x != 0)
+			{
+				binaryPlayerPos.y += pInst->velCurr.x * g_dt;
+			}
+			if (pInst->velCurr.y != 0)
+			{
+				binaryPlayerPos.x -= pInst->velCurr.y * g_dt;
+			}
+			if (pInst->pObject->type == TYPE_NPCS) {
+				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
+				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
+			}
+		}
+
+		pInst->posCurr.x += pInst->velCurr.x * g_dt;
+		pInst->posCurr.y += pInst->velCurr.y * g_dt;
+	}
+
+	// Camera position, stops following character when at edge of Maze
+	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
+		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
+		camX = Player->posCurr.x;
+	}
+	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
+		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
+		camY = Player->posCurr.y;
+	}
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
+	if (SLASH_ACTIVATE == true) {
+		AEVec2 Pos = Player->posCurr;
+		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
+		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		slashObj->dirCurr = angleMousetoPlayer + PI;
+		slashObj->timetracker = 0;
+		SLASH_ACTIVATE = false;
+	}
+
 
 	// ====================
 	// check for collision
@@ -579,86 +666,6 @@ void GS_Maze_Update(void) {
 		}
 	}
 
-
-
-
-	if (binaryMap[(int)Player->posCurr.x][-(int)Player->posCurr.y] == 1) {
-		std::cout << "colliding";
-	}
-
-	// ======================================================
-	//	-- Positions of the instances are updated here with the already computed velocity (above)
-	// ======================================================
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
-		{
-			AEVec2 temp_velo{ pInst->velCurr.x, pInst->velCurr.y };
-			AEVec2Normalize(&pInst->velCurr, &temp_velo); // normalize
-
-			if (pInst->pObject->type == TYPE_CHARACTER) {
-				pInst->velCurr.x *= PLAYER_SPEED; // magnitude/speed of velo.x
-				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
-			}
-			if (pInst->pObject->type == TYPE_NPCS) {
-				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
-				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
-			}
-		}
-
-		pInst->posCurr.x += pInst->velCurr.x * g_dt;
-		pInst->posCurr.y += pInst->velCurr.y * g_dt;
-	}
-
-	// Camera position, stops following character when at edge of Maze
-	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
-		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
-		camX = Player->posCurr.x;
-	}
-	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
-		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
-		camY = Player->posCurr.y;
-	}
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
-	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr;
-		Pos.x += Player->velCurr.x * 0.25f;
-		Pos.y += Player->velCurr.y * 0.25f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
-		switch (slashDir) {
-		case 1: //right
-			slashObj->posCurr.x += 0.8f;
-			slashObj->posCurr.y += 0;
-			slashObj->dirCurr = 0;
-			break;
-		case 2: //up
-			slashObj->posCurr.y += 0.8f;
-			slashObj->posCurr.x += 0;
-			slashObj->dirCurr = PI / 2;
-			break;
-		case 3: //left
-			slashObj->posCurr.x += -0.8f;
-			slashObj->posCurr.y += 0;
-			slashObj->dirCurr = PI;
-			break;
-		case 4: //down
-			slashObj->posCurr.y += -0.8f;
-			slashObj->posCurr.x += 0;
-			slashObj->dirCurr = -PI / 2;
-			break;
-		default:
-			break;
-		}
-		slashObj->timetracker = 0;
-		SLASH_ACTIVATE = false;
-	}
-
-
 	// ===================================
 	// update active game object instances
 	// Example:
@@ -745,6 +752,22 @@ void GS_Maze_Update(void) {
 	}
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+
+	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
+
+	if (AEInputCheckTriggered(AEVK_F)) {
+		static int test = 2;
+		std::ofstream testfile{ "test.txt" };
+		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+		for (int i = 0; i < 42; i++) {
+			for (int j = 0; j < 124; j++) {
+				testfile << binaryMap[j][i];
+			}
+			testfile << std::endl;
+		}
+		testfile.close();
+	}
+	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
 }
 
