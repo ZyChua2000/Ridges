@@ -2,6 +2,9 @@
 #include <fstream> //For printing
 #include "Utilities.h" // For externs
 
+static const int MAX_LEVERS = 3;
+static const int MAX_CHESTS = 4;
+static const int MAX_MOBS = 5;
 
 namespace utilities {
 
