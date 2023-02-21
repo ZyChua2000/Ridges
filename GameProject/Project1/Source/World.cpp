@@ -16,6 +16,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <fstream>
 #include <iostream>
 #include "Globals.h"
+#include "Enemy.h"
+
 
 /*!
 	Defines
@@ -78,7 +80,8 @@ static unsigned long		FontListNum;								// The number of used fonts
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers[3];										// Pointer to each lever object instance
+static staticObjInst* Levers[3];										// Pointer to each enemy object instance
+static GameObjInst* enemy[2];
 
 
 
@@ -162,6 +165,13 @@ void GS_World_Load(void) {
 	Map->refMesh = true;
 	Map->refTexture = true;
 
+	
+
+	//Enemy*  enemy;
+	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
+	//enemy->pMesh = Character->pMesh;
+	//enemy->pTexture = Character->pTexture;
+
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -201,6 +211,14 @@ void GS_World_Load(void) {
 	Lever->type = TYPE_LEVERS;
 	Lever->refMesh = true;
 	Lever->refTexture = true;
+
+	GameObj* Enemy;
+	Enemy = sGameObjList + sGameObjNum++;
+	Enemy->pMesh = Character->pMesh;
+	Enemy->pTexture = Character->pTexture;
+	Enemy->type = TYPE_ENEMY;
+	Enemy->refMesh = true;
+	Enemy->refTexture = true;
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -277,6 +295,14 @@ void GS_World_Init(void) {
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
+	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
+
+	//Initialise enemy in level
+	for (int i = 0; i < 2; i++) {
+		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+		enemy[i]->TextureMap = { 0,9 };
+	}
+	
 }
 
 
@@ -813,13 +839,22 @@ void GS_World_Draw(void) {
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			
 			continue;
 		}
 		// for any sprite textures
-		if (pInst->pObject->type == TYPE_CHARACTER) {
+		if (pInst->pObject->type == TYPE_CHARACTER ) {
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+		}
+
+		else if (pInst->pObject->type == TYPE_ENEMY) {
+			std::cout << " ghost is spawnned near cam" << std::endl;
+			AEGfxTextureSet(pInst->pObject->pTexture,
+				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+
 		}
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
