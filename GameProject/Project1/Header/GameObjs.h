@@ -107,3 +107,15 @@ enum TYPE
 
 	TYPE_NUM
 };
+
+struct Inventory {
+	int Potion;
+	int Key;
+	int lastItem;
+
+	Inventory(){
+		Potion = 0;
+		Key = 0;
+		lastItem = 0;
+	}
+};
