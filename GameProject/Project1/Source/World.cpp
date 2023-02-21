@@ -25,7 +25,7 @@ static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of uniqu
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 50000;	// The total number of static game object instances
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 100000;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS;							// The total number of mobs
 static const unsigned int	MAX_CHESTS;							// The total number of chests
@@ -33,8 +33,9 @@ static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
-static const int			MAP_CELL_WIDTH = 200;				// Total number of cell widths
-static const int			MAP_CELL_HEIGHT = 100;				// Total number of cell heights
+static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
+static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
+
 
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
@@ -215,7 +216,7 @@ void GS_World_Load(void) {
 /******************************************************************************/
 void GS_World_Init(void) {
 	//Initialise Player
-	AEVec2 PlayerPos = { 12,-31 };
+	AEVec2 PlayerPos = { 12,-8 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
@@ -265,7 +266,7 @@ void GS_World_Init(void) {
 		Health[i]->TextureMap = { 0,11 };
 	}
 
-	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-37} ,{ 66.5f - (1.0f / 16), -35 } ,{ 43.5f - (1.0f/16), -30}};
+	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f/16), -6}};
 
 	//Initialise Levers in level
 	for (int i = 0; i < 3; i++) {
@@ -273,7 +274,8 @@ void GS_World_Init(void) {
 		Levers[i]->TextureMap = {2,11 };
 	}
 
-	
+	// Initialise camera pos
+	camX = Player->posCurr.x, camY = Player->posCurr.y;
 }
 
 
@@ -290,7 +292,6 @@ void GS_World_Update(void) {
 	// =====================================
 	// User Input
 	// =====================================
-	camX = Player->posCurr.x, camY = Player->posCurr.y;
 	//Debugging mode
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		state ^= 1;
@@ -334,12 +335,12 @@ void GS_World_Update(void) {
 				switch (i) {
 				case 0:
 					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][39]->TextureMap = { 0,4 };
-						binaryMap[i][39] = 0;
+						MapObjInstList[i][15]->TextureMap = { 0,4 };
+						binaryMap[i][15] = 0;
 					}
 					break;
 				case 1:
-					for (int i = 56; i < 59; i++) {
+					for (int i = 32; i < 35; i++) {
 						MapObjInstList[81][i]->TextureMap = { 0,4 };
 						binaryMap[81][i] = 0;
 					}
@@ -420,6 +421,7 @@ void GS_World_Update(void) {
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
 		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureWorld.txt");
+
 		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryWorld.txt");
 	}
 
@@ -482,7 +484,7 @@ void GS_World_Update(void) {
 			Health[0]->TextureMap = { 1, 11 };
 		}
 	}
-	
+
 
 	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
 		//player_direction.x = -player_direction.x;
@@ -555,11 +557,11 @@ void GS_World_Update(void) {
 			}
 		}
 	}
-	
-		
 
-		
-	
+
+
+
+
 
 	// ======================================================
 	//	-- Positions of the instances are updated here with the already computed velocity (above)
@@ -586,8 +588,15 @@ void GS_World_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
-	camX = Player->posCurr.x, camY = Player->posCurr.y;
-
+	// Camera position, stops following character when at edge of world
+	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
+		CAM_CELL_WIDTH/2 + 0.5 < Player->posCurr.x) {
+		camX = Player->posCurr.x;
+	}
+	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
+		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
+		camY = Player->posCurr.y;
+	}
 	//player health following viewport
 	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
 	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };

@@ -70,8 +70,8 @@ namespace utilities {
 	}
 
 	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename) {
-		std::ofstream mapOutput{ filename };
 		filename = "Assets/" + filename;
+		std::ofstream mapOutput{ filename };
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i) -> TextureMap.x << " ";
@@ -97,6 +97,8 @@ namespace utilities {
 				mapOutput << "0" << " ";
 				else
 				mapOutput << "1" << " ";
+
+			
 
 				if (i == MAP_CELL_WIDTH - 1) {
 					mapOutput << "\n";
