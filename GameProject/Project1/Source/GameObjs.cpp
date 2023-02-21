@@ -1,5 +1,6 @@
 #include "GameObjs.h"
 
+//player health 
 void GameObjInst::deducthealth(int damage)
 {
 	if (health > 0)
@@ -7,7 +8,7 @@ void GameObjInst::deducthealth(int damage)
 		health -= damage;
 	}
 }
-
+//player health recover
 void GameObjInst::recoverhealth(int recover)
 {
 	if (health < 3)

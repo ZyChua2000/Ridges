@@ -1,10 +1,10 @@
 /******************************************************************************/
 /*!
-\file		World.cpp
+\file		Colosseum.cpp
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
 \date   	February 02, 2023
-\brief		This header file contains the functions for the level of World.
+\brief		This header file contains the functions for the level of Colosseum.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
@@ -31,15 +31,13 @@ static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS;							// The total number of mobs
-static const unsigned int	MAX_CHESTS = 1;							// The total number of chests
+static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_POTION = 9;					// The total number of potion
-static const unsigned int	MAX_KEYS = 3;						// The total number of keys
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
-static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
-static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
+static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
+static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
 
 static unsigned int			state = 0;							// Debugging state
@@ -84,14 +82,7 @@ static unsigned long		FontListNum;								// The number of used fonts
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers[3];										// Pointer to each enemy object instance
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
-static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Potion[MAX_POTION];
-static staticObjInst* Key[MAX_KEYS];
 static GameObjInst* enemy[2];
-static Inventory Backpack;
 
 
 
@@ -107,12 +98,12 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY,
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the World level.
+	This function loads all necessary assets for the Colosseum level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
-void GS_World_Load(void) {
+void GS_Colosseum_Load(void) {
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
 	// No game objects (shapes) at this point
@@ -228,14 +219,6 @@ void GS_World_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
-	GameObj* Chest;
-	Chest = sGameObjList + sGameObjNum++;
-	Chest->pMesh = Character->pMesh;
-	Chest->pTexture = Character->pTexture;
-	Chest->type = TYPE_CHEST;
-	Chest->refMesh = true;
-	Chest->refTexture = true;
-
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
@@ -245,18 +228,18 @@ void GS_World_Load(void) {
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the World state. It should
+	This function initialises all the values of the Colosseum state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
-void GS_World_Init(void) {
+void GS_Colosseum_Init(void) {
 	//Initialise Player
 	AEVec2 PlayerPos = { 12,-8 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
 	//Initialise map textures
-	std::ifstream mapInput{ "Assets/textureWorld.txt" };
+	std::ifstream mapInput{ "Assets/textureColosseum.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
@@ -273,8 +256,8 @@ void GS_World_Init(void) {
 	mapInput.close();
 
 	// Initialise map binary
-	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-	std::ifstream binInput{ "Assets/binaryWorld.txt" };
+	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryColosseum.txt");
+	std::ifstream binInput{ "Assets/binaryColosseum.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
 			binInput >> binaryMap[i][j];
@@ -303,12 +286,6 @@ void GS_World_Init(void) {
 
 	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
 
-	//Initialise Levers in level
-	for (int i = 0; i < 3; i++) {
-		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-		Levers[i]->TextureMap = { 2,11 };
-	}
-
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
 	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
@@ -317,34 +294,6 @@ void GS_World_Init(void) {
 	for (int i = 0; i < 2; i++) {
 		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 		enemy[i]->TextureMap = { 0,9 };
-	}
-
-
-	AEVec2 chestpos[1] = { {13,-8} };
-	Chest[0] = staticObjInstCreate(TYPE_ITEMS, 1, &chestpos[0], 0);
-	Chest[0]->TextureMap = { 5, 7 };
-
-	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
-	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
-	MenuObj[1] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[1], 0); // Keys
-	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
-	MenuObj[0]->TextureMap = { 6,9 };
-	MenuObj[1]->TextureMap = { 4,11 };
-	//MenuObj[2]->TextureMap = { , };
-
-	AEVec2 NumPos[3] = { {3,-2},{6,-2},{9,-2} };
-	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[0], 0); // Potions
-	NumObj[1] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[1], 0); // Keys
-	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
-	NumObj[0]->TextureMap = { 2,12 };
-	NumObj[1]->TextureMap = { 2,12 };
-	//NumObj[2]->TextureMap = { , };
-
-	AEVec2 potionpos[9] = { {15, -8}, {33,-14} , {44,-26}, {50,-6}, {64, -30}, {70,-11}, {84,-34}, {80,-14}, {106,-24} };
-	for (int i = 0; i < MAX_POTION; i++)
-	{
-		Potion[i] = staticObjInstCreate(TYPE_ITEMS, 1, &potionpos[i], 0);
-		Potion[i]->TextureMap = { 6,9 };
 	}
 
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
@@ -358,11 +307,11 @@ void GS_World_Init(void) {
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the World state.
+	the game loop runs for the Colosseum state.
 */
 /******************************************************************************/
 
-void GS_World_Update(void) {
+void GS_Colosseum_Update(void) {
 
 	// =====================================
 	// User Input
@@ -397,59 +346,6 @@ void GS_World_Update(void) {
 		Player->velCurr.x = 1;// this is direction , positive x direction
 		Player->scale = 1;
 	}
-
-	if (AEInputCheckTriggered(AEVK_E)) {
-
-		//Interaction with levers
-		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1) {
-				//Switch lever to face down
-				Levers[i]->TextureMap = { 3,11 };
-				Levers[i]->posCurr.x -= 0.2f;
-				//Remove gates: Change texture & Binary map
-				switch (i) {
-				case 0:
-					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15]->TextureMap = { 0,4 };
-						binaryMap[i][15] = 0;
-					}
-					break;
-				case 1:
-					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i]->TextureMap = { 0,4 };
-						binaryMap[81][i] = 0;
-					}
-					MapObjInstList[81][56]->TextureMap = { 2,4 };
-					break;
-					//WIP for 3rd gate
-				case 2:
-					break;
-				default:
-					break;
-				}
-			}
-		}
-
-		//Interaction with Chest
-		if (Player->calculateDistance(*Chest[0]) < 1)
-		{
-			//change texture of chest
-			Chest[0]->TextureMap = { 8, 7 };
-		}
-	}
-	for (int i = 0; i < MAX_POTION; i++)
-	{
-		if (Potion[i]->flag == 1)
-		{
-			if (Player->calculateDistance(*Potion[i]) < 1)
-			{			
-				Potion[i]->TextureMap = { 0, 4 };
-				staticObjInstDestroy(Potion[i]);
-				Backpack.Potion++;
-			}
-		}
-	}
-
 
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
@@ -500,14 +396,14 @@ void GS_World_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureWorld.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureColosseum.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryWorld.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryColosseum.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
-		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-		std::ifstream binInput{ "Assets/binaryWorld.txt" };
+		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryColosseum.txt");
+		std::ifstream binInput{ "Assets/binaryColosseum.txt" };
 		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
 				binInput >> binaryMap[j][i];
@@ -580,7 +476,7 @@ void GS_World_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
-	// Camera position, stops following character when at edge of world
+	// Camera position, stops following character when at edge of Colosseum
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
 		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
 		camX = Player->posCurr.x;
@@ -604,45 +500,6 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
-	switch (Backpack.Potion)
-	{
-	case 0:
-		NumObj[0]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[0]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[0]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	case 4:
-		NumObj[0]->TextureMap = { 8,11 };
-		break;
-	case 5:
-		NumObj[0]->TextureMap = { 9,11 };
-		break;
-	case 6:
-		NumObj[0]->TextureMap = { 10,11 };
-		break;
-	case 7:
-		NumObj[0]->TextureMap = { 11,11 };
-		break;
-	case 8:
-		NumObj[0]->TextureMap = { 0,12 };
-		break;
-	case 9:
-		NumObj[0]->TextureMap = { 1,12 };
-		break;
-	}
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -865,7 +722,7 @@ void GS_World_Update(void) {
 	during game loop.
 */
 /******************************************************************************/
-void GS_World_Draw(void) {
+void GS_Colosseum_Draw(void) {
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
@@ -918,8 +775,8 @@ void GS_World_Draw(void) {
 			AEGfxSetTransparency(1.0f);
 		}
 		// For any types using spritesheet
-		if (pInst->pObject->type == TYPE_HEALTH || pInst->pObject->type == TYPE_LEVERS
-			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject->type == TYPE_ITEMS)
+		if (pInst->pObject->type == TYPE_HEALTH ||
+			pInst->pObject->type == TYPE_LEVERS)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
@@ -1036,10 +893,10 @@ void GS_World_Draw(void) {
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the World level.
+	This function frees all the instances created for the Colosseum level.
 */
 /******************************************************************************/
-void GS_World_Free(void) {
+void GS_Colosseum_Free(void) {
 	// kill all object instances in the array using "gameObjInstDestroy"
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
@@ -1061,10 +918,10 @@ void GS_World_Free(void) {
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	World level.
+	Colosseum level.
 */
 /******************************************************************************/
-void GS_World_Unload(void) {
+void GS_Colosseum_Unload(void) {
 	// free all mesh data (shapes) of each object using "AEGfxTriFree"
 	for (unsigned int i = 0; i < sGameObjNum; i++) {
 		if ((sGameObjList + i)->refMesh == false)
