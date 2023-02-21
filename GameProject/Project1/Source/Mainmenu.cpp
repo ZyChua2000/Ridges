@@ -50,7 +50,7 @@ struct MenuObj
 struct MenuObjInst
 {
 	MenuObj* pObject;
-	unsigned long flag =0;
+	unsigned long flag=0 ;
 	float scale;
 	AEVec2 posCurr;
 	float	dirCurr;
@@ -58,7 +58,7 @@ struct MenuObjInst
 };
 
 static const unsigned int	MENU_OBJ_NUM_MAX = 8;
-static const unsigned int	MENU_OBJ_INST_NUM_MAX = 32;
+static const unsigned int	MENU_OBJ_INST_NUM_MAX = 12000;
 static const unsigned long	FLAG_ACTIVE = 0x00000001;
 
 
@@ -67,12 +67,18 @@ static unsigned long		sMenuObjNum;
 static MenuObjInst			sMenuObjInstList[MENU_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
 static unsigned long		sMenuObjInstNum;
 
-static MenuObjInst* mBack;
+static MenuObjInst* mBack1;
+static MenuObjInst* mBack2;
+static MenuObjInst* mBack3;
+static MenuObjInst* mBack4;
+static MenuObjInst* mBack5;
+static MenuObjInst* mBack6;
 
-//MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+
+
 static int animated = 1;
 
-//MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+
 
 
 static const float BackSize = 10;
@@ -92,6 +98,7 @@ void menuObjInstDestroy(MenuObjInst* pInst);
 */
 /******************************************************************************/
 void GS_MainMenu_Load(void) {
+	
 	font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 	//MenuObj* Play;
 
@@ -122,7 +129,9 @@ void GS_MainMenu_Load(void) {
     */
 
 	MenuObj* Background_1;
+	
 	Background_1= sMenuObjList + sMenuObjNum++;
+	Background_1->type = TYPE_BACK1;
 	AEGfxMeshStart();
 	AEGfxTriAdd(-80.f, 45.f, 0x00FF00, 0.f, 0.f,
 		-80.f, -45.f, 0x00FF00, 0.0f, 1.0f,
@@ -132,7 +141,7 @@ void GS_MainMenu_Load(void) {
 		-80.f, -45.f, 0x00FF00, 0.0f, 1.f,
 		80.f, 45.f, 0x00FF00, 1.f, 0.0f);
 	Background_1->pMesh = AEGfxMeshEnd();
-	Background_1->type = TYPE_BACK1;
+	
 	Background_1->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
 	Background_1->refMesh = true;
 	Background_1->refTexture = true;
@@ -142,45 +151,47 @@ void GS_MainMenu_Load(void) {
 
 	MenuObj* Background_2;
 	Background_2 = sMenuObjList + sMenuObjNum++;
-	Background_2->pMesh = Background_1->pMesh;
 	Background_2->type = TYPE_BACK2;
+	Background_2->pMesh = Background_1->pMesh;
 	Background_2->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
 	Background_2->refMesh = true;
 	Background_2->refTexture = true;
 
 	MenuObj* Background_3;
 	Background_3 = sMenuObjList + sMenuObjNum++;
-	Background_3->pMesh = Background_1->pMesh;
 	Background_3->type = TYPE_BACK3;
+	Background_3->pMesh = Background_1->pMesh;
 	Background_3->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback3.png");
 	Background_3->refMesh = true;
 	Background_3->refTexture = true;
 
 	MenuObj* Background_4;
+	
 	Background_4 = sMenuObjList + sMenuObjNum++;
-	Background_4->pMesh = Background_1->pMesh;
 	Background_4->type = TYPE_BACK4;
+	Background_4->pMesh = Background_1->pMesh;
 	Background_4->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback4.png");
 	Background_4->refMesh = true;
 	Background_4->refTexture = true;
 
 	MenuObj* Background_5;
 	Background_5 = sMenuObjList + sMenuObjNum++;
-	Background_5->pMesh = Background_1->pMesh;
 	Background_5->type = TYPE_BACK5;
+	Background_5->pMesh = Background_1->pMesh;
 	Background_5->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback5.png");
 	Background_5->refMesh = true;
 	Background_5->refTexture = true;
 
 	MenuObj* Background_6;
 	Background_6 = sMenuObjList + sMenuObjNum++;
-	Background_6->pMesh = Background_1->pMesh;
 	Background_6->type = TYPE_BACK6;
+	Background_6->pMesh = Background_1->pMesh;
 	Background_6->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback6.png");
 	Background_6->refMesh = true;
 	Background_6->refTexture = true;
 
-
+	printf("load\n");
+	
 	
 }
 
@@ -192,61 +203,12 @@ void GS_MainMenu_Load(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Init(void) {
+	printf("init\n");
 	AEGfxSetBackgroundColor(0, 0, 0);
-	
-	AEVec2 Backpos;
+	/*AEVec2 Backpos;
 	AEVec2Set(&Backpos, 0, 0);
-	switch (animated)
-	{
-	case 1:
-		
-		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-	case 2:
-		mBack = menuObjInstCreate(TYPE_BACK2, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-	case 3:
-		mBack = menuObjInstCreate(TYPE_BACK3, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-
-	case 4:
-		mBack = menuObjInstCreate(TYPE_BACK4, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-
-	case 5:
-		mBack = menuObjInstCreate(TYPE_BACK5, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-	case 6:
-		mBack = menuObjInstCreate(TYPE_BACK6, BackSize, &Backpos, 0.0f);
-		mBack= sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		
-
-	}
-
-	
-	
-		animated++;
-	
-	if(animated == 6)
-	{
-		animated = 1;
-	}
+	mBack1 = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
+	mBack1 = sMenuObjInstList + sMenuObjInstNum++;*/
 	
 	
 }
@@ -260,7 +222,7 @@ void GS_MainMenu_Init(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
-	
+	printf("update\n");
 	if (AEInputCheckTriggered(AEVK_3)) {
 		gGameStateNext = GS_MAZE;
 	}
@@ -294,7 +256,59 @@ void GS_MainMenu_Update(void) {
 		//gGameStateNext = GS_WORLD;
 	}
 	
+	
+	AEVec2 Backpos;
+	AEVec2Set(&Backpos, 0, 0);
+	
 
+	if (animated == 1) {
+
+		mBack1 = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
+		mBack1 = sMenuObjInstList + sMenuObjInstNum++;
+		
+		printf("1");
+	}
+
+	else if (animated == 2) {
+		mBack2 = menuObjInstCreate(TYPE_BACK2, BackSize, &Backpos, 0.0f);
+		mBack2 = sMenuObjInstList + sMenuObjInstNum++;
+		
+		printf("2");
+
+	}
+
+	else if (animated == 3) {
+		mBack3 = menuObjInstCreate(TYPE_BACK3, BackSize, &Backpos, 0.0f);
+		mBack3 = sMenuObjInstList + sMenuObjInstNum++;
+		
+		printf("3");
+	}
+
+
+	else if (animated == 4)
+	{
+		mBack4 = menuObjInstCreate(TYPE_BACK4, BackSize, &Backpos, 0.0f);
+		mBack4 = sMenuObjInstList + sMenuObjInstNum++;
+		
+		printf("4");
+	}
+
+
+	else if (animated == 5) {
+		mBack5 = menuObjInstCreate(TYPE_BACK5, BackSize, &Backpos, 0.0f);
+		mBack5 = sMenuObjInstList + sMenuObjInstNum++;
+		
+		printf("5");
+	}
+
+	else if (animated == 6) {
+		mBack6 = menuObjInstCreate(TYPE_BACK6, BackSize, &Backpos, 0.0f);
+		mBack6 = sMenuObjInstList + sMenuObjInstNum++;
+		
+		printf("6");
+	}
+	
+	
 
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
@@ -333,8 +347,10 @@ void GS_MainMenu_Update(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Draw(void) {
+
+
 	
-	
+	printf("draw\n");
 
 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -351,7 +367,7 @@ void GS_MainMenu_Draw(void) {
 		
 
 		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
+		if ((pInst->flag & FLAG_ACTIVE) == 0 || pInst==nullptr)
 			continue;
 
 		
@@ -365,7 +381,11 @@ void GS_MainMenu_Draw(void) {
 		
 	}
 	
-
+	animated++;
+	if (animated == 6)
+	{
+		animated = 1;
+	}
 	
 
 	//Exit/////////////////////////////////////////
@@ -396,11 +416,12 @@ void GS_MainMenu_Draw(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Free(void) {
-	
+	printf("free");
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
 		MenuObjInst* pInst = sMenuObjInstList + i;
 		menuObjInstDestroy(pInst);
+		
 	}
 	
 }
@@ -474,9 +495,8 @@ void menuObjInstDestroy(MenuObjInst* pInst)
 	// if instance is destroyed before, just return
 	if (pInst->flag == 0)
 		return;
-
 	
-	sMenuObjInstNum--; //Decrement the number of game object instance
+	//sMenuObjInstNum--; //Decrement the number of game object instance
 	// zero out the flag
 	pInst->flag = 0;
 }
