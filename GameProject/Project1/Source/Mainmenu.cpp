@@ -367,7 +367,7 @@ void GS_MainMenu_Draw(void) {
 		
 
 		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0 || pInst==nullptr)
+		if ((pInst->flag & FLAG_ACTIVE) == 0 )
 			continue;
 
 		
