@@ -7,8 +7,8 @@ struct GameObj
 	unsigned long	type;		// object type
 	AEGfxVertexList* pMesh;		// This will hold the triangles which will form the shape of the object
 	AEGfxTexture* pTexture;		// This holds a pointer to the texture that is being used
-	bool refMesh = 0;			// True if Mesh is referencing another object's mesh, else false by default
-	bool refTexture = 0;		// True if texture is referencing another object's texture, else false by default
+	bool refMesh;			// True if Mesh is referencing another object's mesh, else false by default
+	bool refTexture;		// True if texture is referencing another object's texture, else false by default
 };
 
 // This struct holds the max and min of the axis of an object for collision purpose
