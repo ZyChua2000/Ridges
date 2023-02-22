@@ -31,9 +31,9 @@ static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS;							// The total number of mobs
-static const unsigned int	MAX_CHESTS = 1;							// The total number of chests
+static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_POTION = 9;					// The total number of potion
+static const unsigned int	MAX_POTION;							// The total number of potion
 static const unsigned int	MAX_KEYS = 3;						// The total number of keys
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
@@ -88,7 +88,7 @@ static staticObjInst* Levers[3];										// Pointer to each enemy object instan
 static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
 static staticObjInst* NumObj[3];
 static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Potion[MAX_POTION];
+static staticObjInst* Potion;
 static staticObjInst* Key[MAX_KEYS];
 static GameObjInst* enemy[2];
 static Inventory Backpack;
@@ -236,6 +236,14 @@ void GS_World_Load(void) {
 	Chest->refMesh = true;
 	Chest->refTexture = true;
 
+	GameObj* Key;
+	Key = sGameObjList + sGameObjNum++;
+	Key->pMesh = Character->pMesh;
+	Key->pTexture = Character->pTexture;
+	Key->type = TYPE_KEY;
+	Key->refMesh = true;
+	Key->refTexture = true;
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
@@ -321,12 +329,12 @@ void GS_World_Init(void) {
 
 
 	AEVec2 chestpos[1] = { {13,-8} };
-	Chest[0] = staticObjInstCreate(TYPE_ITEMS, 1, &chestpos[0], 0);
+	Chest[0] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[0], 0);
 	Chest[0]->TextureMap = { 5, 7 };
 
 	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
-	MenuObj[1] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[1], 0); // Keys
+	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
 	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
 	MenuObj[0]->TextureMap = { 6,9 };
 	MenuObj[1]->TextureMap = { 4,11 };
@@ -334,18 +342,29 @@ void GS_World_Init(void) {
 
 	AEVec2 NumPos[3] = { {3,-2},{6,-2},{9,-2} };
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[0], 0); // Potions
-	NumObj[1] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[1], 0); // Keys
+	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, &NumPos[1], 0); // Keys
 	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
 	NumObj[0]->TextureMap = { 2,12 };
 	NumObj[1]->TextureMap = { 2,12 };
 	//NumObj[2]->TextureMap = { , };
 
-	AEVec2 potionpos[9] = { {15, -8}, {33,-14} , {44,-26}, {50,-6}, {64, -30}, {70,-11}, {84,-34}, {80,-14}, {106,-24} };
-	for (int i = 0; i < MAX_POTION; i++)
+	AEVec2 keypos = { 28,-14 };
+	Key[0] = staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
+	Key[0]->TextureMap = { 4,11 };
+
+	AEVec2 potionpos = { 15,-8 };
+	staticObjInstCreate(TYPE_ITEMS, 1, &potionpos, 0);
+	for (int i = 0; i < sStaticObjInstNum; i++)
 	{
-		Potion[i] = staticObjInstCreate(TYPE_ITEMS, 1, &potionpos[i], 0);
-		Potion[i]->TextureMap = { 6,9 };
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_ITEMS)
+		{
+			pInst->TextureMap = { 6,9 };
+		}
 	}
+
+
+
 
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
@@ -430,6 +449,15 @@ void GS_World_Update(void) {
 			}
 		}
 
+		//Interaction with key
+		if (Player->calculateDistance(*Key[0]) < 1)
+		{
+			//change texture of key to background
+			Key[0]->TextureMap = { 0, 4 };
+			Backpack.Key++;
+		}
+		
+		
 		//Interaction with Chest
 		if (Player->calculateDistance(*Chest[0]) < 1)
 		{
@@ -437,16 +465,18 @@ void GS_World_Update(void) {
 			Chest[0]->TextureMap = { 8, 7 };
 		}
 	}
-	for (int i = 0; i < MAX_POTION; i++)
+
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
-		if (Potion[i]->flag == 1)
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS) 
 		{
-			if (Player->calculateDistance(*Potion[i]) < 1)
-			{			
-				Potion[i]->TextureMap = { 0, 4 };
-				staticObjInstDestroy(Potion[i]);
-				Backpack.Potion++;
-			}
+			continue;
+		}
+		if (Player->calculateDistance(*pInst) < 1)
+		{
+			staticObjInstDestroy(pInst);
+			Backpack.Potion++;
 		}
 	}
 
@@ -638,6 +668,22 @@ void GS_World_Update(void) {
 		break;
 	}
 
+	switch (Backpack.Key)
+	{
+	case 0:
+		NumObj[1]->TextureMap = { 2,12 };
+		break;
+	case 1:
+		NumObj[1]->TextureMap = { 5,11 };
+		break;
+	case 2:
+		NumObj[1]->TextureMap = { 6,11 };
+		break;
+	case 3:
+		NumObj[0]->TextureMap = { 7,11 };
+		break;
+	}
+
 	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
 	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
 
@@ -661,6 +707,7 @@ void GS_World_Update(void) {
 			Health[0]->TextureMap = { 0, 11 };
 			break;
 		}
+		Backpack.Potion--;
 	}
 
 	//if player receive damage from collision or from mob, player decrease health
@@ -919,7 +966,8 @@ void GS_World_Draw(void) {
 		}
 		// For any types using spritesheet
 		if (pInst->pObject->type == TYPE_HEALTH || pInst->pObject->type == TYPE_LEVERS
-			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject->type == TYPE_ITEMS)
+			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject->type == TYPE_ITEMS
+			|| pInst->pObject->type == TYPE_KEY)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
