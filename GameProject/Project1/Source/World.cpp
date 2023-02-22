@@ -263,7 +263,7 @@ void GS_World_Init(void) {
 	std::ifstream binInput{ "Assets/binaryWorld.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-			binInput >> binaryMap[i][j];
+			binInput >> binaryMap[j][i];
 		}
 	}
 	binInput.close();
@@ -307,7 +307,7 @@ void GS_World_Init(void) {
 
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
-	binaryPlayerPos = { 32,-89 };
+	binaryPlayerPos = {12,8};
 	
 }
 
@@ -612,14 +612,19 @@ void GS_World_Update(void) {
 				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
 			}
 			//invert movement for binary map
-			if (pInst->velCurr.x != 0)
+			/*if (pInst->velCurr.x != 0)
 			{
 				binaryPlayerPos.y += pInst->velCurr.x * g_dt;
 			}
 			if (pInst->velCurr.y != 0)
 			{
 				binaryPlayerPos.x -= pInst->velCurr.y * g_dt;
-			}
+			}*/
+
+			binaryPlayerPos.x += pInst->velCurr.x * g_dt;
+			binaryPlayerPos.y -= pInst->velCurr.y * g_dt;
+
+
 			if (pInst->pObject->type == TYPE_NPCS) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
@@ -765,7 +770,48 @@ void GS_World_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
+	//binaryMap2 = binaryMap;
+
+	int flag = CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f, binaryMap);
+
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+		snaptocelladd(&binaryPlayerPos.y);
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
+	}
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+		snaptocelladd(&binaryPlayerPos.y);
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+		snaptocelladd(&binaryPlayerPos.x);
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+		snaptocelladd(&binaryPlayerPos.x);
+		//Player->posCurr.x - 0.5;
+	}
+
+
+
+
+
+
 
 	if (AEInputCheckTriggered(AEVK_F)) {
 		static int test = 2;
@@ -780,6 +826,8 @@ void GS_World_Update(void) {
 		testfile.close();
 	}
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
+
+
 
 }
 
