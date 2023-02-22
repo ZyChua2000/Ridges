@@ -24,6 +24,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
+static saveData				data;
 static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
@@ -46,7 +47,14 @@ static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
+
+bool loadState;
 // -----------------------------------------------------------------------------
+
+
+void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax);
+
+void loadData(saveData data);
 
 
 // -----------------------------------------------------------------------------
@@ -74,7 +82,7 @@ static unsigned long		sGameObjInstNum;							// The number of used dynamic game 
 static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
 static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
-static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
+static staticObjInst*		MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
@@ -258,12 +266,11 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
-	//Initialise Player
-	AEVec2 PlayerPos = { 12,-8 };
-	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-	Player->TextureMap = { 1,8 };
 
-	//Initialise map textures
+	// =====================================
+	//	Initialize map textures
+	// =====================================
+
 	std::ifstream mapInput{ "Assets/textureWorld.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -280,7 +287,10 @@ void GS_World_Init(void) {
 	}
 	mapInput.close();
 
-	// Initialise map binary
+	// =====================================
+	//	Initialize map binary
+	// =====================================
+
 	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 	std::ifstream binInput{ "Assets/binaryWorld.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
@@ -290,7 +300,9 @@ void GS_World_Init(void) {
 	}
 	binInput.close();
 
-	// Initialise reference objects for mesh editor
+	// =====================================
+	//	Initialize map editor references
+	// =====================================
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
@@ -302,36 +314,84 @@ void GS_World_Init(void) {
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
-	//Initialise player health. Printing of hearts.
-	Player->health = 3;
-	for (int i = 0; i < Player->health; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		Health[i]->TextureMap = { 0,11 };
+	// =====================================
+	//	Initialize objects for new game
+	// =====================================
+	if (loadState == false) {
+		//Initialise Player
+		AEVec2 PlayerPos = { 12,-8 };
+		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
+		Player->TextureMap = { 1,8 };
+
+		Player->health = 3;
+
+		//Initialise player health.
+		for (int i = 0; i < Player->health; i++) {
+			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+			Health[i]->TextureMap = { 0,11 };
+		}
+
+		//Initialise Levers in level
+		AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
+		for (int i = 0; i < 3; i++) {
+			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
+			Levers[i]->TextureMap = { 2,11 };
+		}
+
+		//Initialise enemy in level
+		AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
+		for (int i = 0; i < 2; i++) {
+			enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+			enemy[i]->TextureMap = { 0,9 };
+		}
+
+		//Initialise chest in level
+		AEVec2 chestpos[1] = { {13,-8} };
+		Chest[0] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[0], 0);
+		Chest[0]->TextureMap = { 5, 7 };
 	}
 
-	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
+	// =====================================
+	//	Initialize objects for loaded game game
+	// =====================================
+	if (loadState == true) {
+		loadData(data);
 
-	//Initialise Levers in level
-	for (int i = 0; i < 3; i++) {
-		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-		Levers[i]->TextureMap = { 2,11 };
+		// Changing fence textures & binary collision depending on
+		// lever texture
+		for (int i = 0; i < 3; i++) {
+			if (Levers[i]->TextureMap.x == 3) {
+				//Remove gates: Change texture & Binary map
+				switch (i) {
+				case 0:
+					for (int i = 17; i < 22; i++) {
+						MapObjInstList[i][15]->TextureMap = { 0,4 };
+						binaryMap[i][15] = 0;
+					}
+					break;
+				case 1:
+					for (int i = 32; i < 35; i++) {
+						MapObjInstList[81][i]->TextureMap = { 0,4 };
+						binaryMap[81][i] = 0;
+					}
+					MapObjInstList[81][56]->TextureMap = { 2,4 };
+					break;
+					//WIP for 3rd gate
+				case 2:
+					break;
+				default:
+					break;
+				}
+			}
+		}
 	}
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
-	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
 
-	//Initialise enemy in level
-	for (int i = 0; i < 2; i++) {
-		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-		enemy[i]->TextureMap = { 0,9 };
-	}
-
-
-	AEVec2 chestpos[1] = { {13,-8} };
-	Chest[0] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[0], 0);
-	Chest[0]->TextureMap = { 5, 7 };
-
+	// =====================================
+	//	Initialize UI objects
+	// =====================================
 	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
@@ -348,6 +408,9 @@ void GS_World_Init(void) {
 	NumObj[1]->TextureMap = { 2,12 };
 	//NumObj[2]->TextureMap = { , };
 
+	// =====================================
+	//	Other items
+	// =====================================
 	AEVec2 keypos = { 28,-14 };
 	Key[0] = staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
 	Key[0]->TextureMap = { 4,11 };
@@ -362,9 +425,6 @@ void GS_World_Init(void) {
 			pInst->TextureMap = { 6,9 };
 		}
 	}
-
-
-
 
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
@@ -395,6 +455,9 @@ void GS_World_Update(void) {
 		mapeditor ^= 1;
 	}
 
+	if (AEInputCheckTriggered(AEVK_N)) {
+		saveGame(data,sGameObjInstList,sStaticObjInstList,GAME_OBJ_INST_NUM_MAX,STATIC_OBJ_INST_NUM_MAX);
+	}
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
@@ -421,7 +484,7 @@ void GS_World_Update(void) {
 
 		//Interaction with levers
 		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1) {
+			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x!= 3) {
 				//Switch lever to face down
 				Levers[i]->TextureMap = { 3,11 };
 				Levers[i]->posCurr.x -= 0.2f;
@@ -1311,4 +1374,183 @@ static void staticObjInstDestroy(staticObjInst* pInst)
 //	}
 //	return Flag;
 //}
+
+void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax) {
+	// Put data into struct
+	for (int i = 0; i < gameObjMax; i++) {
+		GameObjInst* pInst = gameObjList + i;
+
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			data.playerHealth = pInst->health;
+			data.playerPosition = pInst->posCurr;
+		}
+
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			data.mobsNum++;
+		}
+	}
+
+	for (int i = 0; i < staticObjMax; i++) {
+		staticObjInst* pInst = staticObjList + i;
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHEST) {
+			data.chestNum++;
+		}
+
+		if (pInst->pObject->type == TYPE_LEVERS) {
+			data.leverNum++;
+		}
+	}
+	GameObjInst* Mobs = new GameObjInst[data.mobsNum];
+	staticObjInst* Chests = new staticObjInst[data.chestNum];
+	staticObjInst* Levers = new staticObjInst[data.leverNum];
+
+	int k = 0, j = 0;
+	for (int i = 0; i < gameObjMax; i++) {
+		GameObjInst* pInst = gameObjList + i;
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			Mobs[k].health = pInst->health;
+			Mobs[k].posCurr = pInst->posCurr;
+			k++;
+		}
+	}
+
+	k = 0;
+
+	for (int i = 0; i < staticObjMax; i++) {
+		staticObjInst* pInst = staticObjList + i;
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHEST) {
+			Chests[k].posCurr = pInst->posCurr;
+			Chests[k].TextureMap = pInst->TextureMap;
+			k++;
+		}
+
+		if (pInst->pObject->type == TYPE_LEVERS) {
+			Levers[j].posCurr = pInst->posCurr;
+			Levers[j].TextureMap = pInst->TextureMap;
+			j++;
+		}
+	}
+
+	std::ofstream saveText{ "Assets/save.txt" };
+
+	saveText << data.playerHealth << std::endl;
+	saveText << data.playerPosition.x << std::endl;
+	saveText << data.playerPosition.y << std::endl;
+	saveText << Backpack.Key << std::endl;
+	saveText << Backpack.Potion << std::endl;
+
+	saveText << data.mobsNum << std::endl;
+	if (data.mobsNum != 0) {
+		for (int i = 0; i < data.mobsNum; i++) {
+			saveText << Mobs[i].posCurr.x << std::endl;
+			saveText << Mobs[i].posCurr.y << std::endl;
+			saveText << Mobs[i].health << std::endl;
+		}
+	}
+
+	saveText <<data.chestNum << std::endl;
+	if (data.chestNum != 0) {
+		for (int i = 0; i < data.chestNum; i++) {
+			saveText << Chests[i].posCurr.x << std::endl;
+			saveText << Chests[i].posCurr.y << std::endl;
+			saveText << Chests[i].TextureMap.x << std::endl;
+			saveText << Chests[i].TextureMap.y << std::endl;
+		}
+	}
+
+	saveText << data.leverNum << std::endl;
+	if (data.leverNum != 0) {
+		for (int i = 0; i < data.leverNum; i++) {
+			saveText << Levers[i].posCurr.x << std::endl;
+			saveText << Levers[i].posCurr.y << std::endl;
+			saveText << Levers[i].TextureMap.x << std::endl;
+			saveText << Levers[i].TextureMap.y << std::endl;
+		}
+	}
+
+	//for (int i = 0; i < 4; i++) {
+	//	saveText << data.puzzleCompleted[i] << std::endl;
+	//}
+
+	//saveText << data.elapsedTime << std::endl;
+
+	delete[] Mobs;
+	delete[] Chests;
+	delete[] Levers;
+}
+
+void loadData(saveData data) {
+	std::ifstream saveText{ "Assets/save.txt" };
+
+	saveText >> data.playerHealth;
+	saveText >> data.playerPosition.x;
+	saveText >> data.playerPosition.y;
+	saveText >> Backpack.Key;
+	saveText >> Backpack.Potion;
+
+	AEVec2 PlayerPos = { data.playerPosition.x,data.playerPosition.y};
+	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
+	Player->TextureMap = { 1,8 };
+
+
+	Player->health = data.playerHealth;
+
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		Health[i]->TextureMap = { 0,11 };
+	}
+
+	saveText >> data.mobsNum;
+	for (int i = 0; i < data.mobsNum; i++) {
+		//Create mob objs
+		AEVec2 pos = { 0,0 };
+		saveText >> pos.x;
+		saveText >> pos.y;
+		GameObjInst* pInst = gameObjInstCreate(TYPE_ENEMY, 1, &pos, nullptr, 0);
+		saveText >> pInst->health;
+	}
+
+	saveText >> data.chestNum;
+	for (int i = 0; i < data.chestNum; i++) {
+		AEVec2 pos = { 0,0 };
+		AEVec2 tex = { 0,0 };
+		saveText >> pos.x;
+		saveText >> pos.y;
+		saveText >> tex.x;
+		saveText >> tex.y;
+		Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos, 0);
+		Chest[i]->TextureMap = tex;
+	}
+
+	saveText >> data.leverNum;
+	for (int i = 0; i < data.leverNum; i++) {
+		AEVec2 pos = { 0,0 };
+		AEVec2 tex = { 0,0 };
+		saveText >> pos.x;
+		saveText >> pos.y;
+		saveText >> tex.x;
+		saveText >> tex.y;
+		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos, 0);
+		Levers[i]->TextureMap = tex;
+	}
+
+	//for (int i = 0; i < 4; i++) {
+		//saveText >> data.puzzleCompleted[i];
+	//}
+
+	//saveText >> data.elapsedTime;
+}
+
 

@@ -164,6 +164,7 @@ void GS_MainMenu_Update(void) {
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
 		if (utilities::rectbuttonClicked_AlignCtr(800.f, 300.f, 105.f, 35.f) == 1)
 		{
+			loadState = false;
 			gGameStateNext = GS_WORLD;
 		}
 
