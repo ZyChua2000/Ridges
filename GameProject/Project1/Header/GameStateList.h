@@ -26,8 +26,9 @@ enum
 	// list of all game states 
 	GS_MAINMENU = 0,
 	GS_WORLD,
-	GS_WORLD2,
 	GS_BOSSLEVEL,
+	GS_MAZE,
+	GS_COLOSSEUM,
 	
 	// special game state.
 	GS_RESTART,

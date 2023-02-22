@@ -1,10 +1,10 @@
-/******************************************************************************/
+﻿/******************************************************************************/
 /*!
-\file		World.h
+\file		Maze.h
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
-\date   	February 02, 2023
-\brief		This header file contains the functions for the level of World.
+\date   	February 21, 2023
+\brief		This header file contains the functions for the level of Maze.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
@@ -12,38 +12,38 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 
-extern bool loadState;
+
 
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the World level.
+	This function loads all necessary assets for the Maze level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc�c
 */
 /******************************************************************************/
-void GS_World_Load(void);
+void GS_Maze_Load(void);
 
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the World state. It should
+	This function initialises all the values of the Maze state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
-void GS_World_Init(void);
+void GS_Maze_Init(void);
 
 
 /******************************************************************************/
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the World state.
+	the game loop runs for the Maze state.
 */
 /******************************************************************************/
-void GS_World_Update(void);
+void GS_Maze_Update(void);
 
 /******************************************************************************/
 /*!
@@ -52,24 +52,24 @@ void GS_World_Update(void);
 	during game loop.
 */
 /******************************************************************************/
-void GS_World_Draw(void);
+void GS_Maze_Draw(void);
 
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the World level.
+	This function frees all the instances created for the Maze level.
 */
 /******************************************************************************/
-void GS_World_Free(void);
+void GS_Maze_Free(void);
 
 /******************************************************************************/
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	World level.
+	Maze level.
 */
 /******************************************************************************/
-void GS_World_Unload(void);
+void GS_Maze_Unload(void);
 
 // ---------------------------------------------------------------------------
 

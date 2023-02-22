@@ -3,10 +3,6 @@
 #include "Globals.h"
 #include <string>
 
-extern const unsigned int MAX_MOBS;
-extern const unsigned int MAX_CHESTS;
-extern const unsigned int MAX_LEVERS;
-
 
 // functions to create/destroy a game object instance
 GameObjInst* gameObjInstCreate(unsigned long type, float scale,
@@ -20,25 +16,27 @@ staticObjInst* staticObjInstCreate(unsigned long type, float scale,
 
 void			staticObjInstDestroy(staticObjInst* pInst);
 
+enum {
+	notActivated,
+	Activated
+};
+
 
 struct saveData {
-	int playerHealth;
-	AEVec2 playerPosition;
-	int playerItems;
+	int playerHealth = 0;
+	AEVec2 playerPosition = { 0,0 };
+	//int playerItems;
 
 	// Array of mobs
-	int mobsLife;
-	AEVec2 mobPosition;
+	int mobsNum = 0;
 
-	// Array of chests
-	bool chestOpened;
+	int chestNum = 0;
 
-	// Array of levers
-	bool leverOpened;
+	int leverNum = 0;
 
-	int puzzleCompleted[4];
+	//int puzzleCompleted[4];
 
-	float elapsedTime;
+	//float elapsedTime;
 };
 
 namespace utilities {
@@ -172,8 +170,4 @@ namespace utilities {
 		Filename to import texture from.
 	*************************************************************************/
 	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
-
-	void saveGame(saveData data);
-
-	void loadData(saveData data);
 }

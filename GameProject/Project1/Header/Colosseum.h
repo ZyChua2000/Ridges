@@ -1,10 +1,10 @@
-/******************************************************************************/
+﻿/******************************************************************************/
 /*!
-\file		World.h
+\file		Colosseum.h
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
-\date   	February 02, 2023
-\brief		This header file contains the functions for the level of World.
+\date   	February 21, 2023
+\brief		This header file contains the functions for the level of Colosseum.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
@@ -12,38 +12,38 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 
-extern bool loadState;
+
 
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the World level.
+	This function loads all necessary assets for the Colosseum level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc�c
 */
 /******************************************************************************/
-void GS_World_Load(void);
+void GS_Colosseum_Load(void);
 
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the World state. It should
+	This function initialises all the values of the Colosseum state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
-void GS_World_Init(void);
+void GS_Colosseum_Init(void);
 
 
 /******************************************************************************/
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the World state.
+	the game loop runs for the Colosseum state.
 */
 /******************************************************************************/
-void GS_World_Update(void);
+void GS_Colosseum_Update(void);
 
 /******************************************************************************/
 /*!
@@ -52,24 +52,24 @@ void GS_World_Update(void);
 	during game loop.
 */
 /******************************************************************************/
-void GS_World_Draw(void);
+void GS_Colosseum_Draw(void);
 
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the World level.
+	This function frees all the instances created for the Colosseum level.
 */
 /******************************************************************************/
-void GS_World_Free(void);
+void GS_Colosseum_Free(void);
 
 /******************************************************************************/
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	World level.
+	Colosseum level.
 */
 /******************************************************************************/
-void GS_World_Unload(void);
+void GS_Colosseum_Unload(void);
 
 // ---------------------------------------------------------------------------
 
