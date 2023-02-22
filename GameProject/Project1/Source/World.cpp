@@ -740,6 +740,7 @@ void GS_World_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
+
 }
 
 /******************************************************************************/
@@ -840,7 +841,9 @@ void GS_World_Draw(void) {
 		}
 
 		else if (pInst->pObject->type == TYPE_ENEMY) {
-			std::cout << " ghost is spawnned near cam" << std::endl;
+
+			
+			//std::cout << " ghost is spawnned near cam" << std::endl;
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);

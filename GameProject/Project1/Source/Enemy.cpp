@@ -1,9 +1,8 @@
 #include "AEEngine.h"
 #include "Enemy.h"
 
+
 // for enemy 
-
-
 // FOR FUTURE USE MAYBE ???
 //void enemy_Init()
 //{
@@ -20,5 +19,10 @@
 //
 //void enemy_draw()
 //{
+
+Node *parent = nullptr;
+
+
+
 
 
