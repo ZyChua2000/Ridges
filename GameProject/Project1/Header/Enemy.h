@@ -28,7 +28,7 @@
 struct Node 
 {
 	bool b_Obstacle = false;
-	bool b_Visited = false;
+	bool b_Closed = false;
 	float f_DistLeft;
 	float f_AltDist;
 	AEVec2 ae_NodePos;
@@ -36,4 +36,4 @@ struct Node
 	Node* parent;
 };
 
-void NodesInit(int** grid, Node node );
+void NodesInit(int** grid , Node node );
