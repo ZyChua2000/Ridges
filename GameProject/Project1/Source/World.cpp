@@ -35,7 +35,7 @@ static const unsigned int	MAX_MOBS;							// The total number of mobs
 static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_POTION;							// The total number of potion
-static const unsigned int	MAX_KEYS = 3;						// The total number of keys
+static const unsigned int	MAX_KEYS;						// The total number of keys
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
@@ -97,7 +97,7 @@ static staticObjInst* MenuObj[3];										// Pointer to each enemy object insta
 static staticObjInst* NumObj[3];
 static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* Potion;
-static staticObjInst* Key[MAX_KEYS];
+static staticObjInst* Key;
 static GameObjInst* enemy[2];
 static Inventory Backpack;
 
@@ -408,13 +408,6 @@ void GS_World_Init(void) {
 	NumObj[1]->TextureMap = { 2,12 };
 	//NumObj[2]->TextureMap = { , };
 
-	// =====================================
-	//	Other items
-	// =====================================
-	AEVec2 keypos = { 28,-14 };
-	Key[0] = staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
-	Key[0]->TextureMap = { 4,11 };
-
 	AEVec2 potionpos = { 15,-8 };
 	staticObjInstCreate(TYPE_ITEMS, 1, &potionpos, 0);
 	for (int i = 0; i < sStaticObjInstNum; i++)
@@ -425,6 +418,18 @@ void GS_World_Init(void) {
 			pInst->TextureMap = { 6,9 };
 		}
 	}
+
+	AEVec2 keypos = { 28,-14 };
+	staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
+	for (int i = 0; i < sStaticObjInstNum; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_KEY)
+		{
+			pInst->TextureMap = { 4,11 };
+		}
+	}
+
 
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
@@ -512,20 +517,26 @@ void GS_World_Update(void) {
 			}
 		}
 
-		//Interaction with key
-		if (Player->calculateDistance(*Key[0]) < 1)
-		{
-			//change texture of key to background
-			Key[0]->TextureMap = { 0, 4 };
-			Backpack.Key++;
-		}
-		
-		
 		//Interaction with Chest
 		if (Player->calculateDistance(*Chest[0]) < 1)
 		{
 			//change texture of chest
 			Chest[0]->TextureMap = { 8, 7 };
+		}
+	}
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_KEY)
+		{
+			continue;
+		}
+		//Interaction with key
+		if (Player->calculateDistance(*pInst) < 1)
+		{
+			//remove texture of key
+			staticObjInstDestroy(pInst);
+			Backpack.Key++;
 		}
 	}
 

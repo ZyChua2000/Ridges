@@ -234,7 +234,7 @@ void GS_Colosseum_Load(void) {
 /******************************************************************************/
 void GS_Colosseum_Init(void) {
 	//Initialise Player
-	AEVec2 PlayerPos = { 12,-8 };
+	AEVec2 PlayerPos = { 14,-16 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = { 1,8 };
 
