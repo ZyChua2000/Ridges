@@ -197,7 +197,6 @@ void GS_MainMenu_Update(void) {
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
 		if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 		{
-			loadState = false;
 			gGameStateNext = GS_WORLD;
 		}
 
