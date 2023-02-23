@@ -22,11 +22,7 @@ static int debugstate = 0;
 
 enum TYPE_BUTTON
 {
-	TYPE_PLAY = 0,
-	TYPE_EXIT,
-	TYPE_CREDIT,
-	TYPE_INSTR,
-	TYPE_BACK1,
+	TYPE_BACK1=0,
 	TYPE_BACK2,
 	TYPE_BACK3,
 	TYPE_BACK4,
@@ -68,9 +64,10 @@ static MenuObjInst			sMenuObjInstList[MENU_OBJ_INST_NUM_MAX];	// Each element in
 static unsigned long		sMenuObjInstNum;
 
 static MenuObjInst* mBack;
+static AEGfxTexture* animationBG[6];
 
 //MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
-static int animated = 1;
+static float animated = 1;
 
 //MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 
@@ -121,6 +118,13 @@ void GS_MainMenu_Load(void) {
 	Exit->refTexture = true;
     */
 
+	animationBG[0] = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
+	animationBG[1] = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
+	animationBG[2] = AEGfxTextureLoad("Assets/MainMenu/Mainback3.png");
+	animationBG[3] = AEGfxTextureLoad("Assets/MainMenu/Mainback4.png");
+	animationBG[4] = AEGfxTextureLoad("Assets/MainMenu/Mainback5.png");
+	animationBG[5] = AEGfxTextureLoad("Assets/MainMenu/Mainback6.png");
+
 	MenuObj* Background_1;
 	Background_1= sMenuObjList + sMenuObjNum++;
 	AEGfxMeshStart();
@@ -134,54 +138,7 @@ void GS_MainMenu_Load(void) {
 	Background_1->pMesh = AEGfxMeshEnd();
 	Background_1->type = TYPE_BACK1;
 	Background_1->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
-	Background_1->refMesh = true;
-	Background_1->refTexture = true;
-	
-	
-	
-
-	MenuObj* Background_2;
-	Background_2 = sMenuObjList + sMenuObjNum++;
-	Background_2->pMesh = Background_1->pMesh;
-	Background_2->type = TYPE_BACK2;
-	Background_2->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
-	Background_2->refMesh = true;
-	Background_2->refTexture = true;
-
-	MenuObj* Background_3;
-	Background_3 = sMenuObjList + sMenuObjNum++;
-	Background_3->pMesh = Background_1->pMesh;
-	Background_3->type = TYPE_BACK3;
-	Background_3->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback3.png");
-	Background_3->refMesh = true;
-	Background_3->refTexture = true;
-
-	MenuObj* Background_4;
-	Background_4 = sMenuObjList + sMenuObjNum++;
-	Background_4->pMesh = Background_1->pMesh;
-	Background_4->type = TYPE_BACK4;
-	Background_4->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback4.png");
-	Background_4->refMesh = true;
-	Background_4->refTexture = true;
-
-	MenuObj* Background_5;
-	Background_5 = sMenuObjList + sMenuObjNum++;
-	Background_5->pMesh = Background_1->pMesh;
-	Background_5->type = TYPE_BACK5;
-	Background_5->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback5.png");
-	Background_5->refMesh = true;
-	Background_5->refTexture = true;
-
-	MenuObj* Background_6;
-	Background_6 = sMenuObjList + sMenuObjNum++;
-	Background_6->pMesh = Background_1->pMesh;
-	Background_6->type = TYPE_BACK6;
-	Background_6->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback6.png");
-	Background_6->refMesh = true;
-	Background_6->refTexture = true;
-
-
-	
+	Background_1->refTexture = false;
 }
 
 /******************************************************************************/
@@ -196,59 +153,9 @@ void GS_MainMenu_Init(void) {
 	
 	AEVec2 Backpos;
 	AEVec2Set(&Backpos, 0, 0);
-	switch (animated)
-	{
-	case 1:
-		
+
 		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
 
-	case 2:
-		mBack = menuObjInstCreate(TYPE_BACK2, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-	case 3:
-		mBack = menuObjInstCreate(TYPE_BACK3, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-
-	case 4:
-		mBack = menuObjInstCreate(TYPE_BACK4, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-
-	case 5:
-		mBack = menuObjInstCreate(TYPE_BACK5, BackSize, &Backpos, 0.0f);
-		mBack = sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		break;
-
-	case 6:
-		mBack = menuObjInstCreate(TYPE_BACK6, BackSize, &Backpos, 0.0f);
-		mBack= sMenuObjInstList + sMenuObjInstNum++;
-		printf("%d", animated);
-		
-
-	}
-
-	
-	
-		animated++;
-	
-	if(animated == 6)
-	{
-		animated = 1;
-	}
-	
-	
 }
 
 
@@ -261,6 +168,12 @@ void GS_MainMenu_Init(void) {
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
 	
+	animated += g_dt;
+	std::cout << animated;
+
+	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
+
+
 	if (AEInputCheckTriggered(AEVK_3)) {
 		gGameStateNext = GS_MAZE;
 	}
