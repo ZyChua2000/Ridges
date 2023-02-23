@@ -466,24 +466,35 @@ void GS_World_Update(void) {
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
+	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
+		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
+		Player->TextureMap = { 1,8 };
+	}
+
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
 		Player->velCurr.y = 1;// this is direction , positive y direction
+		Player->walk();
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
 		Player->velCurr.y = -1;// this is direction , negative y direction
+		Player->walk();
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
 		Player->velCurr.x = -1;// this is direction , negative x direction
 		Player->scale = -1;
+		Player->walk();
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
 		Player->velCurr.x = 1;// this is direction , positive x direction
 		Player->scale = 1;
+		Player->walk();
 	}
+
+
 
 	if (AEInputCheckTriggered(AEVK_E)) {
 
@@ -516,6 +527,7 @@ void GS_World_Update(void) {
 				}
 			}
 		}
+
 
 		//Interaction with Chest
 		if (Player->calculateDistance(*Chest[0]) < 1)
@@ -707,6 +719,8 @@ void GS_World_Update(void) {
 		slashObj->timetracker = 0;
 		SLASH_ACTIVATE = false;
 	}
+
+	Player->timetracker += g_dt;
 
 	switch (Backpack.Potion)
 	{
