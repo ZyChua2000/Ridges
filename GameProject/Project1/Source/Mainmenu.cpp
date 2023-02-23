@@ -22,14 +22,18 @@ static int debugstate = 0;
 
 enum TYPE_BUTTON
 {
-	TYPE_PLAY = 0,
-	TYPE_EXIT,
-	TYPE_CREDIT,
-	TYPE_INSTR,
+	TYPE_BACK1=0,
+	TYPE_BACK2,
+	TYPE_BACK3,
+	TYPE_BACK4,
+	TYPE_BACK5,
+	TYPE_BACK6,
+	
+
+
 
 	
 };
-
 struct MenuObj
 {
 	unsigned long type;
@@ -42,7 +46,7 @@ struct MenuObj
 struct MenuObjInst
 {
 	MenuObj* pObject;
-	unsigned long flag;
+	unsigned long flag =0;
 	float scale;
 	AEVec2 posCurr;
 	float	dirCurr;
@@ -59,10 +63,16 @@ static unsigned long		sMenuObjNum;
 static MenuObjInst			sMenuObjInstList[MENU_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
 static unsigned long		sMenuObjInstNum;
 
-static MenuObjInst* pPlay;
-static MenuObjInst* pExit;
+static MenuObjInst* mBack;
+static AEGfxTexture* animationBG[6];
 
-static const float ButtonSize = 5;
+//MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+static float animated = 1;
+
+//MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+
+
+static const float BackSize = 10;
 
 static s8 font;
 
@@ -79,9 +89,10 @@ void menuObjInstDestroy(MenuObjInst* pInst);
 */
 /******************************************************************************/
 void GS_MainMenu_Load(void) {
-	MenuObj* Play;
+	font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+	//MenuObj* Play;
 
-	Play = sMenuObjList + sMenuObjNum++;
+	/*Play = sMenuObjList + sMenuObjNum++;
 	Play->type = TYPE_PLAY;
 	AEGfxMeshStart();
 
@@ -105,9 +116,29 @@ void GS_MainMenu_Load(void) {
 	Exit->pTexture = AEGfxTextureLoad("Assets/ExitButton.png");
 	Exit->refMesh = true;
 	Exit->refTexture = true;
-    font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+    */
 
-	
+	animationBG[0] = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
+	animationBG[1] = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
+	animationBG[2] = AEGfxTextureLoad("Assets/MainMenu/Mainback3.png");
+	animationBG[3] = AEGfxTextureLoad("Assets/MainMenu/Mainback4.png");
+	animationBG[4] = AEGfxTextureLoad("Assets/MainMenu/Mainback5.png");
+	animationBG[5] = AEGfxTextureLoad("Assets/MainMenu/Mainback6.png");
+
+	MenuObj* Background_1;
+	Background_1= sMenuObjList + sMenuObjNum++;
+	AEGfxMeshStart();
+	AEGfxTriAdd(-80.f, 45.f, 0x00FF00, 0.f, 0.f,
+		-80.f, -45.f, 0x00FF00, 0.0f, 1.0f,
+		80.f, 45.f, 0x00FF00, 1.f, 0.0f);
+
+	AEGfxTriAdd(80.f, -45.f, 0x00FF00, 1.0f, 1.0f,
+		-80.f, -45.f, 0x00FF00, 0.0f, 1.f,
+		80.f, 45.f, 0x00FF00, 1.f, 0.0f);
+	Background_1->pMesh = AEGfxMeshEnd();
+	Background_1->type = TYPE_BACK1;
+	Background_1->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
+	Background_1->refTexture = false;
 }
 
 /******************************************************************************/
@@ -120,15 +151,11 @@ void GS_MainMenu_Load(void) {
 void GS_MainMenu_Init(void) {
 	AEGfxSetBackgroundColor(0, 0, 0);
 	
+	AEVec2 Backpos;
+	AEVec2Set(&Backpos, 0, 0);
 
-	AEVec2 Exitpos;
-	AEVec2Set(&Exitpos, 0, 0);
-	pExit = menuObjInstCreate(TYPE_EXIT, ButtonSize, &Exitpos, 0.0f);
-	pExit = sMenuObjInstList + sMenuObjInstNum++;
-	AEVec2 Playpos;
-	AEVec2Set(&Playpos, 0, 70);
-	pPlay = menuObjInstCreate(TYPE_PLAY, ButtonSize, &Playpos, 0.0f); //width 105 height 35
-	pPlay = sMenuObjInstList + sMenuObjInstNum++;
+		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
+
 }
 
 
@@ -141,6 +168,12 @@ void GS_MainMenu_Init(void) {
 /******************************************************************************/
 void GS_MainMenu_Update(void) {
 	
+	animated += g_dt;
+	std::cout << animated;
+
+	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
+
+
 	if (AEInputCheckTriggered(AEVK_3)) {
 		gGameStateNext = GS_MAZE;
 	}
@@ -154,7 +187,7 @@ void GS_MainMenu_Update(void) {
 	mouseX = float (mX);
 	mouseY = float (mY);
 
-	pPlay = nullptr;
+	//pPlay = nullptr;
 	
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		debugstate ^= 1;
@@ -162,18 +195,20 @@ void GS_MainMenu_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 300.f, 105.f, 35.f) == 1)
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 		{
 			loadState = false;
 			gGameStateNext = GS_WORLD;
 		}
 
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 370.f, 105.f, 35.f) == 1)
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 		{
 			gGameStateNext = GS_QUIT;
 		}
 		//gGameStateNext = GS_WORLD;
 	}
+	
+
 
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
@@ -222,9 +257,12 @@ void GS_MainMenu_Draw(void) {
 	//AEGfxTextureSet(NULL, 0, 0);
 
 	AEGfxSetTransparency(1.0f);
+
+	
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
 		MenuObjInst* pInst = sMenuObjInstList + i;
+		
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
@@ -238,8 +276,9 @@ void GS_MainMenu_Draw(void) {
 		// Actually drawing the mesh
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		
+		
 	}
-
+	
 
 	
 
@@ -271,12 +310,13 @@ void GS_MainMenu_Draw(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Free(void) {
-	//AEGfxMeshFree(BoxMesh);
+	
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
 		MenuObjInst* pInst = sMenuObjInstList + i;
 		menuObjInstDestroy(pInst);
 	}
+	
 }
 
 /******************************************************************************/
@@ -287,6 +327,7 @@ void GS_MainMenu_Free(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Unload(void) {
+
 	
 	for (unsigned int i = 0; i < sMenuObjNum; i++) {
 		if ((sMenuObjList + i)->refMesh == false)
@@ -348,6 +389,8 @@ void menuObjInstDestroy(MenuObjInst* pInst)
 	if (pInst->flag == 0)
 		return;
 
+	
+	sMenuObjInstNum--; //Decrement the number of game object instance
 	// zero out the flag
 	pInst->flag = 0;
 }
