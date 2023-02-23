@@ -53,6 +53,7 @@ struct GameObjInst
 	int					health;		// object's health level
 	int					damage;		// object's damage parameter
 	std::vector<Node*>	path; // this is only for enemy or any ai/ npc that requires path
+	float				timetracker;// object's time of existence
 
 	// Member functions
 
@@ -95,6 +96,8 @@ struct GameObjInst
 		The calculated distance between the 2 objects
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
+
+	void walk();
 };
 
 // This enum is a list of the different types of game objects
@@ -112,6 +115,8 @@ enum TYPE
 	TYPE_ENEMY,
 	TYPE_CHEST,
 	TYPE_KEY,
+	TYPE_SPIKE,
+	TYPE_MASK,
 
 
 	TYPE_NUM
