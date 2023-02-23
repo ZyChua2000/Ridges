@@ -92,8 +92,8 @@ static GameObjInst* enemy[2];
 /******************************************************************************/
 
 
-int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-	float scaleX, float scaleY);
+//int CheckInstanceBinaryMapCollision(float PosX, float PosY,
+//	float scaleX, float scaleY);
 
 
 /******************************************************************************/
@@ -753,7 +753,7 @@ void GS_Maze_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
+	CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (AEInputCheckTriggered(AEVK_F)) {
 		static int test = 2;

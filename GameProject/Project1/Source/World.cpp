@@ -46,7 +46,6 @@ static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
-static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 
 bool loadState;
 // -----------------------------------------------------------------------------
@@ -100,6 +99,7 @@ static staticObjInst* Potion;
 static staticObjInst* Key;
 static GameObjInst* enemy[2];
 static Inventory Backpack;
+static staticObjInst* Spike;
 
 
 
@@ -251,6 +251,14 @@ void GS_World_Load(void) {
 	Key->type = TYPE_KEY;
 	Key->refMesh = true;
 	Key->refTexture = true;
+
+	GameObj* Spike;
+	Spike = sGameObjList + sGameObjNum++;
+	Spike->pMesh = Character->pMesh;
+	Spike->pTexture = Character->pTexture;
+	Spike->type = TYPE_SPIKE;
+	Spike->refMesh = true;
+	Spike->refTexture = true;
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -430,10 +438,16 @@ void GS_World_Init(void) {
 		}
 	}
 
-
-	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
-	//{ 12,-31 };
-	binaryPlayerPos = { 32,-89 };
+	AEVec2 spikepos = { 20,-10 };
+	staticObjInstCreate(TYPE_SPIKE, 1, &spikepos, 0);
+	for (int i = 0; i < sStaticObjInstNum; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_SPIKE)
+		{
+			pInst->TextureMap = { 5,3 };
+		}
+	}
 
 }
 
@@ -678,14 +692,7 @@ void GS_World_Update(void) {
 				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
 			}
 			//invert movement for binary map
-			if (pInst->velCurr.x != 0)
-			{
-				binaryPlayerPos.y += pInst->velCurr.x * g_dt;
-			}
-			if (pInst->velCurr.y != 0)
-			{
-				binaryPlayerPos.x -= pInst->velCurr.y * g_dt;
-			}
+			
 			if (pInst->pObject->type == TYPE_NPCS) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
@@ -815,78 +822,77 @@ void GS_World_Update(void) {
 		}
 	}
 
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
-		//player_direction.x = -player_direction.x;
-
-		float player_bottom = Player->posCurr.y + 50;
-		float tiles_bottom = 0 + 50;
-		float player_right = Player->posCurr.x + 50;
-		float tiles_right = -160 + 50;
-
-		float b_collision = tiles_bottom - Player->posCurr.y;
-		float t_collision = player_bottom - 0;
-		float l_collision = player_right + 160;
-		float r_collision = tiles_right - Player->posCurr.x;
-
-		if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
-			//Top collision
-			std::cout << "collide top" << std::endl;
-			if (Player->velCurr.y == 1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = -1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
-
-		if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
-			//bottom collision
-			std::cout << "collide botton" << std::endl;
-			if (Player->velCurr.y == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = 1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
-
-		if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
-			//Left collision
-			std::cout << "collide left" << std::endl;
-			if (Player->velCurr.x == 1)
-			{
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = -1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-
-		}
-
-		if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
-			//Right collision
-			std::cout << "collide right" << std::endl;
-			if (Player->velCurr.x == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = 1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-		}
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+		
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
 	}
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+	
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x - 0.5;
+	}
+
+
+	/*AEVec2 PlayerMaxX{ Player->posCurr.x + 0.5 };
+	AEVec2 PlayerMinX{ Player->posCurr.x - 0.5 };
+	AEVec2 PlayerMaxY{ Player->posCurr.y - 0.5 };
+	AEVec2 PlayerMinY{ Player->posCurr.y + 0.5 };
+	struct AABB playerAABB {};*/
+
+
+
+
+
+
+	/*AEVec2 novelo{ 0.0001, 0.0001 };
+	
+	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
+			std::cout << "DOG\n";
+	}*/
+
+	//FOR PRINTING ON BINARY MAP
+	//if (AEInputCheckTriggered(AEVK_F)) {
+	//	static int test = 2;
+	//	std::ofstream testfile{ "test.txt" };
+	//	binaryMap[(int)Player->posCurr.x][(int)-Player->posCurr.y] = test++;
+	//	for (int i = 0; i < 42; i++) {
+	//		for (int j = 0; j < 124; j++) {
+	//			testfile << binaryMap[j][i];
+	//		}
+	//		testfile << std::endl;
+	//	}
+	//	testfile.close();
+	//}
+	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
+
+	
+
+	
 
 	// ===================================
 	// update active game object instances
@@ -975,65 +981,6 @@ void GS_World_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	//binaryMap2 = binaryMap;
-
-	int flag = CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f, binaryMap);
-
-	if (flag & COLLISION_TOP) {
-		//Top collision
-		std::cout << "collide top" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-		snaptocelladd(&binaryPlayerPos.y);
-		std::cout << Player->posCurr.y << std::endl;
-		//Player->posCurr.y + 0.5;
-	}
-
-	if (flag & COLLISION_BOTTOM) {
-		//bottom collision
-		std::cout << "collide botton" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-		snaptocelladd(&binaryPlayerPos.y);
-		//Player->posCurr.y - 0.5;
-	}
-
-	if (flag & COLLISION_LEFT) {
-		//Left collision
-		std::cout << "collide left" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-		snaptocelladd(&binaryPlayerPos.x);
-		//Player->posCurr.x + 0.5;
-
-	}
-	if (flag & COLLISION_RIGHT) {
-		//Right collision
-		std::cout << "collide right" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-		snaptocelladd(&binaryPlayerPos.x);
-		//Player->posCurr.x - 0.5;
-	}
-
-
-
-
-
-
-
-	if (AEInputCheckTriggered(AEVK_F)) {
-		static int test = 2;
-		std::ofstream testfile{ "test.txt" };
-		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
-		for (int i = 0; i < 42; i++) {
-			for (int j = 0; j < 124; j++) {
-				testfile << binaryMap[j][i];
-			}
-			testfile << std::endl;
-		}
-		testfile.close();
-	}
-	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
-
-
-
 }
 
 /******************************************************************************/
@@ -1098,7 +1045,7 @@ void GS_World_Draw(void) {
 		// For any types using spritesheet
 		if (pInst->pObject->type == TYPE_HEALTH || pInst->pObject->type == TYPE_LEVERS
 			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject->type == TYPE_ITEMS
-			|| pInst->pObject->type == TYPE_KEY)
+			|| pInst->pObject->type == TYPE_KEY || pInst->pObject->type == TYPE_SPIKE)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,

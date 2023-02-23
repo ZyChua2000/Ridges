@@ -91,8 +91,8 @@ static GameObjInst* enemy[2];
 /******************************************************************************/
 
 
-int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-	float scaleX, float scaleY);
+//int CheckInstanceBinaryMapCollision(float PosX, float PosY,
+//	float scaleX, float scaleY);
 
 
 /******************************************************************************/
@@ -697,7 +697,7 @@ void GS_Colosseum_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
+	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
 
 	if (AEInputCheckTriggered(AEVK_F)) {
 		static int test = 2;
