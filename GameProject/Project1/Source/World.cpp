@@ -49,6 +49,7 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 
 bool loadState;
+
 // -----------------------------------------------------------------------------
 
 
@@ -252,6 +253,8 @@ void GS_World_Load(void) {
 	Key->refMesh = true;
 	Key->refTexture = true;
 
+	
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
@@ -339,7 +342,7 @@ void GS_World_Init(void) {
 		}
 
 		//Initialise enemy in level
-		AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
+		AEVec2 EnemyPos[2] = { {33.f, -16.f} ,{33.f, -21.f} };
 		for (int i = 0; i < 2; i++) {
 			enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 			enemy[i]->TextureMap = { 0,9 };
@@ -385,6 +388,9 @@ void GS_World_Init(void) {
 			}
 		}
 	}
+
+	//Init pathfinding nodes
+	NodesInit(binaryMap,  MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -965,6 +971,24 @@ void GS_World_Update(void) {
 		testfile.close();
 	}
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
+
+	//looping throught enemy array to make all enemy instance pathfind to player
+	for(int i = 0; i < sizeof(enemy)/sizeof(enemy[0]); i++)
+	{
+		enemy[i]->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+	
+		if (enemy[i]->path.size() >= 5)
+		{
+			enemy[i]->posCurr.x = enemy[i]->path[1]->ae_NodePos.x;
+			enemy[i]->posCurr.y = enemy[i]->path[1]->ae_NodePos.y;
+			if (i == 0)
+			{
+				std::cout << enemy[i]->posCurr.x << "\t" << enemy[i]->posCurr.y << std::endl;
+			}
+		}
+
+	}
+
 
 }
 

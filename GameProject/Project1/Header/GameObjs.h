@@ -1,5 +1,8 @@
 #pragma once
 #include "AEEngine.h"
+#include <vector>
+
+struct Node;
 
 // This struct is for GameObj, called and initalised during load for each unique game object
 struct GameObj
@@ -9,6 +12,7 @@ struct GameObj
 	AEGfxTexture* pTexture;		// This holds a pointer to the texture that is being used
 	bool refMesh;			// True if Mesh is referencing another object's mesh, else false by default
 	bool refTexture;		// True if texture is referencing another object's texture, else false by default
+	
 };
 
 // This struct holds the max and min of the axis of an object for collision purpose
@@ -48,6 +52,7 @@ struct GameObjInst
 	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
 	int					health;		// object's health level
 	int					damage;		// object's damage parameter
+	std::vector<Node*>	path; // this is only for enemy or any ai/ npc that requires path
 
 	// Member functions
 
