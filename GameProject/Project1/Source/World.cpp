@@ -479,7 +479,7 @@ void GS_World_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_N)) {
-		saveGame(data,sGameObjInstList,sStaticObjInstList,GAME_OBJ_INST_NUM_MAX,STATIC_OBJ_INST_NUM_MAX);
+		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
@@ -518,7 +518,7 @@ void GS_World_Update(void) {
 
 		//Interaction with levers
 		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x!= 3) {
+			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x != 3) {
 				//Switch lever to face down
 				Levers[i]->TextureMap = { 3,11 };
 				Levers[i]->posCurr.x -= 0.2f;
@@ -573,7 +573,7 @@ void GS_World_Update(void) {
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS) 
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS)
 		{
 			continue;
 		}
@@ -696,7 +696,7 @@ void GS_World_Update(void) {
 				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
 			}
 			//invert movement for binary map
-			
+
 			if (pInst->pObject->type == TYPE_NPCS) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
@@ -832,7 +832,7 @@ void GS_World_Update(void) {
 		//Top collision
 		std::cout << "collide top" << std::endl;
 		snaptocellsub(&Player->posCurr.y);
-		
+
 		std::cout << Player->posCurr.y << std::endl;
 		//Player->posCurr.y + 0.5;
 	}
@@ -841,7 +841,7 @@ void GS_World_Update(void) {
 		//bottom collision
 		std::cout << "collide botton" << std::endl;
 		snaptocellsub(&Player->posCurr.y);
-	
+
 		//Player->posCurr.y - 0.5;
 	}
 
@@ -874,7 +874,7 @@ void GS_World_Update(void) {
 
 
 	/*AEVec2 novelo{ 0.0001, 0.0001 };
-	
+
 	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
 			std::cout << "DOG\n";
 	}*/
@@ -894,9 +894,9 @@ void GS_World_Update(void) {
 	//}
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
-	
 
-	
+
+
 
 	// ===================================
 	// update active game object instances
@@ -985,39 +985,53 @@ void GS_World_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
+	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
 
-	if (AEInputCheckTriggered(AEVK_F)) {
-		static int test = 2;
-		std::ofstream testfile{ "test.txt" };
-		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
-		for (int i = 0; i < 42; i++) {
-			for (int j = 0; j < 124; j++) {
-				testfile << binaryMap[j][i];
-			}
-			testfile << std::endl;
-		}
-		testfile.close();
-	}
+	//if (AEInputCheckTriggered(AEVK_F)) {
+	//	static int test = 2;
+	//	std::ofstream testfile{ "test.txt" };
+	//	binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+	//	for (int i = 0; i < 42; i++) {
+	//		for (int j = 0; j < 124; j++) {
+	//			testfile << binaryMap[j][i];
+	//		}
+	//		testfile << std::endl;
+	//	}
+	//	testfile.close();
+	//}
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
 	//looping throught enemy array to make all enemy instance pathfind to player
-	for(int i = 0; i < sizeof(enemy)/sizeof(enemy[0]); i++)
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
 	{
-		enemy[i]->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-	
-		if (enemy[i]->path.size() >= 5)
+		GameObjInst* pInst = sGameObjInstList + i;
+
+		// skip non-active object
+		if (pInst->flag != FLAG_ACTIVE)
+			continue;
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) 
 		{
-			enemy[i]->posCurr.x = enemy[i]->path[1]->ae_NodePos.x;
-			enemy[i]->posCurr.y = enemy[i]->path[1]->ae_NodePos.y;
-			if (i == 0)
+
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			for (int i = 0; i < sizeof(enemy) / sizeof(enemy[0]); i++)
 			{
-				std::cout << enemy[i]->posCurr.x << "\t" << enemy[i]->posCurr.y << std::endl;
+				enemy[i]->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+
+				if (enemy[i]->path.size() >= 5)
+				{
+					enemy[i]->posCurr.x = enemy[i]->path[1]->ae_NodePos.x;
+					enemy[i]->posCurr.y = enemy[i]->path[1]->ae_NodePos.y;
+					if (i == 0)
+					{
+						std::cout << enemy[i]->posCurr.x << "\t" << enemy[i]->posCurr.y << std::endl;
+					}
+				}
+
 			}
 		}
-
 	}
-
 
 }
 
