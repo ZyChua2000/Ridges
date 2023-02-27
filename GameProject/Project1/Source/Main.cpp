@@ -33,10 +33,10 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	UNREFERENCED_PARAMETER(prevInstanceH);
 	UNREFERENCED_PARAMETER(command_line);
-	//// Enable run-time memory check for debug builds.
-	//#if defined(DEBUG) | defined(_DEBUG)
-		//_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-	//#endif
+	// Enable run-time memory check for debug builds.
+	#if defined(DEBUG) | defined(_DEBUG)
+		_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	#endif
 
 	//int * pi = new int;
 	//delete pi;

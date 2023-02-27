@@ -93,7 +93,7 @@ namespace utilities {
 				int x = (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.x;
 				int y = (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.y;
 
-				if ((x < 6 && y == 4) || (x < 5 && y == 3) || (y < 3 && x == 0))
+				if ((x < 6 && y == 4) || (x < 5 && y == 3) || (y < 3 && x == 0) || (x==6 && y ==2) || (x==6 && y == 3))
 					mapOutput << "0" << " ";
 				else
 					mapOutput << "1" << " ";

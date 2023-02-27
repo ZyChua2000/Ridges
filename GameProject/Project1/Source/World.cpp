@@ -25,6 +25,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 */
 /******************************************************************************/
 static saveData				data;
+static Node* nodes{};
 static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
@@ -333,6 +334,8 @@ void GS_World_Init(void) {
 		Player->TextureMap = { 1,8 };
 
 		Player->health = 3;
+		Player->damage = 1;
+		Player->timetracker = 0;
 
 		//Initialise player health.
 		for (int i = 0; i < Player->health; i++) {
@@ -352,6 +355,7 @@ void GS_World_Init(void) {
 		for (int i = 0; i < 2; i++) {
 			enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 			enemy[i]->TextureMap = { 0,9 };
+			enemy[i]->health = 1;
 		}
 
 		//Initialise chest in level
@@ -365,7 +369,7 @@ void GS_World_Init(void) {
 	// =====================================
 	if (loadState == true) {
 		loadData(data);
-
+		Player->damage = 1;
 		// Changing fence textures & binary collision depending on
 		// lever texture
 		for (int i = 0; i < 3; i++) {
@@ -383,7 +387,7 @@ void GS_World_Init(void) {
 						MapObjInstList[81][i]->TextureMap = { 0,4 };
 						binaryMap[81][i] = 0;
 					}
-					MapObjInstList[81][56]->TextureMap = { 2,4 };
+					MapObjInstList[81][32]->TextureMap = { 2,4 };
 					break;
 					//WIP for 3rd gate
 				case 2:
@@ -697,7 +701,7 @@ void GS_World_Update(void) {
 			}
 			//invert movement for binary map
 
-			if (pInst->pObject->type == TYPE_NPCS) {
+			if (pInst->pObject->type == TYPE_ENEMY) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
 			}
@@ -731,7 +735,6 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
-	Player->timetracker += g_dt;
 
 	switch (Backpack.Potion)
 	{
@@ -810,19 +813,41 @@ void GS_World_Update(void) {
 	}
 
 	//if player receive damage from collision or from mob, player decrease health
-	if (AEInputCheckTriggered(AEVK_T))
-	{
-		Player->deducthealth();
-		switch (Player->health)
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ENEMY) {
+			continue;
+		}
+
+		if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+			&& Player->timetracker == 0)
 		{
-		case 0:
-			Health[2]->TextureMap = { 1, 11 };
-			break;
-		case 1:
-			Health[1]->TextureMap = { 1, 11 };
-			break;
-		case 2:
-			Health[0]->TextureMap = { 1, 11 };
+			Player->deducthealth();
+			Player->timetracker = 2.0f;
+			switch (Player->health)
+			{
+			case 0:
+				Health[2]->TextureMap = { 1, 11 };
+				break;
+			case 1:
+				Health[1]->TextureMap = { 1, 11 };
+				break;
+			case 2:
+				Health[0]->TextureMap = { 1, 11 };
+			}
+		}
+
+		for (int j = MAP_CELL_HEIGHT * MAP_CELL_HEIGHT * 2; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+			staticObjInst* jInst = sStaticObjInstList + j;
+			if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+				continue;
+			}
+			AEVec2 velNull = { 0,0 };
+			if (CollisionIntersection_RectRect(pInst->boundingBox, pInst->velCurr, jInst->boundingBox, velNull)
+				&& jInst->Alpha == 0) {
+				pInst->deducthealth(Player->damage);
+
+			}
 		}
 	}
 
@@ -902,6 +927,7 @@ void GS_World_Update(void) {
 	// update active game object instances
 	// Example:
 	//		-- Removing effects after certain time
+	//		-- Removing dead objects
 	// ===================================
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
@@ -922,15 +948,42 @@ void GS_World_Update(void) {
 		}
 
 	}
-	/*if (CheckInstanceBinaryMapCollision(Player->posCurr.x, Player->posCurr.y,
-		SPRITE_SCALE, SPRITE_SCALE) == 1)
-	{
-		Player->posCurr.x = Player->posCurr.x;
-		Player->posCurr.y = Player->posCurr.y;
-		std::cout << "collided" << std::endl;
-	}*/
 
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
 
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			if (pInst->health == 0) {
+				gameObjInstDestroy(pInst);
+			}
+		}
+
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			if (pInst->timetracker > 0) {
+				pInst->timetracker -= g_dt;
+			} 
+			if (pInst->timetracker < 0) {
+				pInst->timetracker = 0;
+			}
+			if (pInst->health == 0) {
+				gGameStateNext = GS_MAINMENU;
+			}
+		}
+	}
+
+	if (enemy[0]->health == 0 && enemy[1]->health == 0) {
+		for (int i = 17; i < 21; i++) {
+			MapObjInstList[35][i]->TextureMap = { 0,4 };
+			binaryMap[35][i] = 0;
+		}
+	}
+
+	if (AEInputCheckTriggered(AEVK_M)) {
+		gGameStateNext = GS_MAINMENU;
+	}
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -1235,6 +1288,8 @@ void GS_World_Free(void) {
 		}
 	}
 
+	freeNode();
+
 }
 
 /******************************************************************************/
@@ -1255,7 +1310,7 @@ void GS_World_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxDestroyFont(FontList[0]);
-
+	AEGfxSetCamPosition(0, 0);
 }
 
 // ---------------------------------------------------------------------------
