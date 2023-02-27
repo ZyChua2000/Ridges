@@ -895,9 +895,6 @@ void GS_World_Update(void) {
 
 
 
-
-
-
 	/*AEVec2 novelo{ 0.0001, 0.0001 };
 
 	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
@@ -1042,15 +1039,18 @@ void GS_World_Update(void) {
 
 	//if (AEInputCheckTriggered(AEVK_F)) {
 	//	static int test = 2;
-	//	std::ofstream testfile{ "test.txt" };
-	//	binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+	//	//std::ofstream testfile{ "test.txt" };
+	//	//binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+	//	binaryMap[(int)Player->posCurr.x][(int)Player->posCurr.y] = test++;
+	//	/*binaryMap[(int)enemy[0]->posCurr.x][(int)enemy[0]->posCurr.y] = test++;
+	//	binaryMap[(int)enemy[1]->posCurr.x][(int)enemy[1]->posCurr.y] = test++;*/
 	//	for (int i = 0; i < 42; i++) {
 	//		for (int j = 0; j < 124; j++) {
-	//			testfile << binaryMap[j][i];
+	//			std::cout << binaryMap[j][i];
 	//		}
-	//		testfile << std::endl;
+	//		std::cout << std::endl;
 	//	}
-	//	testfile.close();
+	//	//testfile.close();
 	//}
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
@@ -1190,7 +1190,7 @@ void GS_World_Draw(void) {
 
 			
 			//std::cout << " ghost is spawnned near cam" << std::endl;
-			AEGfxTextureSet(pInst->pObject->pTexture,
+				AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
 
@@ -1287,9 +1287,7 @@ void GS_World_Free(void) {
 			staticObjInstDestroy(pInst);
 		}
 	}
-
-	freeNode();
-
+	deletenodes();
 }
 
 /******************************************************************************/
