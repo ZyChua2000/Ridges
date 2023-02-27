@@ -7,8 +7,8 @@ struct GameObj
 	unsigned long	type;		// object type
 	AEGfxVertexList* pMesh;		// This will hold the triangles which will form the shape of the object
 	AEGfxTexture* pTexture;		// This holds a pointer to the texture that is being used
-	bool refMesh;			// True if Mesh is referencing another object's mesh, else false by default
-	bool refTexture;		// True if texture is referencing another object's texture, else false by default
+	bool refMesh = 0;			// True if Mesh is referencing another object's mesh, else false by default
+	bool refTexture = 0;		// True if texture is referencing another object's texture, else false by default
 };
 
 // This struct holds the max and min of the axis of an object for collision purpose
@@ -49,7 +49,6 @@ struct GameObjInst
 	int					health;		// object's health level
 	int					damage;		// object's damage parameter
 	int					potion;
-	float				timetracker;// object's time of existence
 
 	// Member functions
 
@@ -95,7 +94,6 @@ struct GameObjInst
 
 
 	void potion_counter(int potion = 1);
-	void walk();
 };
 
 // This enum is a list of the different types of game objects
@@ -112,9 +110,6 @@ enum TYPE
 	TYPE_LEVERS,
 	TYPE_ENEMY,
 	TYPE_CHEST,
-	TYPE_KEY,
-	TYPE_SPIKE,
-	TYPE_MASK,
 
 
 	TYPE_NUM

@@ -2,7 +2,7 @@
 
 
 bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
-	const AABB& aabb2, const AEVec2& vel2)
+	const AABB& aabb2, const AEVec2& vel2, float g_dt)
 {
 	// Implement the collision intersection over here. The steps are: 
 
@@ -71,7 +71,7 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	else return 1;
 }
 
-int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[124][42])
+int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
 {
 	int Flag = 0;
 	int x1, y1, x2, y2;
@@ -90,10 +90,9 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float 
 	//std::cout << "X2: " << x2 << "\tY2: " << y2 << std::endl;
 
 
-	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+	if (binaryMap2[abs(y1)][x1] == 1 || binaryMap2[abs(y2)][x2] == 1) {
 		Flag |= COLLISION_RIGHT;
 		std::cout << "r" << std::endl;
-
 	}
 
 
@@ -106,7 +105,7 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float 
 	y2 = int(PosY + scaleY / 4);
 
 
-	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+	if (binaryMap2[x1][abs(y1)] == 1 || binaryMap2[x2][abs(y2)] == 1) {
 		Flag |= COLLISION_LEFT;
 		std::cout << "l" << std::endl;
 	}
@@ -120,13 +119,13 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float 
 	y2 = int(PosY + scaleY / 2);
 
 
-	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
-		Flag |= COLLISION_BOTTOM;
-		std::cout << "b" << std::endl;
+	if (binaryMap2[x1][abs(y1)] == 1 || binaryMap2[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_TOP;
+		std::cout << "t" << std::endl;
 	}
 
 
-	// Check the top side of the object instance
+	// Check the bottom side of the object instance
 	//Hotspot 1
 	x1 = int(PosX + scaleX / 4);
 	y1 = int(PosY - scaleY / 2);
@@ -135,42 +134,35 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float 
 	y2 = int(PosY - scaleY / 2);
 
 
-	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
-		Flag |= COLLISION_TOP;
-		std::cout << "t" << std::endl;
+	if (binaryMap2[x1][abs(y1)] == 1 || binaryMap2[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_BOTTOM;
+		std::cout << "b" << std::endl;
 	}
 
 	return Flag;
 }
 
-void snaptocelladd(float* coordinate) {
-	*coordinate = static_cast<float>(static_cast<int>(*coordinate)) + 0.5f;
+
+
+
+bool ShittyCollisionMap(float posx, float posy) {
+	if (binaryMap2[((int(posx + 8)))][abs((int(posy)))]) {
+		std::cout << "r" << std::endl;
+
+	}
+	if (binaryMap2[((int(posx - 8)))][abs((int(posy)))]) {
+		std::cout << "l" << std::endl;
+
+	}
+	if (binaryMap2[((int(posx)))][abs((int(posy)))+8]) {
+		std::cout << "t" << std::endl;
+
+	}
+	if (binaryMap2[((int(posx)))][abs((int(posy)))-8]) {
+		std::cout << "b" << std::endl;
+
+	}
+	return 0;
 }
-
-void snaptocellsub(float* coordinate) {
-	*coordinate = static_cast<float>(static_cast<int>(*coordinate)) - 0.5f;
-}
-
-
-
-//bool ShittyCollisionMap(float posx, float posy) {
-//	if (binaryMap[((int(posx + 8)))][abs((int(posy)))]) {
-//		std::cout << "r" << std::endl;
-//
-//	}
-//	if (binaryMap[((int(posx - 8)))][abs((int(posy)))]) {
-//		std::cout << "l" << std::endl;
-//
-//	}
-//	if (binaryMap[((int(posx)))][abs((int(posy)))+8]) {
-//		std::cout << "t" << std::endl;
-//
-//	}
-//	if (binaryMap[((int(posx)))][abs((int(posy)))-8]) {
-//		std::cout << "b" << std::endl;
-//
-//	}
-//	return 0;
-//}
 
 //binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))])

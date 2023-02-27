@@ -2,6 +2,9 @@
 #include <fstream> //For printing
 #include "Utilities.h" // For externs
 
+static const int MAX_LEVERS = 3;
+static const int MAX_CHESTS = 4;
+static const int MAX_MOBS = 5;
 
 namespace utilities {
 
@@ -34,12 +37,12 @@ namespace utilities {
 	void aeDrawQuadMesh(f32 vertice1, f32 vertice2, f32 vertice3, f32 vertice4, u32 color) {
 
 		AEGfxTriAdd(vertice1, vertice1, color, vertice3, vertice3,
-			vertice2, vertice1, color, vertice4, vertice3,
-			vertice1, vertice2, color, vertice3, vertice4);
+					vertice2, vertice1, color, vertice4, vertice3,
+					vertice1, vertice2, color, vertice3, vertice4);
 
 		AEGfxTriAdd(vertice2, vertice1, color, vertice4, vertice3,
-			vertice2, vertice2, color, vertice4, vertice4,
-			vertice1, vertice2, color, vertice3, vertice4);
+					vertice2, vertice2, color, vertice4, vertice4,
+					vertice1, vertice2, color, vertice3, vertice4);
 	}
 
 	float getAngle(float x1, float y1, float x2, float y2) {
@@ -58,10 +61,10 @@ namespace utilities {
 		return 0;
 	}
 	bool checkWithinCam(AEVec2 Pos, f32 camX, f32 camY) {
-		if (Pos.x - 1 > camX + CAM_CELL_WIDTH / 2 ||
-			Pos.x + 1 < camX - CAM_CELL_WIDTH / 2 ||
-			Pos.y - 1 > camY + CAM_CELL_HEIGHT / 2 ||
-			Pos.y + 1 < camY - CAM_CELL_HEIGHT / 2) {
+		if (Pos.x-1 > camX + CAM_CELL_WIDTH / 2 ||
+			Pos.x+1 < camX - CAM_CELL_WIDTH / 2 ||
+			Pos.y-1 > camY + CAM_CELL_HEIGHT / 2 ||
+			Pos.y+1 < camY - CAM_CELL_HEIGHT / 2) {
 			return true;
 		}
 		else {
@@ -74,8 +77,8 @@ namespace utilities {
 		filename = "Assets/" + filename;
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.x << " ";
-				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.y << " ";
+				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i) -> TextureMap.x << " ";
+				mapOutput << (MapObjInstList + j * MAP_CELL_WIDTH + i) -> TextureMap.y << " ";
 
 				if (i == MAP_CELL_WIDTH - 1) {
 					mapOutput << "\n";
@@ -94,11 +97,9 @@ namespace utilities {
 				int y = (MapObjInstList + j * MAP_CELL_WIDTH + i)->TextureMap.y;
 
 				if ((x < 6 && y == 4) || (x < 5 && y == 3) || (y < 3 && x == 0))
-					mapOutput << "0" << " ";
+				mapOutput << "0" << " ";
 				else
-					mapOutput << "1" << " ";
-
-
+				mapOutput << "1" << " ";
 
 				if (i == MAP_CELL_WIDTH - 1) {
 					mapOutput << "\n";
@@ -119,4 +120,60 @@ namespace utilities {
 		mapInput.close();
 	}*/
 
+	void saveGame(saveData data) {
+		std::ofstream saveText{ "save.txt" };
+
+		saveText << data.playerHealth << std::endl;
+		saveText << data.playerPosition.x << std::endl;
+		saveText << data.playerPosition.y << std::endl;
+		saveText << data.playerItems << std::endl;
+
+		for (int i = 0; i < MAX_MOBS; i++) {
+			saveText << data.mobPosition.x << std::endl;
+			saveText << data.mobPosition.y << std::endl;
+		}
+
+		for (int i = 0; i < MAX_CHESTS; i++) {
+			saveText << data.chestOpened << std::endl;
+		}
+
+		for (int i = 0; i < MAX_LEVERS; i++) {
+			saveText << data.leverOpened << std::endl;
+		}
+
+		for (int i = 0; i < 4; i++) {
+			saveText << data.puzzleCompleted[i] << std::endl;
+		}
+
+		saveText << data.elapsedTime << std::endl;
+	}
+
+	void loadData(saveData data) {
+		std::ifstream saveText{ "save.txt" };
+
+		saveText >> data.playerHealth;
+		saveText >> data.playerPosition.x;
+		saveText >> data.playerPosition.y;
+		saveText >> data.playerItems;
+
+		for (int i = 0; i < MAX_MOBS; i++) {
+			saveText >> data.mobPosition.x;
+			saveText >> data.mobPosition.y;
+		}
+
+		for (int i = 0; i < MAX_CHESTS; i++) {
+			saveText >> data.chestOpened;
+		}
+
+		for (int i = 0; i < MAX_LEVERS; i++) {
+			saveText >> data.leverOpened;
+		}
+
+		for (int i = 0; i < 4; i++) {
+			saveText >> data.puzzleCompleted[i];
+		}
+
+		saveText >> data.elapsedTime;
+	}
 }
+

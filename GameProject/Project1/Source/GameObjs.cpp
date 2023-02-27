@@ -17,20 +17,6 @@ void GameObjInst::recoverhealth(int recover)
 	}
 }
 
-//player walk
-void GameObjInst::walk()
-{
-	if ((int)(timetracker*4) % 2 == 1) {
-		TextureMap.x = 3;
-		TextureMap.y = 12;
-	}
-	else {
-		TextureMap.x = 4;
-		TextureMap.y = 12;
-	}
-}
-
-
 float GameObjInst::calculateDistance(GameObjInst dynamicObj) {
 	return sqrt((posCurr.x - dynamicObj.posCurr.x) * (posCurr.x - dynamicObj.posCurr.x) +
 		(posCurr.y - dynamicObj.posCurr.y) * (posCurr.y - dynamicObj.posCurr.y));
