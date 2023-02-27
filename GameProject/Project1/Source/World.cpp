@@ -24,6 +24,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
+static saveData				data;
 static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
@@ -31,10 +32,10 @@ static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 50000;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS;							// The total number of mobs
-static const unsigned int	MAX_CHESTS = 1;							// The total number of chests
+static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_POTION = 9;					// The total number of potion
-static const unsigned int	MAX_KEYS = 3;						// The total number of keys
+static const unsigned int	MAX_POTION;							// The total number of potion
+static const unsigned int	MAX_KEYS;						// The total number of keys
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
@@ -46,7 +47,14 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 
 int							counter = 0;
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
+
+bool loadState;
 // -----------------------------------------------------------------------------
+
+
+void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax);
+
+void loadData(saveData data);
 
 
 // -----------------------------------------------------------------------------
@@ -74,7 +82,7 @@ static unsigned long		sGameObjInstNum;							// The number of used dynamic game 
 static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
 static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
-static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
+static staticObjInst*		MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
@@ -88,10 +96,12 @@ static staticObjInst* Levers[3];										// Pointer to each enemy object instan
 static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
 static staticObjInst* NumObj[3];
 static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Potion[MAX_POTION];
-static staticObjInst* Key[MAX_KEYS];
+static staticObjInst* Potion;
+static staticObjInst* Key;
 static GameObjInst* enemy[2];
 static Inventory Backpack;
+static staticObjInst* Spike;
+
 
 
 // ---------------------------------------------------------------------------
@@ -235,6 +245,22 @@ void GS_World_Load(void) {
 	Chest->refMesh = true;
 	Chest->refTexture = true;
 
+	GameObj* Key;
+	Key = sGameObjList + sGameObjNum++;
+	Key->pMesh = Character->pMesh;
+	Key->pTexture = Character->pTexture;
+	Key->type = TYPE_KEY;
+	Key->refMesh = true;
+	Key->refTexture = true;
+
+	GameObj* Spike;
+	Spike = sGameObjList + sGameObjNum++;
+	Spike->pMesh = Character->pMesh;
+	Spike->pTexture = Character->pTexture;
+	Spike->type = TYPE_SPIKE;
+	Spike->refMesh = true;
+	Spike->refTexture = true;
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
@@ -249,12 +275,10 @@ void GS_World_Load(void) {
 */
 /******************************************************************************/
 void GS_World_Init(void) {
-	//Initialise Player
-	AEVec2 PlayerPos = { 12,-31 };
-	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-	Player->TextureMap = { 1,8 };
+	// =====================================
+	//	Initialize map textures
+	// =====================================
 
-	//Initialise map textures
 	std::ifstream mapInput{ "Assets/textureWorld.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -271,17 +295,22 @@ void GS_World_Init(void) {
 	}
 	mapInput.close();
 
-	// Initialise map binary
+	// =====================================
+	//	Initialize map binary
+	// =====================================
+
 	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 	std::ifstream binInput{ "Assets/binaryWorld.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-			binInput >> binaryMap[i][j];
+			binInput >> binaryMap[j][i];
 		}
 	}
 	binInput.close();
 
-	// Initialise reference objects for mesh editor
+	// =====================================
+	//	Initialize map editor references
+	// =====================================
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
@@ -293,61 +322,132 @@ void GS_World_Init(void) {
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
-	//Initialise player health. Printing of hearts.
-	Player->health = 3;
-	for (int i = 0; i < Player->health; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		Health[i]->TextureMap = { 0,11 };
+	// =====================================
+	//	Initialize objects for new game
+	// =====================================
+	if (loadState == false) {
+		//Initialise Player
+		AEVec2 PlayerPos = { 12,-8 };
+		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
+		Player->TextureMap = { 1,8 };
+
+		Player->health = 3;
+
+		//Initialise player health.
+		for (int i = 0; i < Player->health; i++) {
+			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+			Health[i]->TextureMap = { 0,11 };
+		}
+
+		//Initialise Levers in level
+		AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
+		for (int i = 0; i < 3; i++) {
+			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
+			Levers[i]->TextureMap = { 2,11 };
+		}
+
+		//Initialise enemy in level
+		AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
+		for (int i = 0; i < 2; i++) {
+			enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+			enemy[i]->TextureMap = { 0,9 };
+		}
+
+		//Initialise chest in level
+		AEVec2 chestpos[1] = { {13,-8} };
+		Chest[0] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[0], 0);
+		Chest[0]->TextureMap = { 5, 7 };
 	}
 
-	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
+	// =====================================
+	//	Initialize objects for loaded game game
+	// =====================================
+	if (loadState == true) {
+		loadData(data);
 
-	//Initialise Levers in level
-	for (int i = 0; i < 3; i++) {
-		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-		Levers[i]->TextureMap = { 2,11 };
+		// Changing fence textures & binary collision depending on
+		// lever texture
+		for (int i = 0; i < 3; i++) {
+			if (Levers[i]->TextureMap.x == 3) {
+				//Remove gates: Change texture & Binary map
+				switch (i) {
+				case 0:
+					for (int i = 17; i < 22; i++) {
+						MapObjInstList[i][15]->TextureMap = { 0,4 };
+						binaryMap[i][15] = 0;
+					}
+					break;
+				case 1:
+					for (int i = 32; i < 35; i++) {
+						MapObjInstList[81][i]->TextureMap = { 0,4 };
+						binaryMap[81][i] = 0;
+					}
+					MapObjInstList[81][56]->TextureMap = { 2,4 };
+					break;
+					//WIP for 3rd gate
+				case 2:
+					break;
+				default:
+					break;
+				}
+			}
+		}
 	}
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
-	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
 
-	//Initialise enemy in level
-	for (int i = 0; i < 2; i++) {
-		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-		enemy[i]->TextureMap = { 0,9 };
-	}
-
-	AEVec2 chestpos[1] = { {13,-8} };
-	Chest[0] = staticObjInstCreate(TYPE_ITEMS, 1, &chestpos[0], 0); 
-	Chest[0]->TextureMap = { 5, 7 };
-
+	// =====================================
+	//	Initialize UI objects
+	// =====================================
 	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
-	MenuObj[1] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[1], 0); // Keys
+	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
 	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
-	MenuObj[0]->TextureMap = {6,9};
-	MenuObj[1]->TextureMap = {4,11};
+	MenuObj[0]->TextureMap = { 6,9 };
+	MenuObj[1]->TextureMap = { 4,11 };
 	//MenuObj[2]->TextureMap = { , };
 
 	AEVec2 NumPos[3] = { {3,-2},{6,-2},{9,-2} };
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[0], 0); // Potions
-	NumObj[1] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[1], 0); // Keys
+	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, &NumPos[1], 0); // Keys
 	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
 	NumObj[0]->TextureMap = { 2,12 };
 	NumObj[1]->TextureMap = { 2,12 };
 	//NumObj[2]->TextureMap = { , };
 
-	AEVec2 potionpos[9] = { {15, -8}, {33,-14} , {44,-26},{50,-6}, {64, -30}, {70,-11}, {84,-34}, {80,-14}, {106,-24} };
-	for (int i = 0; i < MAX_POTION; i++)
+	AEVec2 potionpos = { 15,-8 };
+	staticObjInstCreate(TYPE_ITEMS, 1, &potionpos, 0);
+	for (int i = 0; i < sStaticObjInstNum; i++)
 	{
-		Potion[i] = staticObjInstCreate(TYPE_ITEMS, 1, &potionpos[i], 0);
-		Potion[i]->TextureMap = { 6,9 };
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_ITEMS)
+		{
+			pInst->TextureMap = { 6,9 };
+		}
 	}
-	
-	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
-	//{ 12,-31 };
-	binaryPlayerPos = { 32,-89 };
+
+	AEVec2 keypos = { 28,-14 };
+	staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
+	for (int i = 0; i < sStaticObjInstNum; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_KEY)
+		{
+			pInst->TextureMap = { 4,11 };
+		}
+	}
+
+	AEVec2 spikepos = { 20,-10 };
+	staticObjInstCreate(TYPE_SPIKE, 1, &spikepos, 0);
+	for (int i = 0; i < sStaticObjInstNum; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_SPIKE)
+		{
+			pInst->TextureMap = { 5,3 };
+		}
+	}
 
 }
 
@@ -375,33 +475,47 @@ void GS_World_Update(void) {
 		mapeditor ^= 1;
 	}
 
+	if (AEInputCheckTriggered(AEVK_N)) {
+		saveGame(data,sGameObjInstList,sStaticObjInstList,GAME_OBJ_INST_NUM_MAX,STATIC_OBJ_INST_NUM_MAX);
+	}
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
+
+	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
+		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
+		Player->TextureMap = { 1,8 };
+	}
 
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
 		Player->velCurr.y = 1;// this is direction , positive y direction
+		Player->walk();
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
 		Player->velCurr.y = -1;// this is direction , negative y direction
+		Player->walk();
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
 		Player->velCurr.x = -1;// this is direction , negative x direction
 		Player->scale = -1;
+		Player->walk();
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
 		Player->velCurr.x = 1;// this is direction , positive x direction
 		Player->scale = 1;
+		Player->walk();
 	}
+
+
 
 	if (AEInputCheckTriggered(AEVK_E)) {
 
 		//Interaction with levers
 		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1) {
+			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x!= 3) {
 				//Switch lever to face down
 				Levers[i]->TextureMap = { 3,11 };
 				Levers[i]->posCurr.x -= 0.2f;
@@ -428,6 +542,8 @@ void GS_World_Update(void) {
 				}
 			}
 		}
+
+
 		//Interaction with Chest
 		if (Player->calculateDistance(*Chest[0]) < 1)
 		{
@@ -435,21 +551,36 @@ void GS_World_Update(void) {
 			Chest[0]->TextureMap = { 8, 7 };
 		}
 	}
-	for (int i = 0; i < MAX_POTION; i++)
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
-		if (Player->calculateDistance(*Potion[i]) < 1)
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_KEY)
 		{
-			if (Potion[i]->flag == 1)
-			{
-				Potion[i]->TextureMap = { 0, 4 };
-				staticObjInstDestroy(Potion[i]);
-				Backpack.Potion++;
-			}
-
+			continue;
+		}
+		//Interaction with key
+		if (Player->calculateDistance(*pInst) < 1)
+		{
+			//remove texture of key
+			staticObjInstDestroy(pInst);
+			Backpack.Key++;
 		}
 	}
 
-	
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS) 
+		{
+			continue;
+		}
+		if (Player->calculateDistance(*pInst) < 1)
+		{
+			staticObjInstDestroy(pInst);
+			Backpack.Potion++;
+		}
+	}
+
 
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
@@ -561,14 +692,7 @@ void GS_World_Update(void) {
 				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
 			}
 			//invert movement for binary map
-			if (pInst->velCurr.x != 0)
-			{
-				binaryPlayerPos.y += pInst->velCurr.x * g_dt;
-			}
-			if (pInst->velCurr.y != 0)
-			{
-				binaryPlayerPos.x -= pInst->velCurr.y * g_dt;
-			}
+			
 			if (pInst->pObject->type == TYPE_NPCS) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
@@ -603,38 +727,56 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
-		switch (Backpack.Potion)
+	Player->timetracker += g_dt;
+
+	switch (Backpack.Potion)
 	{
-		case 0:
-			NumObj[0]->TextureMap = { 2,12 };
-			break;
-		case 1:
-			NumObj[0]->TextureMap = { 5,11 };
-			break;
-		case 2:
-			NumObj[0]->TextureMap = { 6,11 };
-			break;
-		case 3:
-			NumObj[0]->TextureMap = { 7,11 };
-			break;
-		case 4:
-			NumObj[0]->TextureMap = { 8,11 };
-			break;
-		case 5:
-			NumObj[0]->TextureMap = { 9,11 };
-			break;
-		case 6:
-			NumObj[0]->TextureMap = { 10,11 };
-			break;
-		case 7:
-			NumObj[0]->TextureMap = { 11,11 };
-			break;
-		case 8:
-			NumObj[0]->TextureMap = { 0,12 };
-			break;
-		case 9:
-			NumObj[0]->TextureMap = { 1,12 };
-			break;
+	case 0:
+		NumObj[0]->TextureMap = { 2,12 };
+		break;
+	case 1:
+		NumObj[0]->TextureMap = { 5,11 };
+		break;
+	case 2:
+		NumObj[0]->TextureMap = { 6,11 };
+		break;
+	case 3:
+		NumObj[0]->TextureMap = { 7,11 };
+		break;
+	case 4:
+		NumObj[0]->TextureMap = { 8,11 };
+		break;
+	case 5:
+		NumObj[0]->TextureMap = { 9,11 };
+		break;
+	case 6:
+		NumObj[0]->TextureMap = { 10,11 };
+		break;
+	case 7:
+		NumObj[0]->TextureMap = { 11,11 };
+		break;
+	case 8:
+		NumObj[0]->TextureMap = { 0,12 };
+		break;
+	case 9:
+		NumObj[0]->TextureMap = { 1,12 };
+		break;
+	}
+
+	switch (Backpack.Key)
+	{
+	case 0:
+		NumObj[1]->TextureMap = { 2,12 };
+		break;
+	case 1:
+		NumObj[1]->TextureMap = { 5,11 };
+		break;
+	case 2:
+		NumObj[1]->TextureMap = { 6,11 };
+		break;
+	case 3:
+		NumObj[0]->TextureMap = { 7,11 };
+		break;
 	}
 
 	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
@@ -642,11 +784,6 @@ void GS_World_Update(void) {
 
 	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
 	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -685,81 +822,80 @@ void GS_World_Update(void) {
 			break;
 		}
 	}
-	
 
-	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
-		//player_direction.x = -player_direction.x;
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-		float player_bottom = Player->posCurr.y + 50;
-		float tiles_bottom = 0 + 50;
-		float player_right = Player->posCurr.x + 50;
-		float tiles_right = -160 + 50;
-
-		float b_collision = tiles_bottom - Player->posCurr.y;
-		float t_collision = player_bottom - 0;
-		float l_collision = player_right + 160;
-		float r_collision = tiles_right - Player->posCurr.x;
-
-		if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
-			//Top collision
-			std::cout << "collide top" << std::endl;
-			if (Player->velCurr.y == 1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = -1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
-
-		if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
-			//bottom collision
-			std::cout << "collide botton" << std::endl;
-			if (Player->velCurr.y == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = 1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
-
-		if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
-			//Left collision
-			std::cout << "collide left" << std::endl;
-			if (Player->velCurr.x == 1)
-			{
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = -1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-
-		}
-
-		if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
-			//Right collision
-			std::cout << "collide right" << std::endl;
-			if (Player->velCurr.x == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = 1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-		}
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+		
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
 	}
 	
 		
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+	
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x - 0.5;
+	}
+
+
+	/*AEVec2 PlayerMaxX{ Player->posCurr.x + 0.5 };
+	AEVec2 PlayerMinX{ Player->posCurr.x - 0.5 };
+	AEVec2 PlayerMaxY{ Player->posCurr.y - 0.5 };
+	AEVec2 PlayerMinY{ Player->posCurr.y + 0.5 };
+	struct AABB playerAABB {};*/
+
+
+
+
+
+
+	/*AEVec2 novelo{ 0.0001, 0.0001 };
+	
+	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
+			std::cout << "DOG\n";
+	}*/
+
+	//FOR PRINTING ON BINARY MAP
+	//if (AEInputCheckTriggered(AEVK_F)) {
+	//	static int test = 2;
+	//	std::ofstream testfile{ "test.txt" };
+	//	binaryMap[(int)Player->posCurr.x][(int)-Player->posCurr.y] = test++;
+	//	for (int i = 0; i < 42; i++) {
+	//		for (int j = 0; j < 124; j++) {
+	//			testfile << binaryMap[j][i];
+	//		}
+	//		testfile << std::endl;
+	//	}
+	//	testfile.close();
+	//}
+	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
+
+	
+
+	
 
 	// ===================================
 	// update active game object instances
@@ -848,22 +984,6 @@ void GS_World_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
-
-	if (AEInputCheckTriggered(AEVK_F)) {
-		static int test = 2;
-		std::ofstream testfile{ "test.txt" };
-		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
-		for (int i = 0; i < 42; i++) {
-			for (int j = 0; j < 124; j++) {
-				testfile << binaryMap[j][i];
-			}
-			testfile << std::endl;
-		}
-		testfile.close();
-	}
-	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
-
 }
 
 /******************************************************************************/
@@ -927,7 +1047,8 @@ void GS_World_Draw(void) {
 		}
 		// For any types using spritesheet
 		if (pInst->pObject->type == TYPE_HEALTH || pInst->pObject->type == TYPE_LEVERS
-			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject-> type==TYPE_ITEMS)
+			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject->type == TYPE_ITEMS
+			|| pInst->pObject->type == TYPE_KEY || pInst->pObject->type == TYPE_SPIKE)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
@@ -1269,4 +1390,183 @@ static void staticObjInstDestroy(staticObjInst* pInst)
 //	}
 //	return Flag;
 //}
+
+void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax) {
+	// Put data into struct
+	for (int i = 0; i < gameObjMax; i++) {
+		GameObjInst* pInst = gameObjList + i;
+
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			data.playerHealth = pInst->health;
+			data.playerPosition = pInst->posCurr;
+		}
+
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			data.mobsNum++;
+		}
+	}
+
+	for (int i = 0; i < staticObjMax; i++) {
+		staticObjInst* pInst = staticObjList + i;
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHEST) {
+			data.chestNum++;
+		}
+
+		if (pInst->pObject->type == TYPE_LEVERS) {
+			data.leverNum++;
+		}
+	}
+	GameObjInst* Mobs = new GameObjInst[data.mobsNum];
+	staticObjInst* Chests = new staticObjInst[data.chestNum];
+	staticObjInst* Levers = new staticObjInst[data.leverNum];
+
+	int k = 0, j = 0;
+	for (int i = 0; i < gameObjMax; i++) {
+		GameObjInst* pInst = gameObjList + i;
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			Mobs[k].health = pInst->health;
+			Mobs[k].posCurr = pInst->posCurr;
+			k++;
+		}
+	}
+
+	k = 0;
+
+	for (int i = 0; i < staticObjMax; i++) {
+		staticObjInst* pInst = staticObjList + i;
+		if (pInst->flag == 0) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHEST) {
+			Chests[k].posCurr = pInst->posCurr;
+			Chests[k].TextureMap = pInst->TextureMap;
+			k++;
+		}
+
+		if (pInst->pObject->type == TYPE_LEVERS) {
+			Levers[j].posCurr = pInst->posCurr;
+			Levers[j].TextureMap = pInst->TextureMap;
+			j++;
+		}
+	}
+
+	std::ofstream saveText{ "Assets/save.txt" };
+
+	saveText << data.playerHealth << std::endl;
+	saveText << data.playerPosition.x << std::endl;
+	saveText << data.playerPosition.y << std::endl;
+	saveText << Backpack.Key << std::endl;
+	saveText << Backpack.Potion << std::endl;
+
+	saveText << data.mobsNum << std::endl;
+	if (data.mobsNum != 0) {
+		for (int i = 0; i < data.mobsNum; i++) {
+			saveText << Mobs[i].posCurr.x << std::endl;
+			saveText << Mobs[i].posCurr.y << std::endl;
+			saveText << Mobs[i].health << std::endl;
+		}
+	}
+
+	saveText <<data.chestNum << std::endl;
+	if (data.chestNum != 0) {
+		for (int i = 0; i < data.chestNum; i++) {
+			saveText << Chests[i].posCurr.x << std::endl;
+			saveText << Chests[i].posCurr.y << std::endl;
+			saveText << Chests[i].TextureMap.x << std::endl;
+			saveText << Chests[i].TextureMap.y << std::endl;
+		}
+	}
+
+	saveText << data.leverNum << std::endl;
+	if (data.leverNum != 0) {
+		for (int i = 0; i < data.leverNum; i++) {
+			saveText << Levers[i].posCurr.x << std::endl;
+			saveText << Levers[i].posCurr.y << std::endl;
+			saveText << Levers[i].TextureMap.x << std::endl;
+			saveText << Levers[i].TextureMap.y << std::endl;
+		}
+	}
+
+	//for (int i = 0; i < 4; i++) {
+	//	saveText << data.puzzleCompleted[i] << std::endl;
+	//}
+
+	//saveText << data.elapsedTime << std::endl;
+
+	delete[] Mobs;
+	delete[] Chests;
+	delete[] Levers;
+}
+
+void loadData(saveData data) {
+	std::ifstream saveText{ "Assets/save.txt" };
+
+	saveText >> data.playerHealth;
+	saveText >> data.playerPosition.x;
+	saveText >> data.playerPosition.y;
+	saveText >> Backpack.Key;
+	saveText >> Backpack.Potion;
+
+	AEVec2 PlayerPos = { data.playerPosition.x,data.playerPosition.y};
+	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
+	Player->TextureMap = { 1,8 };
+
+
+	Player->health = data.playerHealth;
+
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		Health[i]->TextureMap = { 0,11 };
+	}
+
+	saveText >> data.mobsNum;
+	for (int i = 0; i < data.mobsNum; i++) {
+		//Create mob objs
+		AEVec2 pos = { 0,0 };
+		saveText >> pos.x;
+		saveText >> pos.y;
+		GameObjInst* pInst = gameObjInstCreate(TYPE_ENEMY, 1, &pos, nullptr, 0);
+		saveText >> pInst->health;
+	}
+
+	saveText >> data.chestNum;
+	for (int i = 0; i < data.chestNum; i++) {
+		AEVec2 pos = { 0,0 };
+		AEVec2 tex = { 0,0 };
+		saveText >> pos.x;
+		saveText >> pos.y;
+		saveText >> tex.x;
+		saveText >> tex.y;
+		Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos, 0);
+		Chest[i]->TextureMap = tex;
+	}
+
+	saveText >> data.leverNum;
+	for (int i = 0; i < data.leverNum; i++) {
+		AEVec2 pos = { 0,0 };
+		AEVec2 tex = { 0,0 };
+		saveText >> pos.x;
+		saveText >> pos.y;
+		saveText >> tex.x;
+		saveText >> tex.y;
+		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos, 0);
+		Levers[i]->TextureMap = tex;
+	}
+
+	//for (int i = 0; i < 4; i++) {
+		//saveText >> data.puzzleCompleted[i];
+	//}
+
+	//saveText >> data.elapsedTime;
+}
+
 
