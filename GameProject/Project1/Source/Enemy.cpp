@@ -58,13 +58,16 @@ void NodesInit(int grid[][42], int width, int height)
 			nodes[index].parent = nullptr; //init parent to point to nothing first 
 			nodes[index].b_Closed = false; //init closed node to false
 
+			// in bin map , 1 is wall, 0 is not
 			if (grid[x][y] == 1) // to check binary grid for obstacle
 			{
-				nodes[y * grid[path_width][0] + x].b_Obstacle = false; //if grid[x][y] == 1, it is not obstacle and set to false
+ 				
+ 				nodes[y * path_width + x].b_Obstacle = true; //if grid[x][y] == 1, it is  obstacle and set to true
+				//std::cout << y * path_width + x << std::endl;
 			}
 			else
 			{
-				nodes[y * grid[path_width][0] + x].b_Obstacle = true; // else, everything is an obstacle
+				nodes[y * path_width + x].b_Obstacle = false; // else, everything is not an obstacle
 
 			}
 		}
@@ -125,6 +128,7 @@ std::vector<Node*> shortest;
 
 std::vector<Node*> pathfind(int grid[][42],float x, float y, float x1, float y1)
 {
+	
 	// NOTE TO SELF: SRC IS START, DESC IS END
 	Node* nodesrc = &nodes[(-(int)y) * path_width + (int)x];
 	Node* nodedesc= &nodes[(-(int)y1) * path_width + (int)x1];
@@ -209,7 +213,7 @@ std::vector<Node*> pathfind(int grid[][42],float x, float y, float x1, float y1)
 			}
 		}
 	}
-	if (nodedesc != nullptr) //checks if destination note its not null  //LX SAY SUS, GO CHECK // WHAT I SHLD CHECK IS THE PATH 
+	if (nodedesc != nullptr) //checks if destination note its not null  
 	{
 		Node* p = nodedesc; // node pointer points to destination node
 
@@ -232,8 +236,10 @@ std::vector<Node*> pathfind(int grid[][42],float x, float y, float x1, float y1)
 
 }
 
-void freeNode() {
+void deletenodes()// free New for nodes
+{
+	
 	delete[] nodes;
 }
 
-//delete function, dont forget
+
