@@ -84,19 +84,16 @@ static staticObjInst* mapEditorObj;										// Pointer to the reference map edi
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
 static GameObjInst* enemy[2];
-static GameObjInst* Mask;
 
-AEGfxTexture* DarkRoom;
-AEGfxVertexList* DarkMesh = 0;
 
-static int dark = 0;
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
 
 
-//int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-//	float scaleX, float scaleY);
+int CheckInstanceBinaryMapCollision(float PosX, float PosY,
+	float scaleX, float scaleY);
 
 
 /******************************************************************************/
@@ -223,19 +220,6 @@ void GS_Maze_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
-
-	AEGfxMeshStart();
-
-	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
-		-80.0f, -45.f, 0xFFFFFF00, 0.0f, 1.0f,
-		80.0f, 45.f, 0xFF00FFFF, 1.0f, 0.0f);
-
-	AEGfxTriAdd(-80.0f, -45.f, 0xFFFFFFFF, 0.0f, 1.0f,
-		-80.0f, 45.f, 0xFFFFFFFF, 0.0f, 0.0f,
-		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
-	DarkMesh = AEGfxMeshEnd();
-	DarkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
-
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
@@ -346,11 +330,6 @@ void GS_Maze_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_9)) {
 		mapeditor ^= 1;
-	}
-	//Dark Mesh toggle
-	if (AEInputCheckTriggered(AEVK_1))
-	{
-		dark ^= 1;
 	}
 
 
@@ -774,7 +753,7 @@ void GS_Maze_Update(void) {
 
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+	CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
 
 	if (AEInputCheckTriggered(AEVK_F)) {
 		static int test = 2;
@@ -905,37 +884,6 @@ void GS_Maze_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
-	
-	if (dark == 1) {
-		AEGfxSetTransparency(1.0f);
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 0.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxTextureSet(DarkRoom, 0, 0);
-		// Create a scale matrix that scales by 100 x and y
-		AEMtx33 lscale = { 0 };
-		AEMtx33Scale(&lscale, 10, 10);
-		// Create a rotation matrix that rotates by 45 degrees
-		AEMtx33 lrotate = { 0, };
-
-		AEMtx33Rot(&lrotate, 0);
-
-		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-		// Concat the matrices (TRS) 
-		AEMtx33 ltransform = { 0 };
-		AEMtx33Concat(&ltransform, &lrotate, &lscale);
-		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-		// Choose the transform to use 
-		AEGfxSetTransform(ltransform.m);
-		// Actually drawing the mesh
-		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
-	}
-
 	if (state == 1)
 	{
 		char debug[20] = "Debug Screen";
@@ -1040,8 +988,6 @@ void GS_Maze_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxDestroyFont(FontList[0]);
-	AEGfxMeshFree(DarkMesh);
-	AEGfxTextureUnload(DarkRoom);
 
 }
 

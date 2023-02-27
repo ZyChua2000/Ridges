@@ -10,9 +10,8 @@ struct GameObj
 	unsigned long	type;		// object type
 	AEGfxVertexList* pMesh;		// This will hold the triangles which will form the shape of the object
 	AEGfxTexture* pTexture;		// This holds a pointer to the texture that is being used
-	bool refMesh;			// True if Mesh is referencing another object's mesh, else false by default
-	bool refTexture;		// True if texture is referencing another object's texture, else false by default
-	
+	bool refMesh = 0;			// True if Mesh is referencing another object's mesh, else false by default
+	bool refTexture = 0;		// True if texture is referencing another object's texture, else false by default
 };
 
 // This struct holds the max and min of the axis of an object for collision purpose
@@ -52,8 +51,7 @@ struct GameObjInst
 	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
 	int					health;		// object's health level
 	int					damage;		// object's damage parameter
-	std::vector<Node*>	path; // this is only for enemy or any ai/ npc that requires path
-	float				timetracker;// object's time of existence
+	int					potion;
 
 	// Member functions
 
@@ -97,7 +95,8 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
-	void walk();
+
+	void potion_counter(int potion = 1);
 };
 
 // This enum is a list of the different types of game objects
@@ -114,9 +113,6 @@ enum TYPE
 	TYPE_LEVERS,
 	TYPE_ENEMY,
 	TYPE_CHEST,
-	TYPE_KEY,
-	TYPE_SPIKE,
-	TYPE_MASK,
 
 
 	TYPE_NUM

@@ -16,27 +16,25 @@ staticObjInst* staticObjInstCreate(unsigned long type, float scale,
 
 void			staticObjInstDestroy(staticObjInst* pInst);
 
-enum {
-	notActivated,
-	Activated
-};
-
 
 struct saveData {
-	int playerHealth = 0;
-	AEVec2 playerPosition = { 0,0 };
-	//int playerItems;
+	int playerHealth;
+	AEVec2 playerPosition;
+	int playerItems;
 
 	// Array of mobs
-	int mobsNum = 0;
+	int mobsLife;
+	AEVec2 mobPosition;
 
-	int chestNum = 0;
+	// Array of chests
+	bool chestOpened;
 
-	int leverNum = 0;
+	// Array of levers
+	bool leverOpened;
 
-	//int puzzleCompleted[4];
+	int puzzleCompleted[4];
 
-	//float elapsedTime;
+	float elapsedTime;
 };
 
 namespace utilities {
@@ -170,4 +168,8 @@ namespace utilities {
 		Filename to import texture from.
 	*************************************************************************/
 	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
+
+	void saveGame(saveData data);
+
+	void loadData(saveData data);
 }
