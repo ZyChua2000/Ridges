@@ -116,7 +116,7 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY,
 /*!
 	"Load" function of this state
 	This function loads all necessary assets for the World level.
-	It should be called once before the start of the level.
+	It should be called once before the start of the level.clic
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/

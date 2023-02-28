@@ -91,6 +91,8 @@ void menuObjInstDestroy(MenuObjInst* pInst);
 void GS_MainMenu_Load(void) {
 	font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 
+	sMenuObjNum = 0;
+
 	animationBG[0] = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
 	animationBG[1] = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
 	animationBG[2] = AEGfxTextureLoad("Assets/MainMenu/Mainback3.png");
@@ -109,8 +111,10 @@ void GS_MainMenu_Load(void) {
 		-80.f, -45.f, 0x00FF00, 0.0f, 1.f,
 		80.f, 45.f, 0x00FF00, 1.f, 0.0f);
 	Background_1->pMesh = AEGfxMeshEnd();
+
 	Background_1->type = TYPE_BACK1;
 	Background_1->pTexture = animationBG[0];
+
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
 }
@@ -143,7 +147,6 @@ void GS_MainMenu_Init(void) {
 void GS_MainMenu_Update(void) {
 	
 	animated += g_dt;
-	std::cout << animated;
 
 	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
 
@@ -220,59 +223,59 @@ void GS_MainMenu_Update(void) {
 */
 /******************************************************************************/
 void GS_MainMenu_Draw(void) {
-	//
-	//
+	
+	
 
 
-	//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	//AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-	//	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-	////AEGfxTextureSet(NULL, 0, 0);
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	//AEGfxTextureSet(NULL, 0, 0);
 
-	//AEGfxSetTransparency(1.0f);
+	AEGfxSetTransparency(1.0f);
 
-	//
-	//for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
-	//{
-	//	MenuObjInst* pInst = sMenuObjInstList + i;
-	//	
+	
+	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
+	{
+		MenuObjInst* pInst = sMenuObjInstList + i;
+		
 
-	//	// skip non-active object
-	//	if ((pInst->flag & FLAG_ACTIVE) == 0)
-	//		continue;
+		// skip non-active object
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
+			continue;
 
-	//	
-	//	// Set the current object instance's transform matrix using "AEGfxSetTransform"
-	//	AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-	//	AEGfxSetTransform(pInst->transform.m);
-	//	
-	//	// Actually drawing the mesh
-	//	AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	//	
-	//	
-	//}
-	//
+		
+		// Set the current object instance's transform matrix using "AEGfxSetTransform"
+		AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+		AEGfxSetTransform(pInst->transform.m);
+		
+		// Actually drawing the mesh
+		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+		
+		
+	}
+	
 
-	//
+	
 
-	////Exit/////////////////////////////////////////
+	//Exit/////////////////////////////////////////
 
-	//
-	//if (debugstate == 1)
-	//{
-	//	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+	
+	if (debugstate == 1)
+	{
+		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-	//	char debug[20] = "Debug Screen";
+		char debug[20] = "Debug Screen";
 
-	//	char mouse_xy_buffer[50] = " "; // buffer
-	//	AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
-	//	sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mouseX);
-	//	AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
-	//	sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mouseY);
-	//	AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
+		char mouse_xy_buffer[50] = " "; // buffer
+		AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
+		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mouseX);
+		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
+		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mouseY);
+		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 
-	//}
+	}
 	
 }
 
@@ -287,6 +290,7 @@ void GS_MainMenu_Free(void) {
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
 		MenuObjInst* pInst = sMenuObjInstList + i;
+		if(pInst)
 		menuObjInstDestroy(pInst);
 	}
 	
@@ -302,22 +306,15 @@ void GS_MainMenu_Free(void) {
 void GS_MainMenu_Unload(void) {
 
 	
-	/*for (unsigned int i = 0; i < sMenuObjNum; i++) {
+	for (unsigned int i = 0; i < sMenuObjNum; i++) {
 		if ((sMenuObjList + i)->refMesh == false)
 			AEGfxMeshFree((sMenuObjList + i)->pMesh);
-	}*/
+	}
 
-	//AEGfxMeshFree((sMenuObjList)->pMesh);
-	//AEGfxTextureUnload(animationBG[0]);
-	//AEGfxTextureUnload(animationBG[1]);
-	//AEGfxTextureUnload(animationBG[2]);
-	//AEGfxTextureUnload(animationBG[3]);
-	//AEGfxTextureUnload(animationBG[4]);
-	//AEGfxTextureUnload(animationBG[5]);
-	/*for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 6; i++) {
 		AEGfxTextureUnload(animationBG[i]);
-	}*/
-	//AEGfxDestroyFont(font);
+	}
+	AEGfxDestroyFont(font);
 }
 
 // ---------------------------------------------------------------------------
