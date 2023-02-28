@@ -984,7 +984,7 @@ void GS_World_Update(void) {
 
 	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
 
-	//if (AEInputCheckTriggered(AEVK_F)) {
+	//if (AEInputCheckTriggered(AEVK_F)) { //printing bin map
 	//	static int test = 2;
 	//	//std::ofstream testfile{ "test.txt" };
 	//	//binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
@@ -1023,10 +1023,7 @@ void GS_World_Update(void) {
 				{
 					enemy[i]->posCurr.x = enemy[i]->path[1]->ae_NodePos.x;
 					enemy[i]->posCurr.y = enemy[i]->path[1]->ae_NodePos.y;
-					if (i == 0)
-					{
-						std::cout << enemy[i]->posCurr.x << "\t" << enemy[i]->posCurr.y << std::endl;
-					}
+					
 				}
 
 			}
