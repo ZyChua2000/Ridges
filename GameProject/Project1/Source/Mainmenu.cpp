@@ -137,7 +137,7 @@ void GS_MainMenu_Load(void) {
 		80.f, 45.f, 0x00FF00, 1.f, 0.0f);
 	Background_1->pMesh = AEGfxMeshEnd();
 	Background_1->type = TYPE_BACK1;
-	Background_1->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
+	Background_1->pTexture = animationBG[0];
 	Background_1->refTexture = false;
 }
 
@@ -335,7 +335,7 @@ void GS_MainMenu_Unload(void) {
 		//	AEGfxTextureUnload((sMenuObjList + i)->pTexture);
 	}
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 6; i++) {
 		AEGfxTextureUnload(animationBG[i]);
 	}
 	AEGfxDestroyFont(font);

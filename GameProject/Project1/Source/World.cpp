@@ -129,12 +129,12 @@ void GS_World_Load(void) {
 	sGameObjNum = 0;
 
 	// zero the game object instance array
-	memset(sGameObjInstList, 0, sizeof(GameObjInst) * GAME_OBJ_INST_NUM_MAX);
+	//memset(sGameObjInstList, 0, sizeof(GameObjInst) * GAME_OBJ_INST_NUM_MAX);
 	// No game object instances (sprites) at this point
 	sGameObjInstNum = 0;
 
 	// zero the game object instance array
-	memset(sStaticObjInstList, 0, sizeof(staticObjInst) * STATIC_OBJ_INST_NUM_MAX);
+	//memset(sStaticObjInstList, 0, sizeof(staticObjInst) * STATIC_OBJ_INST_NUM_MAX);
 	// No game object instances (sprites) at this point
 	sStaticObjInstNum = 0;
 
