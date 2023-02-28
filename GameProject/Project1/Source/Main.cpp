@@ -34,8 +34,6 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	UNREFERENCED_PARAMETER(prevInstanceH);
 	UNREFERENCED_PARAMETER(command_line);
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	char* pcDynamicHeapStart = new char[17u];
-	strcpy_s(pcDynamicHeapStart, 17u, "DynamicHeapStart");
 
 	//int * pi = new int;
 	//delete pi;
