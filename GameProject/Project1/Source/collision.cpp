@@ -4,71 +4,121 @@
 bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	const AABB& aabb2, const AEVec2& vel2)
 {
-	// Implement the collision intersection over here. The steps are: 
 
-	// Step 1: Check for static collision detection between rectangles (before moving). 
-			//If the check returns no overlap you continue with the following next steps (dynamics).
-			//Otherwise you return collision true
-	if (!((aabb1.max.x > aabb2.min.x) || (aabb2.max.x > aabb1.min.x)
-		|| (aabb1.max.y > aabb2.min.y) || (aabb2.max.y > aabb1.min.y)))
-		return 0;
+	//Implement the collision intersection over here.
 
-	// Step 2: Initialize and calculate the new velocity of Vb
-	AEVec2 vel;
-	AEVec2Set(&vel, (vel2.x - vel1.x), (vel2.y - vel1.y));
+	//The steps are:	
+	//Step 1: Check for static collision detection between rectangles (before moving). 
+				//If the check returns no overlap you continue with the following next steps (dynamics).
+				//Otherwise you return collision true
+	if ((aabb1.max.x < aabb2.min.x || aabb1.min.x > aabb2.max.x) || (aabb1.max.y < aabb2.min.y || aabb1.min.y > aabb2.max.y)) {
 
-	float tFirst = 0;
-	float tLast = g_dt;
+		//Check that both objects are not static. If both are static, return false
+		if (vel1.x == 0 || vel1.y == 0 || vel2.x == 0 || vel2.y == 0) {
+			return false;
+		}
+		else {
 
-	// Step 3: Working with one dimension (x-axis).
-	if (vel.x <= 0)
-	{
-		if (aabb1.min.x > aabb2.max.x) // case 1
-			return 0; // no intersection and B is moving away
-		if (aabb1.max.x < aabb2.min.x) //case 4 p1
-			tFirst = AEMax((aabb1.max.x - aabb2.min.x) / vel.x, tFirst);
-		if (aabb1.min.x < aabb2.max.x) //case 4 p2
-			tLast = AEMin((aabb1.min.x - aabb2.max.x) / vel.x, tLast);
+			//Step 2: Initialize and calculate the new velocity of Vb
+
+			AEVec2 Vb = { vel2.x - vel1.x,vel2.y - vel1.y }; //Normalise vectors
+			AEVec2 tFirst = { 0,0 };
+			AEVec2 tLast = { (float)(AEFrameRateControllerGetFrameTime()),(float)(AEFrameRateControllerGetFrameTime()) };
+
+			//Step 3: Working with one dimension (x-axis).
+			if (Vb.x > 0) {
+				// Case 3: Boxes moving away from each other
+				if (aabb1.max.x < aabb2.min.x) {
+					return false;
+				}
+
+				//Case 2:
+				if (aabb1.min.x > aabb2.max.x) {
+					// Maximum between dFirst/Vb and original tFirst value for x
+					if (tFirst.x < (aabb1.min.x - aabb2.max.x) / Vb.x) {
+						tFirst.x = (aabb1.min.x - aabb2.max.x) / Vb.x;
+					}
+					// Minimum between dLast/Vb and original tLast value for x
+					if (tLast.x > (aabb1.max.x - aabb2.min.x) / Vb.x) {
+						tLast.x = (aabb1.max.x - aabb2.min.x) / Vb.x;
+					}
+				}
+			}
+
+			if (Vb.x < 0) {
+				//Case 1: Boxes moving away from each other
+				if (aabb1.min.x > aabb2.max.x) {
+					return false;
+				}
+
+				//Case 4:
+				if (aabb1.max.x < aabb2.min.x) {
+					// Maximum between dFirst/Vb and original tFirst value for x
+					if (tFirst.x < (aabb1.max.x - aabb2.min.x) / Vb.x) {
+						tFirst.x = (aabb1.max.x - aabb2.min.x) / Vb.x;
+					}
+					// Minimum between dLast/Vb and original tLast value for x
+					if (tLast.x > (aabb1.min.x - aabb2.max.x) / Vb.x) {
+						tLast.x = (aabb1.min.x - aabb2.max.x) / Vb.x;
+					}
+				}
+			}
+
+			//Step 4: Repeat step 3 on the y-axis
+			if (Vb.y > 0) {
+				// Case 3: Boxes moving away from each other
+				if (aabb1.max.y < aabb2.min.y) {
+					return false;
+				}
+
+				//Case 2:
+				if (aabb1.min.y > aabb2.max.y) {
+					// Maximum between dFirst/Vb and original tFirst value for y
+					if (tFirst.y < (aabb1.min.y - aabb2.max.y) / Vb.y) {
+						tFirst.y = (aabb1.min.y - aabb2.max.y) / Vb.y;
+					}
+					// Minimum between dLast/Vb and original tLast value for y
+					if (tLast.y > (aabb1.max.y - aabb2.min.y) / Vb.y) {
+						tLast.y = (aabb1.max.y - aabb2.min.y) / Vb.y;
+					}
+				}
+			}
+
+			if (Vb.y < 0) {
+				// Case 1: Boxes moving away from each other
+				if (aabb1.min.y > aabb2.max.y) {
+					return false;
+				}
+
+				// Case 4:
+				if (aabb1.max.y < aabb2.min.y) {
+					// Maximum between dFirst/Vb and original tFirst value for y
+					if (tFirst.y < (aabb1.max.y - aabb2.min.y) / Vb.y) {
+						tFirst.y = (aabb1.max.y - aabb2.min.y) / Vb.y;
+					}
+					// Minimum between dLast/Vb and original tLast value for y
+					if (tLast.y > (aabb1.min.y - aabb2.max.y) / Vb.y) {
+						tLast.y = (aabb1.min.y - aabb2.max.y) / Vb.y;
+					}
+				}
+			}
+
+			// Check if ray passes through box
+			if (tFirst.x > tLast.y || tFirst.y > tLast.x) {
+				return false;
+			}
+
+			//Step 5: Otherwise the rectangles intersect
+			else {
+				return true;
+			}
+		}
 	}
-	else if (vel.x > 0)
-	{
-		if (aabb1.max.x < aabb2.min.x) // case 3
-			return 0; //no intersection and B is moving away
-		if (aabb1.min.x > aabb2.max.x) // case 2 p1
-			tFirst = AEMax((aabb1.min.x - aabb2.max.x) / vel.x, tFirst);
-		if (aabb1.max.x > aabb2.min.x) // case 2 p2
-			tLast = AEMin((aabb1.max.x - aabb2.min.x) / vel.x, tLast);
+	// For static collision
+
+	else {
+		return true;
 	}
-
-	// Step 5: Otherwise the rectangles intersect
-	if (tFirst > tLast)
-		return 0; // no intersection
-
-	// Step 4: Repeat step 3 on the y-axis
-	if (vel.y <= 0)
-	{
-	if (aabb1.min.y > aabb2.max.y) // case 1
-		return 0; // no intersection and B is moving away
-	if (aabb1.max.y < aabb2.min.y) //case 4 p1
-		tFirst = AEMax((aabb1.max.y - aabb2.min.y) / vel.y, tFirst);
-	if (aabb1.min.y < aabb2.max.y) //case 4 p2
-		tLast = AEMin((aabb1.min.y - aabb2.max.y) / vel.y, tLast);
-	}
-	else if (vel.y > 0)
-	{
-	if (aabb1.max.y < aabb2.min.y) // case 3
-		return 0; //no intersection and B is moving away
-	if (aabb1.min.y > aabb2.max.y) // case 2 p1
-		tFirst = AEMax((aabb1.min.y - aabb2.max.y) / vel.y, tFirst);
-	if (aabb1.max.y > aabb2.min.y) // case 2 p2
-		tLast = AEMin((aabb1.max.y - aabb2.min.y) / vel.y, tLast);
-	}
-
-	// Step 5: Otherwise the rectangles intersect
-	if (tFirst > tLast)
-		return 0; // no intersection
-
-	else return 1;
 }
 
 int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[124][42])

@@ -4,7 +4,7 @@
 #include <list>
 #include <vector>
 
-static Node* nodes{};
+extern Node* nodes{};
 
 // for enemy 
 // FOR FUTURE USE MAYBE ???
@@ -44,6 +44,7 @@ void NodesInit(int grid[][42], int width, int height)
 	path_height = height;
 
 	nodes = new Node[path_width * path_height]; // allocate mem for *nodes to point to array holding type Nodes
+
 
 	for (int x = 0; x < path_width; x++)// nested for loop to init struct members for Node
 	{

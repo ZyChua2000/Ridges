@@ -331,8 +331,12 @@ void GS_MainMenu_Unload(void) {
 	for (unsigned int i = 0; i < sMenuObjNum; i++) {
 		if ((sMenuObjList + i)->refMesh == false)
 			AEGfxMeshFree((sMenuObjList + i)->pMesh);
-		if ((sMenuObjList + i)->refTexture == false)
-			AEGfxTextureUnload((sMenuObjList + i)->pTexture);
+		//if ((sMenuObjList + i)->refTexture == false)
+		//	AEGfxTextureUnload((sMenuObjList + i)->pTexture);
+	}
+
+	for (int i = 0; i < 5; i++) {
+		AEGfxTextureUnload(animationBG[i]);
 	}
 	AEGfxDestroyFont(font);
 }
