@@ -508,7 +508,6 @@ void GS_World_Update(void) {
 	}
 
 
-
 	if (AEInputCheckTriggered(AEVK_E)) {
 
 		//Interaction with levers
@@ -1078,11 +1077,15 @@ void GS_World_Update(void) {
 			for (int i = 0; i < sizeof(enemy) / sizeof(enemy[0]); i++)
 			{
 				enemy[i]->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+				//pInst->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
 
 				if (enemy[i]->path.size() >= 5)
 				{
 					enemy[i]->posCurr.x = enemy[i]->path[1]->ae_NodePos.x;
 					enemy[i]->posCurr.y = enemy[i]->path[1]->ae_NodePos.y;
+				
+					//pInst->posCurr.x = pInst->velCurr.x * (enemy[i]->path[1]->parent.ae_NodePos.x - enemy[i]->path[1]->ae_NodePos.x);
+					//pInst->posCurr.y = pInst->velCurr.y * (enemy[i]->path[1]->parent.ae_NodePos.x - enemy[i]->path[1]->ae_NodePos.y);
 					
 				}
 
