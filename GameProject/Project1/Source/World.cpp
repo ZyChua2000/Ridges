@@ -451,7 +451,7 @@ void GS_World_Init(void) {
 
 }
 
-
+int spiketimer = 0;
 /******************************************************************************/
 /*!
 	"Update" function of this state
@@ -565,7 +565,26 @@ void GS_World_Update(void) {
 			Backpack.Key++;
 		}
 	}
-
+	//spike
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_SPIKE)
+		{
+			continue;
+		}
+		//Interaction with key
+		if ((int)(++spiketimer + g_dt ) % 50 == 0) {
+			std::cout << "notdog\n";
+			break;
+		}
+		else if (Player->calculateDistance(*pInst) < 1)
+		{
+			std::cout << "dog\n";
+			//Player->deducthealth();
+		}
+	}
+	//spike
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -857,23 +876,33 @@ void GS_World_Update(void) {
 		//Player->posCurr.x - 0.5;
 	}
 
-
-	/*AEVec2 PlayerMaxX{ Player->posCurr.x + 0.5 };
-	AEVec2 PlayerMinX{ Player->posCurr.x - 0.5 };
-	AEVec2 PlayerMaxY{ Player->posCurr.y - 0.5 };
-	AEVec2 PlayerMinY{ Player->posCurr.y + 0.5 };
-	struct AABB playerAABB {};*/
+	//AEVec2 novelo{ 0.0001, 0.0001 };
 
 
+	/*double PlayerMaxX{ Player->posCurr.x + 0.5 };
+	double PlayerMinX{ Player->posCurr.x - 0.5 };
+	double PlayerMaxY{ Player->posCurr.y - 0.5 };
+	double PlayerMinY{ Player->posCurr.y + 0.5 };
+	AEVec2 PlayerMax{ PlayerMaxX, PlayerMaxY };
+	AEVec2 PlayerMin{ PlayerMinX, PlayerMinY };
+	struct AABB PlayerAABB {PlayerMin, PlayerMax};
 
+	double SpikeMaxX{ Spike->posCurr.x + 0.5};
+	double SpikeMinX{ Spike->posCurr.x - 0.5 };
+	double SpikeMaxY{ Spike->posCurr.y - 0.5 };
+	double SpikeMinY{ Spike->posCurr.y + 0.5 };
+	AEVec2 SpikeMax{ SpikeMaxX, SpikeMaxY };
+	AEVec2 SpikeMin{ SpikeMinX, SpikeMinY };
+	struct AABB spikeAABB {SpikeMin, SpikeMax};
 
-
-
-	/*AEVec2 novelo{ 0.0001, 0.0001 };
-	
-	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
-			std::cout << "DOG\n";
+	if (CollisionIntersection_RectRect(PlayerAABB, Player->velCurr, spikeAABB, novelo)) {
+		std::cout << "DOG\n";
 	}*/
+
+
+
+
+
 
 	//FOR PRINTING ON BINARY MAP
 	//if (AEInputCheckTriggered(AEVK_F)) {
