@@ -655,6 +655,16 @@ void GS_World_Update(void) {
 		binInput.close();
 	}
 
+	if (SLASH_ACTIVATE == true) {
+		AEVec2 Pos = Player->posCurr;
+		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
+		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		slashObj->dirCurr = angleMousetoPlayer + PI;
+		slashObj->timetracker = 0;
+		SLASH_ACTIVATE = false;
+	}
+
 	// ======================================================
 	// update physics of all active game object instances
 	//  -- Get the AABB bounding rectangle of every active instance:
@@ -679,10 +689,10 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type != TYPE_SLASH) {
 			continue;
 		}
-		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
-		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+			pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
+			pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+			pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
+			pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
 	}
 
 	// ======================================================
@@ -725,16 +735,6 @@ void GS_World_Update(void) {
 	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
 	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
 	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
-	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr;
-		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
-		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
-		slashObj->dirCurr = angleMousetoPlayer + PI;
-		slashObj->timetracker = 0;
-		SLASH_ACTIVATE = false;
-	}
 
 
 	switch (Backpack.Potion)
@@ -850,8 +850,8 @@ void GS_World_Update(void) {
 				continue;
 			}
 			AEVec2 velNull = { 0,0 };
-			if (CollisionIntersection_RectRect(pInst->boundingBox, pInst->velCurr, jInst->boundingBox, velNull)
-				&& jInst->Alpha == 0) {
+			if (pInst->calculateDistance(*jInst) < 0.6f
+				&& jInst->Alpha == 1) {
 				pInst->deducthealth(Player->damage);
 
 			}
