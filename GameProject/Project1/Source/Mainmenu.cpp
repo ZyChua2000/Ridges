@@ -68,7 +68,7 @@ static AEGfxTexture* animationBG[6];
 
 //MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 static float animated = 1;
-static float timetracker=0;
+
 //MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 
 
@@ -148,7 +148,7 @@ void GS_MainMenu_Init(void) {
 void GS_MainMenu_Update(void) {
 	
 	animated += g_dt;
-	timetracker += g_dt;
+	
 	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
 
 
@@ -171,13 +171,17 @@ void GS_MainMenu_Update(void) {
 		debugstate ^= 1;
 
 	}
-
+	
 	
 		if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+			
+			
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
 				
 				gGameStateNext = GS_WORLD;
+				
+
 			}
 
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
@@ -187,7 +191,8 @@ void GS_MainMenu_Update(void) {
 			//gGameStateNext = GS_WORLD;
 		}
 	
-	
+		
+			
 
 
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
