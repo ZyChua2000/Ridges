@@ -53,8 +53,8 @@ void NodesInit(int grid[][42], int width, int height)
 			int index = y * path_width + x;
 			Node* node = &nodes[index];
 
-			nodes[index].ae_NodePos.x = x; //init pos x for node
-			nodes[index].ae_NodePos.y = -y; //init pos y for node
+			nodes[index].ae_NodePos.x = x+0.5f; //init pos x for node
+			nodes[index].ae_NodePos.y = -y-0.5f; //init pos y for node
 			nodes[index].parent = nullptr; //init parent to point to nothing first 
 			nodes[index].b_Closed = false; //init closed node to false
 
