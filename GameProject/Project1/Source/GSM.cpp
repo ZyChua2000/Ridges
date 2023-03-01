@@ -95,6 +95,14 @@ void GameStateMgrUpdate()
 		GameStateFree = GS_Colosseum_Free;
 		GameStateUnload = GS_Colosseum_Unload;
 		break;
+	case GS_DEATHSCREEN:
+		GameStateLoad = GS_DeathScreen_Load;
+		GameStateInit = GS_DeathScreen_Init;
+		GameStateUpdate = GS_DeathScreen_Update;
+		GameStateDraw = GS_DeathScreen_Draw;
+		GameStateFree = GS_DeathScreen_Free;
+		GameStateUnload = GS_DeathScreen_Unload;
+		break;
 	default:
 		AE_FATAL_ERROR("invalid state!!");
 	}

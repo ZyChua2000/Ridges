@@ -985,7 +985,7 @@ void GS_World_Update(void) {
 				pInst->timetracker = 0;
 			}
 			if (pInst->health == 0) {
-				gGameStateNext = GS_MAINMENU;
+				gGameStateNext = GS_DEATHSCREEN;
 			}
 		}
 	}

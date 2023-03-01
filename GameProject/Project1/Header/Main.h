@@ -34,6 +34,7 @@ extern double	g_appTime;
 #include "Utilities.h"
 #include "Maze.h"
 #include "Colosseum.h"
+#include "DeathScreen.h"
 
 
 #endif
