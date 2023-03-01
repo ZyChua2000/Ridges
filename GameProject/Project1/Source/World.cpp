@@ -18,6 +18,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Globals.h"
 #include "Enemy.h"
 #include "collision.h"
+#include <time.h>
 
 
 /*!
@@ -105,6 +106,7 @@ static staticObjInst* Spike;
 
 
 
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -118,7 +120,7 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY,
 /*!
 	"Load" function of this state
 	This function loads all necessary assets for the World level.
-	It should be called once before the start of the level.
+	It should be called once before the start of the level.clic
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
@@ -360,7 +362,7 @@ void GS_World_Init(void) {
 		}
 
 		//Initialise chest in level
-		AEVec2 chestpos[6] = { {13,-8} , {53,-5} , {70,-10}, {80,-14}, {84,-33}, {107,-24} };
+		AEVec2 chestpos[6] = { {13,-8} , {53,-5} , {70,-11}, {80,-14}, {84,-33}, {107,-24} };
 		for (int i = 0; i < MAX_CHESTS; i++)
 		{
 			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[i], 0);
@@ -961,9 +963,19 @@ void GS_World_Update(void) {
 			continue;
 		}
 
-		if (pInst->pObject->type == TYPE_ENEMY) {
-			if (pInst->health == 0) {
+		if (pInst->pObject->type == TYPE_ENEMY) 
+		{
+			if (pInst->health == 0) 
+			{
 				gameObjInstDestroy(pInst);
+				//randomising potion drop rate when mobs are killed 
+				srand(time(NULL));
+				if (rand() % 2 == 0)
+				{
+					AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
+					staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+					Potion->TextureMap = { 6,9 };
+				}
 			}
 		}
 

@@ -90,33 +90,8 @@ void menuObjInstDestroy(MenuObjInst* pInst);
 /******************************************************************************/
 void GS_MainMenu_Load(void) {
 	font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	//MenuObj* Play;
 
-	/*Play = sMenuObjList + sMenuObjNum++;
-	Play->type = TYPE_PLAY;
-	AEGfxMeshStart();
-
-	AEGfxTriAdd(-15.f, 30.f, 0x00FF00, 0.f, 0.f,
-		-15.f, 0.f, 0x00FF00, 0.0f, 1.0f ,
-		15.f, 30.f, 0x00FF00, 1.f, 0.0f);
-
-	AEGfxTriAdd(15.f, 0.f, 0x00FF00, 1.0f, 1.0f,
-		-15.f, 0.f, 0x00FF00, 0.0f, 1.f,
-		15.f, 30.f, 0x00FF00, 1.f, 0.0f);
-
-	Play->pMesh = AEGfxMeshEnd();
-	Play->pTexture = AEGfxTextureLoad("Assets/StartButton.png");
-	Play->refMesh = true;
-	Play->refTexture = true;
-
-	MenuObj* Exit;
-	Exit = sMenuObjList + sMenuObjNum++;
-	Exit->pMesh = Play->pMesh;
-	Exit->type = TYPE_EXIT;
-	Exit->pTexture = AEGfxTextureLoad("Assets/ExitButton.png");
-	Exit->refMesh = true;
-	Exit->refTexture = true;
-    */
+	sMenuObjNum = 0;
 
 	animationBG[0] = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
 	animationBG[1] = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
@@ -136,9 +111,12 @@ void GS_MainMenu_Load(void) {
 		-80.f, -45.f, 0x00FF00, 0.0f, 1.f,
 		80.f, 45.f, 0x00FF00, 1.f, 0.0f);
 	Background_1->pMesh = AEGfxMeshEnd();
+
 	Background_1->type = TYPE_BACK1;
 	Background_1->pTexture = animationBG[0];
+
 	Background_1->refTexture = false;
+	Background_1->refMesh = false;
 }
 
 /******************************************************************************/
@@ -169,7 +147,6 @@ void GS_MainMenu_Init(void) {
 void GS_MainMenu_Update(void) {
 	
 	animated += g_dt;
-	std::cout << animated;
 
 	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
 
@@ -313,6 +290,7 @@ void GS_MainMenu_Free(void) {
 	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
 	{
 		MenuObjInst* pInst = sMenuObjInstList + i;
+		if(pInst)
 		menuObjInstDestroy(pInst);
 	}
 	
@@ -331,8 +309,6 @@ void GS_MainMenu_Unload(void) {
 	for (unsigned int i = 0; i < sMenuObjNum; i++) {
 		if ((sMenuObjList + i)->refMesh == false)
 			AEGfxMeshFree((sMenuObjList + i)->pMesh);
-		//if ((sMenuObjList + i)->refTexture == false)
-		//	AEGfxTextureUnload((sMenuObjList + i)->pTexture);
 	}
 
 	for (int i = 0; i < 6; i++) {
