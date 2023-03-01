@@ -54,6 +54,9 @@ struct GameObjInst
 	int					damage;		// object's damage parameter
 	std::vector<Node*>	path; // this is only for enemy or any ai/ npc that requires path
 	float				timetracker;// object's time of existence
+	bool				stopped; //to check if enemy stopped moving
+	bool				enemy_dead; // flag to check if enemy is alive or not
+
 
 	// Member functions
 

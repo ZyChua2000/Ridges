@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 
 	//int * pi = new int;
 	//delete pi;
-		_crtBreakAlloc = 4272;
+		//_crtBreakAlloc = 4272;
 
 	// Initialize the system
 	AESysInit(instanceH, show, 1600, 900, 1, 60, false, NULL);
