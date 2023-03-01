@@ -32,7 +32,7 @@ static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of 
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS = 2;							// The total number of mobs
+static const unsigned int	MAX_MOBS =11;							// The total number of mobs
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_KEYS;						// The total number of keys
@@ -351,7 +351,8 @@ void GS_World_Init(void) {
 		}
 
 		//Initialise enemy in level
-		AEVec2 EnemyPos[2] = { {33.f, -16.f} ,{33.f, -21.f} };
+		AEVec2 EnemyPos[MAX_MOBS] = { {33.f, -16.f} ,{33.f, -21.f}, {50.f, -18.f}, {52.f,-18.5f}, {44.4f, -5.4f}, {54.5f,-5.2f},
+		{67.5f, -11.3f},  {71.4f, -10.4f} , {88.7f, -14.5f} , {108.4f,  -20.4f}, {105.5f, -20.4f} };
 		for (int i = 0; i < MAX_MOBS; i++) {
 			enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 			enemy[i]->TextureMap = { 0,9 };
@@ -1097,71 +1098,66 @@ void GS_World_Update(void) {
 	//}
 
 
-// loop through enemy array to make all enemy instance pathfind to player
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+
+		
+	for (int j = 0; j < sizeof(enemy) / sizeof(enemy[0]); j++)
 	{
-		GameObjInst* pInst = sGameObjInstList + i;
+		GameObjInst* pEnemy = enemy[j];
 
 		// skip non-active object
-		if (pInst->flag != FLAG_ACTIVE)
+		if (pEnemy->flag != FLAG_ACTIVE)
 			continue;
 
-		if (utilities::checkWithinCam(pInst->posCurr, camX, camY))
+		if (Player->calculateDistance(*pEnemy) > 10)
 			continue;
 
-		if (pInst->pObject->type == TYPE_ENEMY)
+		// perform pathfinding for this enemy
+		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+
+		// update enemy velocity based on path
+		if (pEnemy->path.size() > 1)
 		{
-			for (int j = 0; j < sizeof(enemy) / sizeof(enemy[0]); j++)
+			Node* pNextNode = pEnemy->path[1];
+
+			// calculate the distance between the enemy and player
+			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
+
+			// update enemy velocity only if it is farther than the maximum distance
+			if (distance > MAX_ENEMY_DISTANCE)
 			{
-				GameObjInst* pEnemy = enemy[j];
-
-				// perform pathfinding for this enemy
-				pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-
-				// update enemy velocity based on path
-				if (pEnemy->path.size() > 1)
+				// check if player is moving or the enemy is already stopped
+				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
 				{
-					Node* pNextNode = pEnemy->path[1];
+					// continue moving
+					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
+					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
 
-					// calculate the distance between the enemy and player
-					float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
-
-					// update enemy velocity only if it is farther than the maximum distance
-					if (distance > MAX_ENEMY_DISTANCE)
-					{
-						// check if player is moving or the enemy is already stopped
-						if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
-						{
-							// continue moving
-							pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-							pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
-
-							// set flag to indicate not stopped
-							pEnemy->stopped = false;
-						}
-						else // player is not moving and enemy is not stopped
-						{
-							// stop moving
-							pEnemy->velCurr.x = 0;
-							pEnemy->velCurr.y = 0;
-
-							// set flag to indicate stopped
-							pEnemy->stopped = true;
-						}
-					}
-					else
-					{
-						// stop moving if already close to the player
-						pEnemy->velCurr.x = 0;
-						pEnemy->velCurr.y = 0;
-
-						// set flag to indicate stopped
-						pEnemy->stopped = true;
-					}
+					// set flag to indicate not stopped
+					pEnemy->stopped = false;
 				}
+				else // player is not moving and enemy is not stopped
+				{
+					// stop moving
+					pEnemy->velCurr.x = 0;
+					pEnemy->velCurr.y = 0;
+
+					// set flag to indicate stopped
+					pEnemy->stopped = true;
+				}
+			}
+			else
+			{
+				// stop moving if already close to the player
+				pEnemy->velCurr.x = 0;
+				pEnemy->velCurr.y = 0;
+
+				// set flag to indicate stopped
+				pEnemy->stopped = true;
 			}
 		}
 	}
+		
+	
 
 }
 
