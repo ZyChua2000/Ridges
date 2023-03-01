@@ -560,40 +560,6 @@ void GS_World_Update(void) {
 		}
 	}
 
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_KEY)
-		{
-			continue;
-		}
-		//Interaction with key
-		if (Player->calculateDistance(*pInst) < 1)
-		{
-			//remove texture of key
-			staticObjInstDestroy(pInst);
-			Backpack.Key++;
-		}
-	}
-
-	//creating potions
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS) 
-		{
-			continue;
-		}
-		//Interaction with potion
-		if (Player->calculateDistance(*pInst) < 0.5f)
-		{
-			//remove texture of potion
-			staticObjInstDestroy(pInst);
-			Backpack.Potion++;
-		}
-	}
-
-
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -659,6 +625,30 @@ void GS_World_Update(void) {
 		binInput.close();
 	}
 
+	if (AEInputCheckTriggered(AEVK_M)) {
+		gGameStateNext = GS_MAINMENU;
+	}
+
+
+	//if pickup potion then add player health
+	if (AEInputCheckTriggered(AEVK_R))
+	{
+		if (Player->health > 0 && Player->health < 3 && Backpack.Potion > 0)
+		{
+			Player->recoverhealth();
+			switch (Player->health)
+			{
+			case 2:
+				Health[1]->TextureMap = { 0, 11 };
+				break;
+			case 3:
+				Health[0]->TextureMap = { 0, 11 };
+				break;
+			}
+			Backpack.Potion--;
+		}
+	}
+
 	if (SLASH_ACTIVATE == true) {
 		AEVec2 Pos = Player->posCurr;
 		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
@@ -669,11 +659,106 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
+
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_KEY)
+		{
+			continue;
+		}
+		//Interaction with key
+		if (Player->calculateDistance(*pInst) < 1)
+		{
+			//remove texture of key
+			staticObjInstDestroy(pInst);
+			Backpack.Key++;
+		}
+	}
+
+	//creating potions
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS)
+		{
+			continue;
+		}
+		//Interaction with potion
+		if (Player->calculateDistance(*pInst) < 0.5f)
+		{
+			//remove texture of potion
+			staticObjInstDestroy(pInst);
+			Backpack.Potion++;
+		}
+	}
+
 	// ======================================================
 	// update physics of all active game object instances
 	//  -- Get the AABB bounding rectangle of every active instance:
 	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+
+
+	// Pathfinding for Enemy AI
+	for (int j = 0; j < sizeof(enemy) / sizeof(enemy[0]); j++)
+	{
+		GameObjInst* pEnemy = enemy[j];
+
+		// skip non-active object
+		if (pEnemy->flag != FLAG_ACTIVE)
+			continue;
+
+		if (Player->calculateDistance(*pEnemy) > 10)
+			continue;
+
+		// perform pathfinding for this enemy
+		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+
+		// update enemy velocity based on path
+		if (pEnemy->path.size() > 1)
+		{
+			Node* pNextNode = pEnemy->path[1];
+
+			// calculate the distance between the enemy and player
+			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
+
+			// update enemy velocity only if it is farther than the maximum distance
+			if (distance > MAX_ENEMY_DISTANCE)
+			{
+				// check if player is moving or the enemy is already stopped
+				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
+				{
+					// continue moving
+					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
+					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
+
+					// set flag to indicate not stopped
+					pEnemy->stopped = false;
+				}
+				else // player is not moving and enemy is not stopped
+				{
+					// stop moving
+					pEnemy->velCurr.x = 0;
+					pEnemy->velCurr.y = 0;
+
+					// set flag to indicate stopped
+					pEnemy->stopped = true;
+				}
+			}
+			else
+			{
+				// stop moving if already close to the player
+				pEnemy->velCurr.x = 0;
+				pEnemy->velCurr.y = 0;
+
+				// set flag to indicate stopped
+				pEnemy->stopped = true;
+			}
+		}
+	}
+
+
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
 		if (pInst->flag != FLAG_ACTIVE) {
@@ -726,99 +811,20 @@ void GS_World_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
-	// Camera position, stops following character when at edge of world
-	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
-		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
-		camX = Player->posCurr.x;
-	}
-	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
-		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
-		camY = Player->posCurr.y;
-	}
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
-
-	switch (Backpack.Potion)
-	{
-	case 0:
-		NumObj[0]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[0]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[0]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	case 4:
-		NumObj[0]->TextureMap = { 8,11 };
-		break;
-	case 5:
-		NumObj[0]->TextureMap = { 9,11 };
-		break;
-	case 6:
-		NumObj[0]->TextureMap = { 10,11 };
-		break;
-	case 7:
-		NumObj[0]->TextureMap = { 11,11 };
-		break;
-	case 8:
-		NumObj[0]->TextureMap = { 0,12 };
-		break;
-	case 9:
-		NumObj[0]->TextureMap = { 1,12 };
-		break;
-	}
-
-	switch (Backpack.Key)
-	{
-	case 0:
-		NumObj[1]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[1]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[1]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	}
-
 	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
 	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
 
 	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
 	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
 
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
 	// ====================
 	// check for collision
 	// ====================
-
-	//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		if (Player->health > 0 && Player->health < 3 && Backpack.Potion > 0)
-		{
-			Player->recoverhealth();
-			switch (Player->health)
-			{
-			case 2:
-				Health[1]->TextureMap = { 0, 11 };
-				break;
-			case 3:
-				Health[0]->TextureMap = { 0, 11 };
-				break;
-			}
-			Backpack.Potion--;
-		}
-	}
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -827,13 +833,20 @@ void GS_World_Update(void) {
 			continue;
 		}
 
+		static float playerHitTime = 0;
+		playerHitTime -= g_dt;
+		if (playerHitTime < 0) {
+			playerHitTime = 0;
+		}
+
+
 		if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-			&& Player->timetracker == 0)
+			&& playerHitTime == 0)
 		{
 			if (Player->health > 0)
 			{
 				Player->deducthealth();
-				Player->timetracker = 2.0f;
+				playerHitTime = 5.0f;
 				switch (Player->health)
 				{
 				case 0:
@@ -946,12 +959,12 @@ void GS_World_Update(void) {
 
 		if (pInst->pObject->type == TYPE_SLASH) {
 			pInst->timetracker += g_dt;
-			if (pInst->timetracker >= 0.2) {
+			if (pInst->timetracker >= 0.2f) {
 				pInst->Alpha = (pInst->timetracker - 0.2f) / 0.4f;
 			}
 		}
 
-		if (pInst->timetracker >= 0.6) {
+		if (pInst->timetracker >= 0.6f) {
 			staticObjInstDestroy(pInst);
 		}
 
@@ -980,12 +993,7 @@ void GS_World_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_CHARACTER) {
-			if (pInst->timetracker > 0) {
-				pInst->timetracker -= g_dt;
-			} 
-			if (pInst->timetracker < 0) {
-				pInst->timetracker = 0;
-			}
+				pInst->timetracker += g_dt;
 			if (pInst->health == 0) {
 				gGameStateNext = GS_DEATHSCREEN;
 			}
@@ -999,9 +1007,6 @@ void GS_World_Update(void) {
 		}
 	}
 
-	if (AEInputCheckTriggered(AEVK_M)) {
-		gGameStateNext = GS_MAINMENU;
-	}
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -1054,7 +1059,7 @@ void GS_World_Update(void) {
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
 	}
 
-	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+
 
 	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
 
@@ -1112,64 +1117,72 @@ void GS_World_Update(void) {
 
 
 		
-	for (int j = 0; j < sizeof(enemy) / sizeof(enemy[0]); j++)
+	// Camera position and UI items
+
+	switch (Backpack.Potion)
 	{
-		GameObjInst* pEnemy = enemy[j];
-
-		// skip non-active object
-		if (pEnemy->flag != FLAG_ACTIVE)
-			continue;
-
-		if (Player->calculateDistance(*pEnemy) > 10)
-			continue;
-
-		// perform pathfinding for this enemy
-		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-
-		// update enemy velocity based on path
-		if (pEnemy->path.size() > 1)
-		{
-			Node* pNextNode = pEnemy->path[1];
-
-			// calculate the distance between the enemy and player
-			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
-
-			// update enemy velocity only if it is farther than the maximum distance
-			if (distance > MAX_ENEMY_DISTANCE)
-			{
-				// check if player is moving or the enemy is already stopped
-				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
-				{
-					// continue moving
-					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
-
-					// set flag to indicate not stopped
-					pEnemy->stopped = false;
-				}
-				else // player is not moving and enemy is not stopped
-				{
-					// stop moving
-					pEnemy->velCurr.x = 0;
-					pEnemy->velCurr.y = 0;
-
-					// set flag to indicate stopped
-					pEnemy->stopped = true;
-				}
-			}
-			else
-			{
-				// stop moving if already close to the player
-				pEnemy->velCurr.x = 0;
-				pEnemy->velCurr.y = 0;
-
-				// set flag to indicate stopped
-				pEnemy->stopped = true;
-			}
-		}
+	case 0:
+		NumObj[0]->TextureMap = { 2,12 };
+		break;
+	case 1:
+		NumObj[0]->TextureMap = { 5,11 };
+		break;
+	case 2:
+		NumObj[0]->TextureMap = { 6,11 };
+		break;
+	case 3:
+		NumObj[0]->TextureMap = { 7,11 };
+		break;
+	case 4:
+		NumObj[0]->TextureMap = { 8,11 };
+		break;
+	case 5:
+		NumObj[0]->TextureMap = { 9,11 };
+		break;
+	case 6:
+		NumObj[0]->TextureMap = { 10,11 };
+		break;
+	case 7:
+		NumObj[0]->TextureMap = { 11,11 };
+		break;
+	case 8:
+		NumObj[0]->TextureMap = { 0,12 };
+		break;
+	case 9:
+		NumObj[0]->TextureMap = { 1,12 };
+		break;
 	}
-		
-	
+
+	switch (Backpack.Key)
+	{
+	case 0:
+		NumObj[1]->TextureMap = { 2,12 };
+		break;
+	case 1:
+		NumObj[1]->TextureMap = { 5,11 };
+		break;
+	case 2:
+		NumObj[1]->TextureMap = { 6,11 };
+		break;
+	case 3:
+		NumObj[0]->TextureMap = { 7,11 };
+		break;
+	}
+
+
+	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+
+	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
+		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
+		camX = Player->posCurr.x;
+	}
+	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
+		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
+		camY = Player->posCurr.y;
+	}
+
+
+
 
 }
 

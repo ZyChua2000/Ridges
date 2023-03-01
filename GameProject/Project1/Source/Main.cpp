@@ -80,10 +80,15 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 			AESysFrameEnd();
 
 			// check if forcing the application to quit
-			if ((AESysDoesWindowExist() == false) || AEInputCheckTriggered(AEVK_ESCAPE))
+			if ((AESysDoesWindowExist() == false))
 				gGameStateNext = GS_QUIT;
 
 			g_dt = (f32)AEFrameRateControllerGetFrameTime();
+
+			//capping the game loop - delta time, to 1/60.0f
+			if (g_dt > 1.f/60)	//0.01667f = 1/60.0f
+				g_dt = 1.f / 60;
+
 			g_appTime += g_dt;
 		}
 
@@ -96,6 +101,6 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 		gGameStateCurr = gGameStateNext;
 	}
 
-	// free the system
+	;	// free the system
 	AESysExit();
 }
