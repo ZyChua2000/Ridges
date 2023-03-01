@@ -22,3 +22,4 @@ static float				mouseY;							// Position of mouse Y
 
 static f32					camX;							// Position of camera X
 static f32					camY;							// Position of camera Y
+
