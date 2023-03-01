@@ -68,7 +68,7 @@ static AEGfxTexture* animationBG[4];
 
 //MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 static float animated = 1;
-
+static float timetracker=0;
 //MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 
 
@@ -144,9 +144,9 @@ void GS_DeathScreen_Init(void) {
 */
 /******************************************************************************/
 void GS_DeathScreen_Update(void) {
-
+	
 	animated += g_dt;
-
+	timetracker += g_dt;
 	mBack->pObject->pTexture = animationBG[(int)(animated * 10) % 4];
 
 
@@ -169,19 +169,22 @@ void GS_DeathScreen_Update(void) {
 		debugstate ^= 1;
 
 	}
+	
+		if (AEInputCheckTriggered(AEVK_LBUTTON)) {
 
-	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-		{
-			gGameStateNext = GS_MAINMENU;
-		}
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				
+				gGameStateNext = GS_MAINMENU;
+			}
 
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-		{
-			gGameStateNext = GS_QUIT;
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				gGameStateNext = GS_QUIT;
+			}
+			//gGameStateNext = GS_WORLD;
 		}
-		//gGameStateNext = GS_WORLD;
-	}
+	
 
 
 

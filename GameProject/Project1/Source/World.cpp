@@ -511,7 +511,22 @@ void GS_World_Update(void) {
 		Player->scale = 1;
 		Player->walk();
 	}
-
+	//reducing heath for debugging
+	if (AEInputCheckTriggered(AEVK_MINUS))
+	{
+		Player->deducthealth();
+		switch (Player->health)
+		{
+		case 0:
+			Health[2]->TextureMap = { 1, 11 };
+			break;
+		case 1:
+			Health[1]->TextureMap = { 1, 11 };
+			break;
+		case 2:
+			Health[0]->TextureMap = { 1, 11 };
+		}
+	}
 
 	if (AEInputCheckTriggered(AEVK_E)) {
 
