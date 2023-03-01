@@ -219,10 +219,7 @@ void GS_Colosseum_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	s8 font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
-	FontList[FontListNum++] = font;
+
 }
 
 /******************************************************************************/
@@ -839,30 +836,30 @@ void GS_Colosseum_Draw(void) {
 		char playerpos[100] = { (char)Player->posCurr.x,(char)Player->posCurr.y };
 		char mouse_xy_buffer[50] = " "; // buffer
 		char camxy_buffer[50] = " ";
-		AEGfxPrint(FontList[0], debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(FontList[0], input, -0.99f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, input, -0.99f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
 
 		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.4f", mouseX + camX);
-		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.4f", mouseY + camY);
-		AEGfxPrint(FontList[0], mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(FontList[0], d, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, d, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(playerpos, "Player Position X: %.4f", (Player->posCurr.x));
-		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(playerpos, "Player Position Y: %.4f", (Player->posCurr.y));
-		AEGfxPrint(FontList[0], playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		sprintf_s(camxy_buffer, "Camera Position X: %.4f", camX);
-		AEGfxPrint(FontList[0], camxy_buffer, -0.99f, 0.30f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, camxy_buffer, -0.99f, 0.30f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(camxy_buffer, "Camera Position Y: %.4f", camY);
-		AEGfxPrint(FontList[0], camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		char Collision[2400] = " ";
 		sprintf_s(Collision, "Collided: %d", binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))]);
-		AEGfxPrint(FontList[0], Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 
 
@@ -870,22 +867,22 @@ void GS_Colosseum_Draw(void) {
 		if (AEInputCheckCurr(AEVK_W))
 		{
 			sprintf_s(w, "W Pressed");
-			AEGfxPrint(FontList[0], w, -0.99f, 0.60f, 1.0f, 0.0f, 1.0f, 0.0f);
+			AEGfxPrint(1, w, -0.99f, 0.60f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 		if (AEInputCheckCurr(AEVK_A))
 		{
 			sprintf_s(a, "A Pressed");
-			AEGfxPrint(FontList[0], a, -0.99f, 0.55f, 1.0f, 0.0f, 1.0f, 0.0f);
+			AEGfxPrint(1, a, -0.99f, 0.55f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 		if (AEInputCheckCurr(AEVK_S))
 		{
 			sprintf_s(s, "S Pressed");
-			AEGfxPrint(FontList[0], s, -0.99f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f);
+			AEGfxPrint(1, s, -0.99f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 		if (AEInputCheckCurr(AEVK_D))
 		{
 			sprintf_s(s, "D Pressed");
-			AEGfxPrint(FontList[0], s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
+			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
 }
@@ -929,9 +926,6 @@ void GS_Colosseum_Unload(void) {
 		if ((sGameObjList + i)->refTexture == false)
 			AEGfxTextureUnload((sGameObjList + i)->pTexture);
 	}
-
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	AEGfxDestroyFont(FontList[0]);
 
 }
 

@@ -42,6 +42,8 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	// Initialize the system
 	AESysInit(instanceH, show, 1600, 900, 1, 60, false, NULL);
 
+	AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
+
 	// Changing the window title
 	AESysSetWindowTitle("Dungeon Redemption");
 
@@ -101,6 +103,7 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 		gGameStateCurr = gGameStateNext;
 	}
 
-	;	// free the system
+	AEGfxDestroyFont(1);
+	// free the system
 	AESysExit();
 }
