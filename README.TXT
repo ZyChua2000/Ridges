@@ -1,34 +1,27 @@
+Game Name: Dungeon Redemption
 
-Game: 
-Goal of game: Reach the end point.
+Team Name : Ridges
 
-Controls: Keyboard and mouse.
+Class/Section/Year : CSD1451/B/2022
 
-Gameplay: Complete puzzle level and boss level. (2 dungeon style puzzle before boss level.)
-          2D topdown dungeon crawler style.
-          Looking for weapons during puzzle stage(Optional for easier boss fight, else fight with base fight.)
-          Look for key to progress to next level.
-          
-          Obstacles:
-          Enemy tower to shoot arrows at user at 90 degree angle only.(if time permits)
-          Spikes.
-          Traps.
-          
-          Character movement:
-           WASD for moving
-           Arrow key for attack.
-           
-           
-           Save point.
+Teammates:
 
-Bonus:
-Shop for items in level.
-Armour, boots, weapon.
-Each cost 1 gold.
+Chua Zheng Yang		-	c.zhengyang@digipen.edu
+Liu Chengrong		-	Chengrong.liu@digipen
+Alvin Woo Jia Hao	-	a.woo@digipen.edu
+Javier Low Zhi Liang	-	zhiliangjavier.low@digipen.edu
+Jaasmeet Singh		-	Jaasmeet.s@digipen.edu
 
-Total attainable gold cap at 2.
+Controls:
+W				- Move Up
+A				- Move Left
+S				- Move Down
+D				- Move Right
 
-Only can choose 2 out of 3 equipments.
+E				- Interact with objects(Levers, Chests)
 
-           
-           
+R				- Use potion to recover 1 health(only when less than max health)
+
+Left Mouse Click 	- Slash(direction relative from mouse to player sprite)
+
+M				- Return to Main Menu
