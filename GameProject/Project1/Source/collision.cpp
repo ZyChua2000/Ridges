@@ -12,7 +12,6 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	//			If the check returns no overlap you continue with the following next steps (dynamics).
 	//			Otherwise you return collision true
 	if (aabb1.max.x < aabb2.min.x || aabb1.min.x > aabb2.max.x || aabb1.max.y < aabb2.min.y || aabb1.min.y > aabb2.max.y) {
-
 		//Check that both objects are not static. If both are static, return false
 		if (vel1.x == 0 || vel1.y == 0 || vel2.x == 0 || vel2.y == 0) {
 			return false;
@@ -113,9 +112,7 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 				return true;
 			}
 		}
-	}
-	// For static collision
-
+	}// For static collision
 	else {
 		return true;
 	}

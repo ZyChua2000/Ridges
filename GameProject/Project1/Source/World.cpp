@@ -263,6 +263,31 @@ void GS_World_Load(void) {
 	Spike->type = TYPE_SPIKE;
 	Spike->refMesh = true;
 	Spike->refTexture = true;
+
+	GameObj* Mask;
+	Mask = sGameObjList + sGameObjNum++;
+	Mask->pMesh = Character->pMesh;
+	Mask->pTexture = Character->pTexture;
+	Mask->type = TYPE_MASK;
+	Mask->refMesh = true;
+	Mask->refTexture = true;
+
+
+	GameObj* Tower;
+	Tower = sGameObjList + sGameObjNum++;
+	Tower->pMesh = Character->pMesh;
+	Tower->pTexture = Character->pTexture;
+	Tower->type = TYPE_TOWER;
+	Tower->refMesh = true;
+	Tower->refTexture = true;
+
+	GameObj* Bullet;
+	Bullet = sGameObjList + sGameObjNum++;
+	Bullet->pMesh = Character->pMesh;
+	Bullet->pTexture = Character->pTexture;
+	Bullet->type = TYPE_BULLET;
+	Bullet->refMesh = true;
+	Bullet->refTexture = true;
 }
 
 /******************************************************************************/
@@ -399,6 +424,13 @@ void GS_World_Init(void) {
 			}
 		}
 	}
+	// Initialise towers
+	Pos = { 49, -4 };
+	staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
+	jInst->TextureMap = { 2,6 };
+	Pos = { 50, -4 };
+	jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
+	jInst->TextureMap = { 2,6 };
 
 	//Init pathfinding nodes
 	NodesInit(binaryMap,  MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
@@ -774,10 +806,10 @@ void GS_World_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
-		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
+		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
+		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
+		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
 	}
 
 	for (unsigned long i = 10416; i < STATIC_OBJ_INST_NUM_MAX; i++) {
@@ -815,6 +847,11 @@ void GS_World_Update(void) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
 			}
+
+			if (pInst->pObject->type == TYPE_BULLET) {
+				pInst->velCurr.x *= BULLET_SPEED;
+				pInst->velCurr.y *= BULLET_SPEED;
+			}
 		}
 
 		pInst->posCurr.x += pInst->velCurr.x * g_dt;
@@ -839,49 +876,72 @@ void GS_World_Update(void) {
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ENEMY) {
+		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
 
-		static float playerHitTime = 0;
-		playerHitTime -= g_dt;
-		if (playerHitTime < 0) {
-			playerHitTime = 0;
-		}
+		if (pInst->pObject->type == TYPE_ENEMY) {
+			static float playerHitTime = 0;
+			playerHitTime -= g_dt;
+			if (playerHitTime < 0) {
+				playerHitTime = 0;
+			}
 
 
-		if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-			&& playerHitTime == 0)
-		{
-			if (Player->health > 0)
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+				&& playerHitTime == 0)
 			{
-				Player->deducthealth();
-				playerHitTime = 5.0f;
-				switch (Player->health)
+				if (Player->health > 0)
 				{
-				case 0:
-					Health[2]->TextureMap = { 1, 11 };
-					break;
-				case 1:
-					Health[1]->TextureMap = { 1, 11 };
-					break;
-				case 2:
-					Health[0]->TextureMap = { 1, 11 };
+					Player->deducthealth();
+					playerHitTime = 5.0f;
+				}
+			}
+
+			for (int j = MAP_CELL_HEIGHT * MAP_CELL_HEIGHT * 2; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+				staticObjInst* jInst = sStaticObjInstList + j;
+				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+					continue;
+				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*jInst) < 0.6f
+					&& jInst->Alpha == 1) {
+					pInst->deducthealth(Player->damage);
+
 				}
 			}
 		}
 
-		for (int j = MAP_CELL_HEIGHT * MAP_CELL_HEIGHT * 2; j < STATIC_OBJ_INST_NUM_MAX; j++) {
-			staticObjInst* jInst = sStaticObjInstList + j;
-			if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
-				continue;
+		if (pInst->pObject->type == TYPE_BULLET) {
+			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
+				Player->deducthealth();
+				gameObjInstDestroy(pInst);
 			}
-			AEVec2 velNull = { 0,0 };
-			if (pInst->calculateDistance(*jInst) < 0.6f
-				&& jInst->Alpha == 1) {
-				pInst->deducthealth(Player->damage);
+			if (flag & COLLISION_TOP) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_BOTTOM) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_RIGHT) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_LEFT) {
+				gameObjInstDestroy(pInst);
+			}
+		}
 
-			}
+		switch (Player->health)
+		{
+		case 0:
+			Health[2]->TextureMap = { 1, 11 };
+			break;
+		case 1:
+			Health[1]->TextureMap = { 1, 11 };
+			break;
+		case 2:
+			Health[0]->TextureMap = { 1, 11 };
 		}
 	}
 
@@ -972,10 +1032,44 @@ void GS_World_Update(void) {
 			if (pInst->timetracker >= 0.2f) {
 				pInst->Alpha = (pInst->timetracker - 0.2f) / 0.4f;
 			}
+			if (pInst->timetracker >= 0.6f) {
+				staticObjInstDestroy(pInst);
+			}
 		}
 
-		if (pInst->timetracker >= 0.6f) {
-			staticObjInstDestroy(pInst);
+		if (pInst->pObject->type == TYPE_TOWER) {
+			pInst->timetracker += g_dt;
+
+			if (pInst->timetracker > 1) {
+				pInst->timetracker = 0;
+			}
+
+			if (pInst->timetracker == 0) {
+				AEVec2 vel;
+				AEVec2 pos = pInst->posCurr;
+				switch ((int)(pInst->dirCurr * 57)) {
+				case 0: // facing down
+					vel = { 0, -1 };
+					pos.y -= 0.25f;
+					break;
+				case 89: // facing right
+					vel = { 1, 0 };
+					pos.x += 0.25f;
+					break;
+				case 179: // facing up
+					vel = { 0, 1 };
+					pos.y += 0.25f;
+					break;
+				case -89: // facing left
+					vel = { -1, 0 };
+					pos.x -= 0.25f;
+					break;
+				default:
+					break;
+				}
+				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
+				jInst->TextureMap = { 5,12 };
+			}
 		}
 
 	}
@@ -1256,9 +1350,7 @@ void GS_World_Draw(void) {
 			AEGfxSetTransparency(1.0f);
 		}
 		// For any types using spritesheet
-		if (pInst->pObject->type == TYPE_HEALTH || pInst->pObject->type == TYPE_LEVERS
-			|| pInst->pObject->type == TYPE_CHEST || pInst->pObject->type == TYPE_ITEMS
-			|| pInst->pObject->type == TYPE_KEY || pInst->pObject->type == TYPE_SPIKE)
+		if (pInst->pObject->type != TYPE_SLASH)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
@@ -1288,21 +1380,13 @@ void GS_World_Draw(void) {
 			continue;
 		}
 		// for any sprite textures
-		if (pInst->pObject->type == TYPE_CHARACTER) {
+		if (pInst->pObject->type != TYPE_NUM) {
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
 		}
 
-		else if (pInst->pObject->type == TYPE_ENEMY) {
 
-			
-			//std::cout << " ghost is spawnned near cam" << std::endl;
-				AEGfxTextureSet(pInst->pObject->pTexture,
-				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
-				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-
-		}
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
