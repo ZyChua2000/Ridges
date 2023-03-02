@@ -34,6 +34,7 @@ static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS =11;							// The total number of mobs
+static unsigned int			CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_KEYS;						// The total number of keys
@@ -100,7 +101,6 @@ static staticObjInst* MenuObj[3];										// Pointer to each enemy object insta
 static staticObjInst* NumObj[3];
 static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* Key;
-static GameObjInst* enemy[MAX_MOBS];
 static Inventory Backpack;
 static staticObjInst* Spike;
 
@@ -376,9 +376,9 @@ void GS_World_Init(void) {
 		AEVec2 EnemyPos[MAX_MOBS] = { {33.f, -16.f} ,{33.f, -21.f}, {50.f, -18.f}, {52.f,-18.5f}, {44.4f, -5.4f}, {54.5f,-5.2f},
 		{67.5f, -11.3f},  {71.4f, -10.4f} , {88.7f, -14.5f} , {108.4f,  -20.4f}, {105.5f, -20.4f} };
 		for (int i = 0; i < MAX_MOBS; i++) {
-			enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-			enemy[i]->TextureMap = { 0,9 };
-			enemy[i]->health = 1;
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 1;
 		}
 
 		//Initialise chest in level
@@ -743,12 +743,12 @@ void GS_World_Update(void) {
 
 
 	// Pathfinding for Enemy AI
-	for (int j = 0; j < sizeof(enemy) / sizeof(enemy[0]); j++)
+	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 	{
-		GameObjInst* pEnemy = enemy[j];
+		GameObjInst* pEnemy = sGameObjInstList + j;
 
 		// skip non-active object
-		if (pEnemy->flag != FLAG_ACTIVE)
+		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
 			continue;
 
 		if (Player->calculateDistance(*pEnemy) > 10)
@@ -817,7 +817,7 @@ void GS_World_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		if (pInst->pObject->type != TYPE_SLASH) {
+		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
 			pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
@@ -827,7 +827,7 @@ void GS_World_Update(void) {
 	}
 
 	// ======================================================
-	//	-- Positions of the instances are updated here with the already computed velocity (above)
+	//	-- Positions of the instances are updated here with the already computed velocity (above)col
 	// ======================================================
 
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -945,6 +945,20 @@ void GS_World_Update(void) {
 		}
 	}
 
+	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != 1) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_SPIKE) {
+			AEVec2 vel = { 0,0 };
+			if (pInst->Alpha < 1 ) {
+				std::cout << "colide";
+			}
+		}
+	}
+
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (flag & COLLISION_TOP) {
@@ -995,24 +1009,43 @@ void GS_World_Update(void) {
 			std::cout << "DOG\n";
 	}*/
 
-	//FOR PRINTING ON BINARY MAP
-	//if (AEInputCheckTriggered(AEVK_F)) {
-	//	static int test = 2;
-	//	std::ofstream testfile{ "test.txt" };
-	//	binaryMap[(int)Player->posCurr.x][(int)-Player->posCurr.y] = test++;
-	//	for (int i = 0; i < 42; i++) {
-	//		for (int j = 0; j < 124; j++) {
-	//			testfile << binaryMap[j][i];
-	//		}
-	//		testfile << std::endl;
-	//	}
-	//	testfile.close();
-	//}
-	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
+	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
+			continue;
+		}
+		if (pInst->timetracker2 == 0) {
+			pInst->timetracker += g_dt;
+		}
+		if (pInst->timetracker > 2) {
+			pInst->timetracker = 2;
+		}
 
+		if (pInst->timetracker == 2) {
+			pInst->timetracker2 += g_dt;
+		}
 
+		if (pInst->timetracker2 > 2) {
+			pInst->timetracker2 = 2;
+		}
 
+		if (pInst->timetracker2 == 2) {
+			pInst->timetracker -= g_dt;
+		}
+
+		if (pInst->timetracker < 0) {
+			pInst->timetracker = 0;
+		}
+
+		if (pInst->timetracker == 0) {
+			pInst->timetracker2 -= g_dt;
+		}
+		if (pInst->timetracker2 < 0) {
+			pInst->timetracker2 = 0;
+		}
+		pInst->Alpha = 1.0f - pInst->timetracker / 2;
+	}
 
 	// ===================================
 	// update active game object instances
@@ -1085,6 +1118,7 @@ void GS_World_Update(void) {
 			if (pInst->health == 0) 
 			{
 				gameObjInstDestroy(pInst);
+				CURRENT_MOBS -= 1;
 				//randomising potion drop rate when mobs are killed 
 				srand(time(NULL));
 				if (rand() % 2 == 0)
@@ -1104,7 +1138,7 @@ void GS_World_Update(void) {
 		}
 	}
 
-	if (enemy[0]->health == 0 && enemy[1]->health == 0) {
+	if (CURRENT_MOBS == 9) {
 		for (int i = 17; i < 21; i++) {
 			MapObjInstList[35][i]->TextureMap = { 0,4 };
 			binaryMap[35][i] = 0;
@@ -1162,64 +1196,6 @@ void GS_World_Update(void) {
 		AEMtx33Concat(&pInst->transform, &rot, &scale);
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
 	}
-
-
-
-	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
-
-	//if (AEInputCheckTriggered(AEVK_F)) { //printing bin map
-	//	static int test = 2;
-	//	//std::ofstream testfile{ "test.txt" };
-	//	//binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
-	//	binaryMap[(int)Player->posCurr.x][(int)Player->posCurr.y] = test++;
-	//	/*binaryMap[(int)enemy[0]->posCurr.x][(int)enemy[0]->posCurr.y] = test++;
-	//	binaryMap[(int)enemy[1]->posCurr.x][(int)enemy[1]->posCurr.y] = test++;*/
-	//	for (int i = 0; i < 42; i++) {
-	//		for (int j = 0; j < 124; j++) {
-	//			std::cout << binaryMap[j][i];
-	//		}
-	//		std::cout << std::endl;
-	//	}
-	//	//testfile.close();
-	//}
-	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
-
-
-	//looping throught enemy array to make all enemy instance pathfind to player
-	//for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	//{
-	//	GameObjInst* pInst = sGameObjInstList + i;
-
-	//	// skip non-active object
-	//	if (pInst->flag != FLAG_ACTIVE)
-	//		continue;
-	//	if (utilities::checkWithinCam(pInst->posCurr, camX, camY))
-	//	{
-
-	//		continue;
-	//	}
-	//	if (pInst->pObject->type == TYPE_ENEMY) {
-	//		for (int i = 0; i < sizeof(enemy) / sizeof(enemy[0]); i++)
-	//		{
-	//			enemy[i]->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-	//			//pInst->path = pathfind(binaryMap, enemy[i]->posCurr.x, enemy[i]->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-
-	//			if (enemy[i]->path.size() >= 5)
-	//			{
-	//				//enemy[i]->posCurr.x = enemy[i]->path[1]->ae_NodePos.x;
-	//				//enemy[i]->posCurr.y = enemy[i]->path[1]->ae_NodePos.y;
-
-	//				enemy[i]->velCurr.x -= 5.0f * (enemy[i]->path[i]->parent->ae_NodePos.x - enemy[i]->path[i]->ae_NodePos.x);
-	//				enemy[i]->velCurr.y -= 5.0f * (enemy[i]->path[i]->parent->ae_NodePos.y - enemy[i]->path[i]->ae_NodePos.y);
-
-	//			}
-
-	//		}
-	//	}
-	//}
-
-
-
 		
 	// Camera position and UI items
 
@@ -1343,7 +1319,7 @@ void GS_World_Draw(void) {
 			continue;
 		}
 		// for any transparent textures
-		if (pInst->pObject->type == TYPE_SLASH) {
+		if (pInst->pObject->type == TYPE_SLASH || pInst->pObject->type == TYPE_SPIKE) {
 			AEGfxSetTransparency(1.0f - pInst->Alpha);
 		}
 		else {
