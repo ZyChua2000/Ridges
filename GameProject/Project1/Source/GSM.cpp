@@ -95,6 +95,14 @@ void GameStateMgrUpdate()
 		GameStateFree = GS_Colosseum_Free;
 		GameStateUnload = GS_Colosseum_Unload;
 		break;
+	case GS_TOWER:
+		GameStateLoad = GS_Tower_Load;
+		GameStateInit = GS_Tower_Init;
+		GameStateUpdate = GS_Tower_Update;
+		GameStateDraw = GS_Tower_Draw;
+		GameStateFree = GS_Tower_Free;
+		GameStateUnload = GS_Tower_Unload;
+		break;
 	case GS_DEATHSCREEN:
 		GameStateLoad = GS_DeathScreen_Load;
 		GameStateInit = GS_DeathScreen_Init;

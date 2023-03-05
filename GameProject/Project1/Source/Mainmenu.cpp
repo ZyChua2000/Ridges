@@ -157,6 +157,10 @@ void GS_MainMenu_Update(void) {
 		gGameStateNext = GS_COLOSSEUM;
 	}
 
+	if (AEInputCheckTriggered(AEVK_5)) {
+		gGameStateNext = GS_TOWER;
+	}
+
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float (mX);
