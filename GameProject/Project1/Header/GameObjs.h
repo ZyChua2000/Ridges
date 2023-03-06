@@ -139,3 +139,4 @@ struct Inventory {
 		lastItem = 0;
 	}
 };
+
