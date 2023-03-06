@@ -90,6 +90,9 @@ static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
+static float slashCD = 0;
+static float walkCD = 0;
+
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
@@ -517,27 +520,36 @@ void GS_World_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
+
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
-		Player->velCurr.y = 1;// this is direction , positive y direction
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.y = 1;// this is direction , positive y direction
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
-		Player->velCurr.y = -1;// this is direction , negative y direction
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.y = -1;// this is direction , negative y direction
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
-		Player->velCurr.x = -1;// this is direction , negative x direction
-		Player->scale = -1;
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.x = -1;// this is direction , negative x direction
+			Player->scale = -1;
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
-		Player->velCurr.x = 1;// this is direction , positive x direction
-		Player->scale = 1;
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.x = 1;// this is direction , positive x direction
+			Player->scale = 1;
+			Player->walk();
+		}
 	}
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
@@ -615,15 +627,23 @@ void GS_World_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	static float slashCD = 0;
+
 	slashCD -= g_dt;
 	if (slashCD < 0) {
 		slashCD = 0;
 	}
 
+
+	walkCD -= g_dt;
+	if (walkCD < 0) {
+		walkCD = 0;
+	}
+
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
 		slashCD = 0.5f;
+		walkCD = 0.2f;
+		Player->velCurr = { 0,0 };
 	}
 
 	if (mapeditor == 1) {
@@ -1268,7 +1288,6 @@ void GS_World_Update(void) {
 	}
 
 
-	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
 
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
 		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
@@ -1278,6 +1297,9 @@ void GS_World_Update(void) {
 		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
 		camY = Player->posCurr.y;
 	}
+
+
+	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
 
 
 
