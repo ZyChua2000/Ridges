@@ -701,7 +701,7 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
-
+	//creating key
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
