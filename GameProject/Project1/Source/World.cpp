@@ -353,6 +353,9 @@ void GS_World_Init(void) {
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 		Player->TextureMap = { 1,8 };
 
+		Backpack.Potion = 0;
+		Backpack.Key = 0;
+
 		Player->health = 3;
 		Player->damage = 1;
 		Player->timetracker = 0;
@@ -900,7 +903,7 @@ void GS_World_Update(void) {
 					Player->deducthealth();
 
 					// Hit cooldown
-					playerHitTime = 2.0f;
+					playerHitTime = 0.5f;
 
 					//knockback
 					AEVec2 nil{ 0,0 };
