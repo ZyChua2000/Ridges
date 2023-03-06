@@ -76,7 +76,8 @@ static const float BackSize = 10;
 
 MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void menuObjInstDestroy(MenuObjInst* pInst);
-
+AEAudio BackgroundMusic;
+AEAudioGroup Group1;
 
 /******************************************************************************/
 /*!
@@ -114,6 +115,8 @@ void GS_MainMenu_Load(void) {
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
+	BackgroundMusic = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Flags.mp3");
+	Group1 = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -131,7 +134,7 @@ void GS_MainMenu_Init(void) {
 
 		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
 		
-
+		AEAudioPlay(BackgroundMusic, Group1, 1, 1, -1);
 }
 
 

@@ -90,6 +90,8 @@ AEGfxTexture* DarkRoom;
 AEGfxVertexList* DarkMesh = 0;
 
 static int dark = 0;
+
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -235,6 +237,7 @@ void GS_Maze_Load(void) {
 		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
 	DarkMesh = AEGfxMeshEnd();
 	DarkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
+	
 
 }
 
@@ -318,7 +321,8 @@ void GS_Maze_Init(void) {
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
-
+	
+	
 }
 
 
@@ -331,7 +335,8 @@ void GS_Maze_Init(void) {
 /******************************************************************************/
 
 void GS_Maze_Update(void) {
-
+	
+	
 	// =====================================
 	// User Input
 	// =====================================
