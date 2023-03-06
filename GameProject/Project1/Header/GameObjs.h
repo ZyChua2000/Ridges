@@ -33,6 +33,7 @@ struct staticObjInst
 	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
 	float				dirCurr;	// object's direction(rotation value)
 	float				timetracker;// object's time of existence
+	float				timetracker2;
 	float				Alpha;		// object's transparency value
 	AABB				boundingBox;// object bouding box that encapsulates the object
 };
@@ -54,6 +55,9 @@ struct GameObjInst
 	int					damage;		// object's damage parameter
 	std::vector<Node*>	path; // this is only for enemy or any ai/ npc that requires path
 	float				timetracker;// object's time of existence
+	bool				stopped; //to check if enemy stopped moving
+	bool				enemy_dead; // flag to check if enemy is alive or not
+
 
 	// Member functions
 
@@ -117,6 +121,8 @@ enum TYPE
 	TYPE_KEY,
 	TYPE_SPIKE,
 	TYPE_MASK,
+	TYPE_TOWER,
+	TYPE_BULLET,
 
 
 	TYPE_NUM

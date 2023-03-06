@@ -37,9 +37,12 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 
 	//int * pi = new int;
 	//delete pi;
+		//_crtBreakAlloc = 4272;
 
 	// Initialize the system
 	AESysInit(instanceH, show, 1600, 900, 1, 60, false, NULL);
+
+	AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 
 	// Changing the window title
 	AESysSetWindowTitle("Dungeon Redemption");
@@ -79,10 +82,15 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 			AESysFrameEnd();
 
 			// check if forcing the application to quit
-			if ((AESysDoesWindowExist() == false) || AEInputCheckTriggered(AEVK_ESCAPE))
+			if ((AESysDoesWindowExist() == false))
 				gGameStateNext = GS_QUIT;
 
 			g_dt = (f32)AEFrameRateControllerGetFrameTime();
+
+			//capping the game loop - delta time, to 1/60.0f
+			if (g_dt > 1.f/30)	//0.01667f = 1/60.0f
+				g_dt = 1.f / 30;
+
 			g_appTime += g_dt;
 		}
 
@@ -95,6 +103,7 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 		gGameStateCurr = gGameStateNext;
 	}
 
+	AEGfxDestroyFont(1);
 	// free the system
 	AESysExit();
 }

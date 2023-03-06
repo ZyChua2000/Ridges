@@ -29,6 +29,8 @@ enum
 	GS_BOSSLEVEL,
 	GS_MAZE,
 	GS_COLOSSEUM,
+	GS_TOWER,
+	GS_DEATHSCREEN,
 	
 	// special game state.
 	GS_RESTART,
