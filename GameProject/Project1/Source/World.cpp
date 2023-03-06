@@ -16,8 +16,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <fstream>
 #include <iostream>
 #include "Globals.h"
-#include "Enemy.h"
-#include "collision.h"
 #include <time.h>
 
 
@@ -378,7 +376,7 @@ void GS_World_Init(void) {
 		for (int i = 0; i < MAX_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
-			enemy->health = 1;
+			enemy->health = 3;
 		}
 
 		//Initialise chest in level
@@ -614,8 +612,15 @@ void GS_World_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+	static float slashCD = 0;
+	slashCD -= g_dt;
+	if (slashCD < 0) {
+		slashCD = 0;
+	}
+
+	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
+		slashCD = 0.5f;
 	}
 
 	if (mapeditor == 1) {
@@ -692,9 +697,9 @@ void GS_World_Update(void) {
 	}
 
 	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr;
-		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
-		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
+		AEVec2 Pos = Player->posCurr + Player->velCurr;
+		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
+		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
 		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
@@ -872,6 +877,11 @@ void GS_World_Update(void) {
 	// ====================
 	// check for collision
 	// ====================
+	static float playerHitTime = 0;
+	playerHitTime -= g_dt;
+	if (playerHitTime < 0) {
+		playerHitTime = 0;
+	}
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -881,12 +891,6 @@ void GS_World_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_ENEMY) {
-			static float playerHitTime = 0;
-			playerHitTime -= g_dt;
-			if (playerHitTime < 0) {
-				playerHitTime = 0;
-			}
-
 
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 				&& playerHitTime == 0)
@@ -894,7 +898,16 @@ void GS_World_Update(void) {
 				if (Player->health > 0)
 				{
 					Player->deducthealth();
-					playerHitTime = 5.0f;
+
+					// Hit cooldown
+					playerHitTime = 2.0f;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+					Player->posCurr += pInst->velCurr/4;
+					else Player->posCurr -= Player->velCurr / 4;
+					
 				}
 			}
 
@@ -907,7 +920,9 @@ void GS_World_Update(void) {
 				if (pInst->calculateDistance(*jInst) < 0.6f
 					&& jInst->Alpha == 1) {
 					pInst->deducthealth(Player->damage);
-
+					// Knockback
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
 				}
 			}
 		}
@@ -954,7 +969,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type == TYPE_SPIKE) {
 			AEVec2 vel = { 0,0 };
 			if (pInst->Alpha < 1 ) {
-				std::cout << "colide";
+				;
 			}
 		}
 	}
@@ -1250,7 +1265,7 @@ void GS_World_Update(void) {
 	}
 
 
-	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
 
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
 		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
