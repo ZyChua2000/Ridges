@@ -74,7 +74,6 @@ static float animated = 1;
 
 static const float BackSize = 10;
 
-static s8 font;
 
 DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void DEATHObjInstDestroy(DEATHObjInst* pInst);
@@ -89,7 +88,6 @@ void DEATHObjInstDestroy(DEATHObjInst* pInst);
 */
 /******************************************************************************/
 void GS_DeathScreen_Load(void) {
-	font = AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 
 	sDEATHObjNum = 0;
 	
@@ -271,11 +269,11 @@ void GS_DeathScreen_Draw(void) {
 		char debug[20] = "Debug Screen";
 
 		char mouse_xy_buffer[50] = " "; // buffer
-		AEGfxPrint(font, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mouseX);
-		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
 		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mouseY);
-		AEGfxPrint(font, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
 
 
 	}
@@ -317,7 +315,6 @@ void GS_DeathScreen_Unload(void) {
 	for (int i = 0; i < 4; i++) {
 		AEGfxTextureUnload(animationBG[i]);
 	}
-	AEGfxDestroyFont(font);
 }
 
 // ---------------------------------------------------------------------------

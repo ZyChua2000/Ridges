@@ -33,6 +33,7 @@ struct staticObjInst
 	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
 	float				dirCurr;	// object's direction(rotation value)
 	float				timetracker;// object's time of existence
+	float				timetracker2;
 	float				Alpha;		// object's transparency value
 	AABB				boundingBox;// object bouding box that encapsulates the object
 };
@@ -120,6 +121,8 @@ enum TYPE
 	TYPE_KEY,
 	TYPE_SPIKE,
 	TYPE_MASK,
+	TYPE_TOWER,
+	TYPE_BULLET,
 
 
 	TYPE_NUM
