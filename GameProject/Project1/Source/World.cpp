@@ -16,7 +16,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <fstream>
 #include <iostream>
 #include <time.h>
-
+#include "ParticleSystem.h"
 
 /*!
 	Defines
@@ -103,6 +103,10 @@ static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
+
+float spikedmgtimer = 0.f;
+float internalTimer = 0.f;
+
 static staticObjInst* RefBox;
 
 
@@ -288,6 +292,8 @@ void GS_World_Load(void) {
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
 	Bullet->refTexture = true;
+
+	ParticleSystemLoad();
 }
 
 /******************************************************************************/
@@ -468,9 +474,12 @@ void GS_World_Init(void) {
 		}
 	}
 
+
+	ParticleSystemInit();
+
 }
 
-
+int spiketimer = 0;
 /******************************************************************************/
 /*!
 	"Update" function of this state
@@ -918,7 +927,7 @@ void GS_World_Update(void) {
 				}
 			}
 
-			for (int j = MAP_CELL_HEIGHT * MAP_CELL_HEIGHT * 2; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
 				staticObjInst* jInst = sStaticObjInstList + j;
 				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 					continue;
@@ -1016,15 +1025,27 @@ void GS_World_Update(void) {
 		//Player->posCurr.x - 0.5;
 	}
 
-
-	/*AEVec2 PlayerMaxX{ Player->posCurr.x + 0.5 };
-	AEVec2 PlayerMinX{ Player->posCurr.x - 0.5 };
-	AEVec2 PlayerMaxY{ Player->posCurr.y - 0.5 };
-	AEVec2 PlayerMinY{ Player->posCurr.y + 0.5 };
-	struct AABB playerAABB {};*/
+	//AEVec2 novelo{ 0.0001, 0.0001 };
 
 
+	/*double PlayerMaxX{ Player->posCurr.x + 0.5 };
+	double PlayerMinX{ Player->posCurr.x - 0.5 };
+	double PlayerMaxY{ Player->posCurr.y - 0.5 };
+	double PlayerMinY{ Player->posCurr.y + 0.5 };
+	AEVec2 PlayerMax{ PlayerMaxX, PlayerMaxY };
+	AEVec2 PlayerMin{ PlayerMinX, PlayerMinY };
+	struct AABB PlayerAABB {PlayerMin, PlayerMax};
 
+	double SpikeMaxX{ Spike->posCurr.x + 0.5};
+	double SpikeMinX{ Spike->posCurr.x - 0.5 };
+	double SpikeMaxY{ Spike->posCurr.y - 0.5 };
+	double SpikeMinY{ Spike->posCurr.y + 0.5 };
+	AEVec2 SpikeMax{ SpikeMaxX, SpikeMaxY };
+	AEVec2 SpikeMin{ SpikeMinX, SpikeMinY };
+	struct AABB spikeAABB {SpikeMin, SpikeMax};
+
+	if (CollisionIntersection_RectRect(PlayerAABB, Player->velCurr, spikeAABB, novelo)) {
+		std::cout << "DOG\n";
 	/*AEVec2 novelo{ 0.0001, 0.0001 };
 
 	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
@@ -1032,11 +1053,22 @@ void GS_World_Update(void) {
 	}*/
 
 
+	spikedmgtimer += g_dt;
+	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && spikedmgtimer>=1) {
+			
+			--Player->health;
+			spikedmgtimer = 0.0f;
+		}
+
+
+		//will work for all spikes spawned, find a better way to do the timetracker
+
 		if (pInst->timetracker2 == 0) {
 			pInst->timetracker += g_dt;
 		}
@@ -1067,7 +1099,10 @@ void GS_World_Update(void) {
 			pInst->timetracker2 = 0;
 		}
 		pInst->Alpha = 1.0f - pInst->timetracker / 2;
+
 	}
+
+	
 
 	// ===================================
 	// update active game object instances
@@ -1283,6 +1318,30 @@ void GS_World_Update(void) {
 	}
 
 
+	
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList+i;
+		AEVec2 reverse;
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			AEVec2Neg(&reverse, &pInst->velCurr);
+			internalTimer += g_dt;
+			if (internalTimer > 0.25f)
+			{
+				AEVec2 particlecoords = pInst->posCurr;
+				particlecoords.y = pInst->posCurr.y - 0.48;
+				internalTimer -= 0.25f;
+				ParticleSystemRequest(0,10.6f, &particlecoords,
+					&reverse, 1.0f, 0.15f, 10);
+			}
+			else
+			{
+				internalTimer += g_dt;
+			}
+		}
+		break;
+
+	}
+	ParticleSystemUpdate();
 	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
 
 
@@ -1298,6 +1357,9 @@ void GS_World_Update(void) {
 */
 /******************************************************************************/
 void GS_World_Draw(void) {
+
+
+
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
@@ -1386,7 +1448,11 @@ void GS_World_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
+
+
 	AEGfxSetTransparency(1.0f);
+
+
 
 	// Spawn dynamic entities
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -1416,6 +1482,14 @@ void GS_World_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
+
+
+	
+
+
+
+
+
 
 	if (state == 1)
 	{
@@ -1477,6 +1551,19 @@ void GS_World_Draw(void) {
 			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
+
+	GameObjInst* pchar;
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		pchar = sGameObjInstList + i;
+
+		if (pchar->pObject->type == TYPE_CHARACTER) {
+			break;
+		}
+	}
+
+	
+	ParticleSystemDraw(&pchar->transform);   //localtransform
+	
 }
 
 /******************************************************************************/
@@ -1501,6 +1588,9 @@ void GS_World_Free(void) {
 		}
 	}
 	deletenodes();
+
+
+	ParticleSystemFree();
 }
 
 /******************************************************************************/
@@ -1521,6 +1611,9 @@ void GS_World_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
+
+
+	ParticleSystemUnload();
 }
 
 // ---------------------------------------------------------------------------

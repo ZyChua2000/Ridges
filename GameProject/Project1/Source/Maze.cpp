@@ -606,77 +606,113 @@ void GS_Maze_Update(void) {
 		}
 	}
 
+	//OBSOLETE CODE ALRD
+	// 
+	//if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
+	//	//player_direction.x = -player_direction.x;
 
-	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
-		//player_direction.x = -player_direction.x;
+	//	float player_bottom = Player->posCurr.y + 50;
+	//	float tiles_bottom = 0 + 50;
+	//	float player_right = Player->posCurr.x + 50;
+	//	float tiles_right = -160 + 50;
 
-		float player_bottom = Player->posCurr.y + 50;
-		float tiles_bottom = 0 + 50;
-		float player_right = Player->posCurr.x + 50;
-		float tiles_right = -160 + 50;
+	//	float b_collision = tiles_bottom - Player->posCurr.y;
+	//	float t_collision = player_bottom - 0;
+	//	float l_collision = player_right + 160;
+	//	float r_collision = tiles_right - Player->posCurr.x;
 
-		float b_collision = tiles_bottom - Player->posCurr.y;
-		float t_collision = player_bottom - 0;
-		float l_collision = player_right + 160;
-		float r_collision = tiles_right - Player->posCurr.x;
+	//	if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
+	//		//Top collision
+	//		std::cout << "collide top" << std::endl;
+	//		if (Player->velCurr.y == 1) {
+	//			std::cout << "move top" << std::endl;
+	//			Player->velCurr.y = 0;
+	//		}
+	//		else {
+	//			std::cout << "move bot" << std::endl;
+	//			Player->velCurr.y = -1;
+	//			Player->posCurr.y += Player->velCurr.y;
+	//		}
+	//	}
 
-		if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
-			//Top collision
-			std::cout << "collide top" << std::endl;
-			if (Player->velCurr.y == 1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = -1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
+	//	if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
+	//		//bottom collision
+	//		std::cout << "collide botton" << std::endl;
+	//		if (Player->velCurr.y == -1) {
+	//			std::cout << "move top" << std::endl;
+	//			Player->velCurr.y = 0;
+	//		}
+	//		else {
+	//			std::cout << "move bot" << std::endl;
+	//			Player->velCurr.y = 1;
+	//			Player->posCurr.y += Player->velCurr.y;
+	//		}
+	//	}
 
-		if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
-			//bottom collision
-			std::cout << "collide botton" << std::endl;
-			if (Player->velCurr.y == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = 1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
+	//	if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
+	//		//Left collision
+	//		std::cout << "collide left" << std::endl;
+	//		if (Player->velCurr.x == 1)
+	//		{
+	//			std::cout << "move top" << std::endl;
+	//			Player->velCurr.x = 0;
+	//		}
+	//		else {
+	//			std::cout << "move bot" << std::endl;
+	//			Player->velCurr.x = -1;
+	//			Player->posCurr.x += Player->velCurr.x;
+	//		}
 
-		if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
-			//Left collision
-			std::cout << "collide left" << std::endl;
-			if (Player->velCurr.x == 1)
-			{
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = -1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
+	//	}
 
-		}
+	//	if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
+	//		//Right collision
+	//		std::cout << "collide right" << std::endl;
+	//		if (Player->velCurr.x == -1) {
+	//			std::cout << "move top" << std::endl;
+	//			Player->velCurr.x = 0;
+	//		}
+	//		else {
+	//			std::cout << "move bot" << std::endl;
+	//			Player->velCurr.x = 1;
+	//			Player->posCurr.x += Player->velCurr.x;
+	//		}
+	//	}
+	//}
 
-		if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
-			//Right collision
-			std::cout << "collide right" << std::endl;
-			if (Player->velCurr.x == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = 1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-		}
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
+	}
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x - 0.5;
 	}
 
 	// ===================================

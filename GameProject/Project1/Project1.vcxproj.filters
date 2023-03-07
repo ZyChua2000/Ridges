@@ -54,6 +54,7 @@
     <ClCompile Include="Source\Tower.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\ParticleSystem.cpp">
     <ClCompile Include="Source\AEVecOverloads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -107,6 +108,7 @@
     <ClInclude Include="Header\Tower.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Header\ParticleSystem.h">
     <ClInclude Include="Header\AEVecOverloads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
