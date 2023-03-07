@@ -465,9 +465,9 @@ void GS_Maze_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureMaze.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
