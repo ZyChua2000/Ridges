@@ -75,6 +75,8 @@ static unsigned long		sStaticObjInstNum;							// The number of used static game
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
+static AEVec2				MiniMapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
+
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
@@ -92,6 +94,8 @@ AEGfxVertexList* DarkMesh = 0;
 
 static int dark = 0;
 float spiketimer = 0.f;
+
+static GameObjInst* Minimap;
 
 // ---------------------------------------------------------------------------
 
@@ -226,7 +230,6 @@ void GS_Maze_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
-
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -238,6 +241,24 @@ void GS_Maze_Load(void) {
 		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
 	DarkMesh = AEGfxMeshEnd();
 	DarkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
+
+	GameObj* MiniMap;
+	MiniMap = sGameObjList + sGameObjNum++;
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(-60.f, 35.f, 0xFFE1E9B2, 0.0f, 0.0f,
+		-60.f, -35.f, 0xFFE1E9B2, 0.0f, 1.0f,
+		60.f, 35.f, 0xFFE1E9B2, 1.0f, 0.0f);
+
+	AEGfxTriAdd(60.f, -35.f, 0xFFE1E9B2, 1.0f, 1.0f,
+		-60.f, -35.f, 0xFFE1E9B2, 0.0f, 1.0f,
+		60.f, 35.f, 0xFFE1E9B2, 1.0f, 0.0f);
+
+	MiniMap ->pMesh = AEGfxMeshEnd();
+	MiniMap->type = TYPE_MINIMAP;
+	MiniMap->refMesh = false;
+	MiniMap->refTexture = false;
+	MiniMap->pTexture = NULL;
 	
 
 }
@@ -312,7 +333,8 @@ void GS_Maze_Init(void) {
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
-	
+	AEVec2 MapPos = { 0,0 };
+	Minimap = gameObjInstCreate(TYPE_ENEMY, 1, &MapPos, 0, 0);
 	
 }
 
@@ -462,6 +484,12 @@ void GS_Maze_Update(void) {
 	else {
 		mapEditorObj->scale = 0;
 	}
+	/////////////////////////////////////////// MINIMAP///////////////////////////
+	int playerx = Player->posCurr.x;
+	int playery = Player->posCurr.y;
+			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
+		
+	
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
@@ -606,79 +634,7 @@ void GS_Maze_Update(void) {
 		}
 	}
 
-	//OBSOLETE CODE ALRD
-	// 
-	//if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
-	//	//player_direction.x = -player_direction.x;
-
-	//	float player_bottom = Player->posCurr.y + 50;
-	//	float tiles_bottom = 0 + 50;
-	//	float player_right = Player->posCurr.x + 50;
-	//	float tiles_right = -160 + 50;
-
-	//	float b_collision = tiles_bottom - Player->posCurr.y;
-	//	float t_collision = player_bottom - 0;
-	//	float l_collision = player_right + 160;
-	//	float r_collision = tiles_right - Player->posCurr.x;
-
-	//	if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
-	//		//Top collision
-	//		std::cout << "collide top" << std::endl;
-	//		if (Player->velCurr.y == 1) {
-	//			std::cout << "move top" << std::endl;
-	//			Player->velCurr.y = 0;
-	//		}
-	//		else {
-	//			std::cout << "move bot" << std::endl;
-	//			Player->velCurr.y = -1;
-	//			Player->posCurr.y += Player->velCurr.y;
-	//		}
-	//	}
-
-	//	if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
-	//		//bottom collision
-	//		std::cout << "collide botton" << std::endl;
-	//		if (Player->velCurr.y == -1) {
-	//			std::cout << "move top" << std::endl;
-	//			Player->velCurr.y = 0;
-	//		}
-	//		else {
-	//			std::cout << "move bot" << std::endl;
-	//			Player->velCurr.y = 1;
-	//			Player->posCurr.y += Player->velCurr.y;
-	//		}
-	//	}
-
-	//	if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
-	//		//Left collision
-	//		std::cout << "collide left" << std::endl;
-	//		if (Player->velCurr.x == 1)
-	//		{
-	//			std::cout << "move top" << std::endl;
-	//			Player->velCurr.x = 0;
-	//		}
-	//		else {
-	//			std::cout << "move bot" << std::endl;
-	//			Player->velCurr.x = -1;
-	//			Player->posCurr.x += Player->velCurr.x;
-	//		}
-
-	//	}
-
-	//	if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
-	//		//Right collision
-	//		std::cout << "collide right" << std::endl;
-	//		if (Player->velCurr.x == -1) {
-	//			std::cout << "move top" << std::endl;
-	//			Player->velCurr.x = 0;
-	//		}
-	//		else {
-	//			std::cout << "move bot" << std::endl;
-	//			Player->velCurr.x = 1;
-	//			Player->posCurr.x += Player->velCurr.x;
-	//		}
-	//	}
-	//}
+	
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
