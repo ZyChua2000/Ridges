@@ -145,6 +145,7 @@ void GS_DeathScreen_Update(void) {
 	
 	animated += g_dt;
 	
+	
 	mBack->pObject->pTexture = animationBG[(int)(animated * 10) % 4];
 
 
@@ -168,18 +169,20 @@ void GS_DeathScreen_Update(void) {
 
 	}
 	
-		if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+		if (AEInputCheckReleased(AEVK_LBUTTON)) {
 			
 
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
-				if (AEInputCheckCurr(AEVK_LBUTTON))
+				
 				gGameStateNext = GS_MAINMENU;
+				return;
 			}
 
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
 				gGameStateNext = GS_QUIT;
+				return;
 			}
 			//gGameStateNext = GS_WORLD;
 		}

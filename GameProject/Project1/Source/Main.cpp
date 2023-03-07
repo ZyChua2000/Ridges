@@ -93,7 +93,6 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 
 			g_appTime += g_dt;
 		}
-
 		GameStateFree();
 
 		if (gGameStateNext != GS_RESTART)
