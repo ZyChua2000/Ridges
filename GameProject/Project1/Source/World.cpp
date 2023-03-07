@@ -15,9 +15,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
-#include "Globals.h"
-#include "Enemy.h"
-#include "collision.h"
 #include <time.h>
 #include "ParticleSystem.h"
 
@@ -31,13 +28,13 @@ static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of uniqu
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;		// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS =11;							// The total number of mobs
 static unsigned int			CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_KEYS;						// The total number of keys
+static const unsigned int	MAX_KEYS;							// The total number of keys
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
@@ -86,11 +83,14 @@ static unsigned long		sGameObjInstNum;							// The number of used dynamic game 
 static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
 static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
-static staticObjInst*		MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
+static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
+
+static float slashCD = 0;
+static float walkCD = 0;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
@@ -107,6 +107,7 @@ static staticObjInst* Spike;
 float spikedmgtimer = 0.f;
 float internalTimer = 0.f;
 
+static staticObjInst* RefBox;
 
 
 
@@ -312,14 +313,8 @@ void GS_World_Init(void) {
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
-			staticObjInstCreate(TYPE_MAP, 1, &Pos, 0);
-			staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
-			MapObjInstList[i][j] = pInst;
-			// input texture
-			pInst->TextureMap = { 0,0 };
-			mapInput >> MapObjInstList[i][j]->TextureMap.x;
-			mapInput >> MapObjInstList[i][j]->TextureMap.y;
+			mapInput >> MapObjInstList[i][j].x;
+			mapInput >> MapObjInstList[i][j].y;
 		}
 	}
 	mapInput.close();
@@ -337,16 +332,7 @@ void GS_World_Init(void) {
 	}
 	binInput.close();
 
-	// =====================================
-	//	Initialize map editor references
-	// =====================================
-	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
-			staticObjInstCreate(TYPE_REF, 1, &Pos, 0);
-
-		}
-	}
+	RefBox = staticObjInstCreate(TYPE_REF, 1, nullptr, 0);
 
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
@@ -359,6 +345,9 @@ void GS_World_Init(void) {
 		AEVec2 PlayerPos = { 12,-8 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 		Player->TextureMap = { 1,8 };
+
+		Backpack.Potion = 0;
+		Backpack.Key = 0;
 
 		Player->health = 3;
 		Player->damage = 1;
@@ -383,7 +372,7 @@ void GS_World_Init(void) {
 		for (int i = 0; i < MAX_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
-			enemy->health = 1;
+			enemy->health = 3;
 		}
 
 		//Initialise chest in level
@@ -409,16 +398,16 @@ void GS_World_Init(void) {
 				switch (i) {
 				case 0:
 					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15]->TextureMap = { 0,4 };
+						MapObjInstList[i][15] = { 0,4 };
 						binaryMap[i][15] = 0;
 					}
 					break;
 				case 1:
 					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i]->TextureMap = { 0,4 };
+						MapObjInstList[81][i] = { 0,4 };
 						binaryMap[81][i] = 0;
 					}
-					MapObjInstList[81][32]->TextureMap = { 2,4 };
+					MapObjInstList[81][32] = { 2,4 };
 					break;
 					//WIP for 3rd gate
 				case 2:
@@ -524,27 +513,36 @@ void GS_World_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
+
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
-		Player->velCurr.y = 1;// this is direction , positive y direction
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.y = 1;// this is direction , positive y direction
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
-		Player->velCurr.y = -1;// this is direction , negative y direction
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.y = -1;// this is direction , negative y direction
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
-		Player->velCurr.x = -1;// this is direction , negative x direction
-		Player->scale = -1;
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.x = -1;// this is direction , negative x direction
+			Player->scale = -1;
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
-		Player->velCurr.x = 1;// this is direction , positive x direction
-		Player->scale = 1;
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.x = 1;// this is direction , positive x direction
+			Player->scale = 1;
+			Player->walk();
+		}
 	}
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
@@ -575,16 +573,16 @@ void GS_World_Update(void) {
 				switch (i) {
 				case 0:
 					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15]->TextureMap = { 0,4 };
+						MapObjInstList[i][15] = { 0,4 };
 						binaryMap[i][15] = 0;
 					}
 					break;
 				case 1:
 					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i]->TextureMap = { 0,4 };
+						MapObjInstList[81][i] = { 0,4 };
 						binaryMap[81][i] = 0;
 					}
-					MapObjInstList[81][56]->TextureMap = { 2,4 };
+					MapObjInstList[81][56] = { 2,4 };
 					break;
 					//WIP for 3rd gate
 				case 2:
@@ -622,8 +620,23 @@ void GS_World_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+
+	slashCD -= g_dt;
+	if (slashCD < 0) {
+		slashCD = 0;
+	}
+
+
+	walkCD -= g_dt;
+	if (walkCD < 0) {
+		walkCD = 0;
+	}
+
+	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
+		slashCD = 0.5f;
+		walkCD = 0.2f;
+		Player->velCurr = { 0,0 };
 	}
 
 	if (mapeditor == 1) {
@@ -648,7 +661,7 @@ void GS_World_Update(void) {
 					-mouseY - camY >= j &&
 					-mouseY - camY <= j + 1
 					&& AEInputCheckCurr(AEVK_LBUTTON)) {
-					MapObjInstList[i][j]->TextureMap = mapEditorObj->TextureMap;
+					MapObjInstList[i][j]= mapEditorObj->TextureMap;
 				}
 			}
 		}
@@ -659,9 +672,9 @@ void GS_World_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureWorld.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryWorld.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
@@ -700,9 +713,9 @@ void GS_World_Update(void) {
 	}
 
 	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr;
-		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
-		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
+		AEVec2 Pos = Player->posCurr + Player->velCurr;
+		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
+		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
 		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
@@ -820,7 +833,7 @@ void GS_World_Update(void) {
 		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
 	}
 
-	for (unsigned long i = 10416; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
@@ -880,6 +893,11 @@ void GS_World_Update(void) {
 	// ====================
 	// check for collision
 	// ====================
+	static float playerHitTime = 0;
+	playerHitTime -= g_dt;
+	if (playerHitTime < 0) {
+		playerHitTime = 0;
+	}
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -889,12 +907,6 @@ void GS_World_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_ENEMY) {
-			static float playerHitTime = 0;
-			playerHitTime -= g_dt;
-			if (playerHitTime < 0) {
-				playerHitTime = 0;
-			}
-
 
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 				&& playerHitTime == 0)
@@ -902,7 +914,16 @@ void GS_World_Update(void) {
 				if (Player->health > 0)
 				{
 					Player->deducthealth();
-					playerHitTime = 5.0f;
+
+					// Hit cooldown
+					playerHitTime = 0.5f;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+					Player->posCurr += pInst->velCurr/4;
+					else Player->posCurr -= Player->velCurr / 4;
+					
 				}
 			}
 
@@ -915,7 +936,9 @@ void GS_World_Update(void) {
 				if (pInst->calculateDistance(*jInst) < 0.6f
 					&& jInst->Alpha == 1) {
 					pInst->deducthealth(Player->damage);
-
+					// Knockback
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
 				}
 			}
 		}
@@ -962,7 +985,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type == TYPE_SPIKE) {
 			AEVec2 vel = { 0,0 };
 			if (pInst->Alpha < 1 ) {
-				std::cout << "colide";
+				;
 			}
 		}
 	}
@@ -1174,7 +1197,7 @@ void GS_World_Update(void) {
 
 	if (CURRENT_MOBS == 9) {
 		for (int i = 17; i < 21; i++) {
-			MapObjInstList[35][i]->TextureMap = { 0,4 };
+			MapObjInstList[35][i] = { 0,4 };
 			binaryMap[35][i] = 0;
 		}
 	}
@@ -1284,7 +1307,6 @@ void GS_World_Update(void) {
 	}
 
 
-	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
 		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
@@ -1320,6 +1342,9 @@ void GS_World_Update(void) {
 
 	}
 	ParticleSystemUpdate();
+	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
+
+
 
 
 }
@@ -1343,16 +1368,37 @@ void GS_World_Draw(void) {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
 	for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
-		for (unsigned long j = 0; j < MAP_CELL_HEIGHT; j++) {
-			if (utilities::checkWithinCam(MapObjInstList[i][j]->posCurr, camX, camY)) {
+		for ( long j = 0; j < MAP_CELL_HEIGHT; j++) {
+			AEVec2 Pos = { i + 0.5f, -j - 0.5f};
+
+			if (utilities::checkWithinCam(Pos, camX, camY)) {
 				continue;
 			}
+
 			AEGfxSetTransparency(1.0f);
-			AEGfxTextureSet(MapObjInstList[i][j]->pObject->pTexture,
-				TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j]->TextureMap.x,
-				TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j]->TextureMap.y);
-			AEGfxSetTransform(MapObjInstList[i][j]->transform.m);
-			AEGfxMeshDraw(MapObjInstList[i][j]->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+
+			AEMtx33 Translate, Scale, Transform;
+			AEMtx33Trans(&Translate, Pos.x, Pos.y);
+			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Concat(&Transform, &Scale, &Translate);
+
+			AEGfxTextureSet(Player->pObject->pTexture,
+				TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j].x,
+				TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j].y);
+
+			AEGfxSetTransform(Transform.m);
+
+			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+
+			if (mapeditor == 1) {
+
+				
+				AEGfxTextureSet(RefBox->pObject->pTexture, 0, 0);
+				
+				AEGfxSetTransform(Transform.m);
+
+				AEGfxMeshDraw(RefBox->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
 		}
 	}
 
@@ -1373,7 +1419,7 @@ void GS_World_Draw(void) {
 		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
-		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP) {
+		if (pInst->pObject->type == TYPE_REF) {
 			continue;
 		}
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {

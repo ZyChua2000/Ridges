@@ -156,12 +156,14 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\AEVecOverloads.cpp" />
     <ClCompile Include="Source\BossLevel.cpp" />
     <ClCompile Include="Source\collision.cpp" />
     <ClCompile Include="Source\Colosseum.cpp" />
     <ClCompile Include="Source\DeathScreen.cpp" />
     <ClCompile Include="Source\Enemy.cpp" />
     <ClCompile Include="Source\GameObjs.cpp" />
+    <ClCompile Include="Source\Globals.cpp" />
     <ClCompile Include="Source\GSM.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Mainmenu.cpp" />
@@ -172,6 +174,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClCompile Include="Source\World.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Header\AEVecOverloads.h" />
     <ClInclude Include="Header\BossLevel.h" />
     <ClInclude Include="Header\collision.h" />
     <ClInclude Include="Header\Colosseum.h" />

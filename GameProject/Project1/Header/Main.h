@@ -36,6 +36,10 @@ extern double	g_appTime;
 #include "Colosseum.h"
 #include "DeathScreen.h"
 #include "Tower.h"
+#include "collision.h"
+#include "AEVecOverloads.h"
+#include "Enemy.h"
+#include "Globals.h"
 
 
 #endif
