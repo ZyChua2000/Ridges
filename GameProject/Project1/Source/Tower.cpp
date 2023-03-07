@@ -360,12 +360,12 @@ void GS_Tower_Init(void) {
 		}
 
 		//Initialise enemy in level
-		//AEVec2 EnemyPos[MAX_MOBS] = { {45,-5},{50,-6},{46,-8} };
-		//for (int i = 0; i < MAX_MOBS; i++) {
-		//	GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-		//	enemy->TextureMap = { 0,9 };
-		//	enemy->health = 3;
-		//}
+		AEVec2 EnemyPos[MAX_MOBS] = { {45,-5},{50,-6},{46,-8} };
+		for (int i = 0; i < MAX_MOBS; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
 
 	}
 
@@ -564,12 +564,11 @@ void GS_Tower_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_E)) {
-
 		//Interaction with levers
 		for (int i = 0; i < 2; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x != 3) {
+			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->dirCurr == 0) {
 				//Switch lever to face down
-				Levers[i]->TextureMap = { 3,11 };
+				Levers[i]->dirCurr = -PI / 4;
 				Levers[i]->posCurr.x -= 0.2f;
 				//Remove gates: Change texture & Binary map
 				switch (i) {
@@ -580,14 +579,10 @@ void GS_Tower_Update(void) {
 					}
 					break;
 				case 1:
-					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i] = { 0,4 };
-						binaryMap[81][i] = 0;
+					for (int i = 18; i < 20; i++) {
+						MapObjInstList[49][i] = { 0,4 };
+						binaryMap[49][i] = 0;
 					}
-					MapObjInstList[81][56] = { 2,4 };
-					break;
-					//WIP for 3rd gate
-				case 2:
 					break;
 				default:
 					break;
@@ -905,7 +900,7 @@ void GS_Tower_Update(void) {
 				}
 			}
 
-			for (int j = MAP_CELL_HEIGHT * MAP_CELL_HEIGHT * 2; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
 				staticObjInst* jInst = sStaticObjInstList + j;
 				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 					continue;
