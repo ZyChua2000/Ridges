@@ -19,7 +19,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Enemy.h"
 #include "collision.h"
 #include <time.h>
-
+#include "ParticleSystem.h"
 
 /*!
 	Defines
@@ -103,6 +103,9 @@ static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
+
+float spikedmgtimer = 0.f;
+float internalTimer = 0.f;
 
 
 
@@ -288,6 +291,8 @@ void GS_World_Load(void) {
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
 	Bullet->refTexture = true;
+
+	ParticleSystemLoad();
 }
 
 /******************************************************************************/
@@ -479,6 +484,9 @@ void GS_World_Init(void) {
 			pInst->TextureMap = { 5,3 };
 		}
 	}
+
+
+	ParticleSystemInit();
 
 }
 
@@ -1022,11 +1030,22 @@ void GS_World_Update(void) {
 	}*/
 
 
+	spikedmgtimer += g_dt;
+	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && spikedmgtimer>=1) {
+			
+			--Player->health;
+			spikedmgtimer = 0.0f;
+		}
+
+
+		//will work for all spikes spawned, find a better way to do the timetracker
+
 		if (pInst->timetracker2 == 0) {
 			pInst->timetracker += g_dt;
 		}
@@ -1057,7 +1076,10 @@ void GS_World_Update(void) {
 			pInst->timetracker2 = 0;
 		}
 		pInst->Alpha = 1.0f - pInst->timetracker / 2;
+
 	}
+
+	
 
 	// ===================================
 	// update active game object instances
@@ -1274,6 +1296,30 @@ void GS_World_Update(void) {
 	}
 
 
+	
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList+i;
+		AEVec2 reverse;
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			AEVec2Neg(&reverse, &pInst->velCurr);
+			internalTimer += g_dt;
+			if (internalTimer > 0.25f)
+			{
+				AEVec2 particlecoords = pInst->posCurr;
+				particlecoords.y = pInst->posCurr.y - 0.48;
+				internalTimer -= 0.25f;
+				ParticleSystemRequest(0,10.6f, &particlecoords,
+					&reverse, 1.0f, 0.15f, 10);
+			}
+			else
+			{
+				internalTimer += g_dt;
+			}
+		}
+		break;
+
+	}
+	ParticleSystemUpdate();
 
 
 }
@@ -1286,6 +1332,9 @@ void GS_World_Update(void) {
 */
 /******************************************************************************/
 void GS_World_Draw(void) {
+
+
+
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
@@ -1353,7 +1402,11 @@ void GS_World_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
+
+
 	AEGfxSetTransparency(1.0f);
+
+
 
 	// Spawn dynamic entities
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -1383,6 +1436,14 @@ void GS_World_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
+
+
+	
+
+
+
+
+
 
 	if (state == 1)
 	{
@@ -1444,6 +1505,21 @@ void GS_World_Draw(void) {
 			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
+
+	GameObjInst* pchar;
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		pchar = sGameObjInstList + i;
+
+		if (pchar->pObject->type == TYPE_CHARACTER) {
+			break;
+		}
+	}
+
+	AEMtx33 moo{ 16, 0, 0,
+				0, 16, 0,
+				0, 0, 1 };
+	ParticleSystemDraw(&pchar->transform);   //localtransform
+	
 }
 
 /******************************************************************************/
@@ -1468,6 +1544,9 @@ void GS_World_Free(void) {
 		}
 	}
 	deletenodes();
+
+
+	ParticleSystemFree();
 }
 
 /******************************************************************************/
@@ -1488,6 +1567,9 @@ void GS_World_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
+
+
+	ParticleSystemUnload();
 }
 
 // ---------------------------------------------------------------------------
