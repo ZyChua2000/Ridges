@@ -15,9 +15,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
-#include "Globals.h"
-#include "Enemy.h"
-#include "collision.h"
 #include <time.h>
 
 
@@ -31,13 +28,13 @@ static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of uniqu
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;		// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
 static unsigned int			CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_KEYS;						// The total number of keys
+static const unsigned int	MAX_KEYS;							// The total number of keys
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
@@ -52,9 +49,7 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
 
 
-
 // -----------------------------------------------------------------------------
-
 
 
 
@@ -89,14 +84,27 @@ static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
 
+static float slashCD = 0;
+static float walkCD = 0;
+
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
-static GameObjInst* enemy[2];
-static GameObjInst* Mask;
+static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
+static staticObjInst* NumObj[3];
+static staticObjInst* Chest[MAX_CHESTS];
+static staticObjInst* Key;
+static Inventory Backpack;
+static staticObjInst* Spike;
 static staticObjInst* RefBox;
+
+static const float timingFIRST = 0.0f;
+static const float timingSECOND = 0.6f;
+static const float timingTHIRD = 1.2f;
+static const float timingFOURTH = 1.8f;
+
 
 // ---------------------------------------------------------------------------
 
@@ -327,9 +335,13 @@ void GS_Tower_Init(void) {
 	// =====================================
 	if (loadState == false) {
 		//Initialise Player
-		AEVec2 PlayerPos = { 58.5,-6 };
+		//AEVec2 PlayerPos = { 58.5,-6 };
+		AEVec2 PlayerPos = { 58,-6 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 		Player->TextureMap = { 1,8 };
+
+		Backpack.Potion = 0;
+		Backpack.Key = 0;
 
 		Player->health = 3;
 		Player->damage = 1;
@@ -342,44 +354,79 @@ void GS_Tower_Init(void) {
 		}
 
 		//Initialise Levers in level
-		AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 67.5f - (1.0f / 16), -8.5 } ,{ 43.5f - (1.0f / 16), -6} };
-		for (int i = 0; i < 3; i++) {
+		AEVec2 pos[2] = { { 67.5f - (1.0f / 16), -8.5 } ,{ 43.5f - (1.0f / 16), -4.5} };
+		for (int i = 0; i < 2; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
 			Levers[i]->TextureMap = { 2,11 };
 		}
 
-		////Initialise enemy in level
-		//AEVec2 EnemyPos[MAX_MOBS] = { {33.f, -16.f} ,{33.f, -21.f}, {50.f, -18.f}, {52.f,-18.5f}, {44.4f, -5.4f}, {54.5f,-5.2f},
-		//{67.5f, -11.3f},  {71.4f, -10.4f} , {88.7f, -14.5f} , {108.4f,  -20.4f}, {105.5f, -20.4f} };
+		//Initialise enemy in level
+		//AEVec2 EnemyPos[MAX_MOBS] = { {45,-5},{50,-6},{46,-8} };
 		//for (int i = 0; i < MAX_MOBS; i++) {
 		//	GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 		//	enemy->TextureMap = { 0,9 };
-		//	enemy->health = 1;
+		//	enemy->health = 3;
 		//}
 
-		//Initialise chest in level
-		/*AEVec2 chestpos[6] = { {13,-8} , {53,-5} , {70,-11}, {80,-14}, {84,-33}, {107,-24} };
-		for (int i = 0; i < MAX_CHESTS; i++)
-		{
-			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[i], 0);
-			Chest[i]->TextureMap = { 5, 7 };
-		}*/
 	}
 
-	// Initialise towers
+	// =====================================
+	//	Initialize objects for loaded game game
+	// =====================================
 
-	AEVec2 towerdownpos[8] = { { 65.5, -14 }, { 66.5, -14 },{62.5,-3},{63.5,-3}, {71.5,-3}, {72.5,-3} , {55.5, -18}, {56.5,-18 } };
-	for (int i =0; i < 8 ;i++)
+	AEVec2 towerdownpos[14] = 
+	{
+	{65.5,-14},
+	{66.5,-14},
+
+	{71.5,-3},
+	{72.5,-3},
+
+	{62.5,-3},
+	{63.5,-3},
+
+	{55.5,-18},
+	{56.5,-18},
+
+	{42.5,-14},
+	{43.5,-14},
+	{44.5,-14},
+	{45.5,-14},
+	{46.5,-14},
+	{47.5,-14}
+	};
+	float towerdowntiming[14] = {
+	timingFIRST,
+	timingSECOND,
+	timingFIRST,
+	timingSECOND,
+	timingFIRST,
+	timingSECOND,
+	timingFIRST,
+	timingSECOND,
+	timingFIRST,
+	timingSECOND,
+	timingTHIRD,
+	timingFOURTH,
+	timingSECOND,
+	timingTHIRD };
+	for (int i = 0; i < 14; i++)
 	{
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerdownpos[i], 0);
 		jInst->TextureMap = { 2,6 };
+		jInst->timetracker = towerdowntiming[i];
 	}
-	
-	AEVec2 towerrightpos[2] = {{50, -13.5}, {50,-14.5}} ;
-	for (int i = 0; i < 2;i++)
+	float towerrighttiming[2] =
 	{
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i],1.57f);
+		timingFIRST,
+		timingSECOND
+	};
+	AEVec2 towerrightpos[2] = { {50, -13.5}, {50,-14.5} };
+	for (int i = 0; i < 2; i++)
+	{
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], 1.57f);
 		jInst->TextureMap = { 2,6 };
+		jInst->timetracker = towerrighttiming[i];
 	}
 
 	//Init pathfinding nodes
@@ -407,20 +454,12 @@ void GS_Tower_Init(void) {
 	NumObj[1]->TextureMap = { 2,12 };
 	//NumObj[2]->TextureMap = { , };
 
-	////spawning of keys
-	//AEVec2 keypos = { 28,-14 };
-	//staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
-	//for (int i = 0; i < sStaticObjInstNum; i++)
-	//{
-	//	staticObjInst* pInst = sStaticObjInstList + i;
-	//	if (pInst->pObject->type == TYPE_KEY)
-	//	{
-	//		pInst->TextureMap = { 4,11 };
-	//	}
-	//}
 
-	AEVec2 spikepos = { 20,-10 };
-	staticObjInstCreate(TYPE_SPIKE, 1, &spikepos, 0);
+	AEVec2 spikepos[10] = { {59,-23.5}, { 63,-23.5 }, { 61,-23.5 }, {59, -24.5}, {63, -24.5}, {61,-24.5} };
+	for (int i = 0; i < 10; i++)
+	{
+		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
+	}
 	for (int i = 0; i < sStaticObjInstNum; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -462,27 +501,36 @@ void GS_Tower_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
+
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
-		Player->velCurr.y = 1;// this is direction , positive y direction
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.y = 1;// this is direction , positive y direction
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
-		Player->velCurr.y = -1;// this is direction , negative y direction
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.y = -1;// this is direction , negative y direction
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
-		Player->velCurr.x = -1;// this is direction , negative x direction
-		Player->scale = -1;
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.x = -1;// this is direction , negative x direction
+			Player->scale = -1;
+			Player->walk();
+		}
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
-		Player->velCurr.x = 1;// this is direction , positive x direction
-		Player->scale = 1;
-		Player->walk();
+		if (walkCD == 0) {
+			Player->velCurr.x = 1;// this is direction , positive x direction
+			Player->scale = 1;
+			Player->walk();
+		}
 	}
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
@@ -560,8 +608,23 @@ void GS_Tower_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+
+	slashCD -= g_dt;
+	if (slashCD < 0) {
+		slashCD = 0;
+	}
+
+
+	walkCD -= g_dt;
+	if (walkCD < 0) {
+		walkCD = 0;
+	}
+
+	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
+		slashCD = 0.5f;
+		walkCD = 0.2f;
+		Player->velCurr = { 0,0 };
 	}
 
 	if (mapeditor == 1) {
@@ -597,9 +660,9 @@ void GS_Tower_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
@@ -638,9 +701,9 @@ void GS_Tower_Update(void) {
 	}
 
 	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr;
-		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
-		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
+		AEVec2 Pos = Player->posCurr + Player->velCurr;
+		Pos.x += -cos(angleMousetoPlayer) / 1.3f;
+		Pos.y += -sin(angleMousetoPlayer) / 1.3f;
 		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
@@ -818,6 +881,11 @@ void GS_Tower_Update(void) {
 	// ====================
 	// check for collision
 	// ====================
+	static float playerHitTime = 0;
+	playerHitTime -= g_dt;
+	if (playerHitTime < 0) {
+		playerHitTime = 0;
+	}
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -827,12 +895,6 @@ void GS_Tower_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_ENEMY) {
-			static float playerHitTime = 0;
-			playerHitTime -= g_dt;
-			if (playerHitTime < 0) {
-				playerHitTime = 0;
-			}
-
 
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 				&& playerHitTime == 0)
@@ -840,7 +902,16 @@ void GS_Tower_Update(void) {
 				if (Player->health > 0)
 				{
 					Player->deducthealth();
-					playerHitTime = 5.0f;
+
+					// Hit cooldown
+					playerHitTime = 0.5f;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+						Player->posCurr += pInst->velCurr / 4;
+					else Player->posCurr -= Player->velCurr / 4;
+
 				}
 			}
 
@@ -853,7 +924,9 @@ void GS_Tower_Update(void) {
 				if (pInst->calculateDistance(*jInst) < 0.6f
 					&& jInst->Alpha == 1) {
 					pInst->deducthealth(Player->damage);
-
+					// Knockback
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
 				}
 			}
 		}
@@ -900,7 +973,7 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_SPIKE) {
 			AEVec2 vel = { 0,0 };
 			if (pInst->Alpha < 1) {
-				std::cout << "colide";
+				;
 			}
 		}
 	}
@@ -1019,7 +1092,7 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_TOWER) {
 			pInst->timetracker += g_dt;
 
-			if (pInst->timetracker > 1) {
+			if (pInst->timetracker > 2) {
 				pInst->timetracker = 0;
 			}
 
@@ -1048,10 +1121,8 @@ void GS_Tower_Update(void) {
 				}
 				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
 				jInst->TextureMap = { 5,12 };
-
 			}
 		}
-
 	}
 
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -1087,7 +1158,7 @@ void GS_Tower_Update(void) {
 
 	if (CURRENT_MOBS == 9) {
 		for (int i = 17; i < 21; i++) {
-			MapObjInstList[35][i]->TextureMap = { 0,4 };
+			MapObjInstList[35][i] = { 0,4 };
 			binaryMap[35][i] = 0;
 		}
 	}
@@ -1197,7 +1268,6 @@ void GS_Tower_Update(void) {
 	}
 
 
-	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
 		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
@@ -1207,6 +1277,9 @@ void GS_Tower_Update(void) {
 		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
 		camY = Player->posCurr.y;
 	}
+
+
+	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
 
 
 
@@ -1280,7 +1353,7 @@ void GS_Tower_Draw(void) {
 		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
-		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP) {
+		if (pInst->pObject->type == TYPE_REF) {
 			continue;
 		}
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
@@ -1580,54 +1653,3 @@ static void staticObjInstDestroy(staticObjInst* pInst)
 	pInst->flag = 0;
 }
 
-//int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
-//{
-//	int Flag = 0;
-//	int x1, y1, x2, y2;
-//
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 2;	//To reach the right side
-//	y1 = PosY + scaleY / 4;	//To go up 1 / 4 of the height
-//
-//	//- hotspot 2
-//	x2 = PosX + scaleX / 2;	//To reach the right side
-//	y2 = PosY - scaleY / 4;	//To go down 1 / 4 of the height
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_RIGHT;
-//	}
-//
-//	//-hotspot 1
-//	x1 = PosX - scaleX / 2;
-//	y1 = PosY - scaleY / 4;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 2;
-//	y2 = PosY + scaleY / 4;
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_LEFT;
-//	}
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 4;
-//	y1 = PosY + scaleY / 2;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 4;
-//	y2 = PosY + scaleY / 2;
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_TOP;
-//	}
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 4;
-//	y1 = PosY - scaleY / 2;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 4;
-//	y2 = PosY - scaleY / 2;
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_BOTTOM;
-//	}
-//	return Flag;
-//}
