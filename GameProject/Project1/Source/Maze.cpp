@@ -91,11 +91,20 @@ static staticObjInst* RefBox;
 
 AEGfxTexture* DarkRoom;
 AEGfxVertexList* DarkMesh = 0;
+AEGfxVertexList* MapMesh = 0;
+AEGfxVertexList* MapChar = 0;
 
 static int dark = 0;
 float spiketimer = 0.f;
-
-static GameObjInst* Minimap;
+static int minimap = 0;
+static int posx = 0;
+static int posy = 0;
+static int flag;
+static float prevX = 0.0f;
+static float prevY = 0.0f;
+float currX = 0.0f;
+float currY = 0.0f;
+float angle = 0.0f;
 
 // ---------------------------------------------------------------------------
 
@@ -242,24 +251,33 @@ void GS_Maze_Load(void) {
 	DarkMesh = AEGfxMeshEnd();
 	DarkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
 
-	GameObj* MiniMap;
-	MiniMap = sGameObjList + sGameObjNum++;
+	///////MAPMESH////////////
 	AEGfxMeshStart();
 
-	AEGfxTriAdd(-60.f, 35.f, 0xFFE1E9B2, 0.0f, 0.0f,
-		-60.f, -35.f, 0xFFE1E9B2, 0.0f, 1.0f,
-		60.f, 35.f, 0xFFE1E9B2, 1.0f, 0.0f);
+	AEGfxTriAdd(-60.f, 35.f, 0xd0d4c700, 0.0f, 0.0f,
+		-60.f, -35.f, 0xd0d4c700, 0.0f, 1.0f,
+		60.f, 35.f, 0xd0d4c700, 1.0f, 0.0f);
 
-	AEGfxTriAdd(60.f, -35.f, 0xFFE1E9B2, 1.0f, 1.0f,
-		-60.f, -35.f, 0xFFE1E9B2, 0.0f, 1.0f,
-		60.f, 35.f, 0xFFE1E9B2, 1.0f, 0.0f);
+	AEGfxTriAdd(60.f, -35.f, 0xd0d4c700, 1.0f, 1.0f,
+		-60.f, -35.f, 0xd0d4c700, 0.0f, 1.0f,
+		60.f, 35.f, 0xd0d4c700, 1.0f, 0.0f);
 
-	MiniMap ->pMesh = AEGfxMeshEnd();
-	MiniMap->type = TYPE_MINIMAP;
-	MiniMap->refMesh = false;
-	MiniMap->refTexture = false;
-	MiniMap->pTexture = NULL;
+	MapMesh = AEGfxMeshEnd();
+
+
 	
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(-2.f, 2.f, 0xFFFF0000, 0.0f, 0.0f,
+		-2.f, -2.f, 0xFFFF0000, 0.0f, 1.0f,
+		2.f, 2.f, 0xFFFF0000, 1.0f, 0.0f);
+
+	AEGfxTriAdd(2.f, -2.f, 0xFFFF0000, 1.0f, 1.0f,
+		-2.f, -2.f, 0xFFFF0000, 0.0f, 1.0f,
+		2.f, 2.f, 0xFFFF0000, 1.0f, 0.0f);
+
+	MapChar = AEGfxMeshEnd();
+
 
 }
 
@@ -334,7 +352,10 @@ void GS_Maze_Init(void) {
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
 	AEVec2 MapPos = { 0,0 };
-	Minimap = gameObjInstCreate(TYPE_ENEMY, 1, &MapPos, 0, 0);
+
+	
+
+
 	
 }
 
@@ -367,6 +388,11 @@ void GS_Maze_Update(void) {
 		dark ^= 1;
 	}
 
+	//Minimap toggle
+	if (AEInputCheckTriggered(AEVK_M))
+	{
+		minimap ^= 1;
+	}
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
@@ -636,7 +662,7 @@ void GS_Maze_Update(void) {
 
 	
 
-	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+	 flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (flag & COLLISION_TOP) {
 		//Top collision
@@ -822,6 +848,23 @@ void GS_Maze_Update(void) {
 		testfile.close();
 	}
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
+	//===================MINIMAP Position Update=================//
+	if (flag & COLLISION_TOP || flag & COLLISION_BOTTOM || flag & COLLISION_LEFT || flag & COLLISION_RIGHT)
+	{
+		posx = posx;
+		posy = posy;
+	}
+	else {
+		posx += Player->velCurr.x;
+
+		posy += Player->velCurr.y;
+
+		
+	}
+	
+	
+
+	
 
 }
 
@@ -989,7 +1032,85 @@ void GS_Maze_Draw(void) {
 		// Actually drawing the mesh
 		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
 	}
+	if (minimap == 1)
+	{
+		AEMtx33 lscale = { 0 };
+		AEMtx33 lrotate = { 0, };
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33 ltransform = { 0 };
+		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+		AEGfxSetTransparency(1.0f);
+		// Tell the engine to get ready to draw something with texture. 
+		
+		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 0.5f);
+		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+		
+		if (MapMesh) {
+			// Create a scale matrix that scales by 100 x and y
+			
+			AEMtx33Scale(&lscale, 10, 10);
+			// Create a rotation matrix that rotates by 45 degrees
+			
 
+			AEMtx33Rot(&lrotate, 0);
+
+			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+			
+			AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+			// Concat the matrices (TRS) 
+			AEMtx33Concat(&ltransform, &lrotate, &lscale);
+			AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+			AEGfxSetTransform(ltransform.m);
+			// Actually drawing the mesh
+			AEGfxMeshDraw(MapMesh, AE_GFX_MDM_TRIANGLES);
+		}
+		if (MapChar)
+		{
+			
+
+			//if (posx != prevX || posy != prevY)
+			//{
+			currX = (camX * SPRITE_SCALE) + posx / 10;
+				AEMtx33Scale(&lscale, 3, 3);
+
+
+				// Create a rotation matrix that rotates by 45 degrees
+
+
+				AEMtx33Rot(&lrotate, 0);
+
+				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+
+				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
+				AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
+				// Concat the matrices (TRS) 
+				AEMtx33Concat(&ltransform, &lrotate, &lscale);
+				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+				AEGfxSetTransform(ltransform.m);
+				// Actually drawing the mesh
+				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
+				
+					
+				
+
+			//}
+				
+			
+					
+				
+		}
+		
+			
+		prevX = posx;
+		prevY = posy;
+
+		
+	}
+	
+	
+	
 	if (state == 1)
 	{
 		char debug[20] = "Debug Screen";
@@ -1095,7 +1216,8 @@ void GS_Maze_Unload(void) {
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxMeshFree(DarkMesh);
 	AEGfxTextureUnload(DarkRoom);
-
+	AEGfxMeshFree(MapMesh);
+	AEGfxMeshFree(MapChar);
 }
 
 // ---------------------------------------------------------------------------
