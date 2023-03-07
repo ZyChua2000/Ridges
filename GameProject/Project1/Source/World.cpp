@@ -927,7 +927,7 @@ void GS_World_Update(void) {
 				}
 			}
 
-			for (int j = MAP_CELL_HEIGHT * MAP_CELL_HEIGHT * 2; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
 				staticObjInst* jInst = sStaticObjInstList + j;
 				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 					continue;
