@@ -134,7 +134,7 @@ void GS_MainMenu_Init(void) {
 
 		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
 		
-		AEAudioPlay(BackgroundMusic, Group1, 1, 1, -1);
+		AEAudioPlay(BackgroundMusic, Group1, 1, 1, 1);
 }
 
 
@@ -151,7 +151,7 @@ void GS_MainMenu_Update(void) {
 	
 	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
 
-
+	
 	if (AEInputCheckTriggered(AEVK_3)) {
 		gGameStateNext = GS_MAZE;
 	}
@@ -177,13 +177,15 @@ void GS_MainMenu_Update(void) {
 	}
 	
 	
-		if (AEInputCheckTriggered(AEVK_LBUTTON)) {
+		if (AEInputCheckReleased(AEVK_LBUTTON)) {
 			
 			
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
 				loadState = 0;
+				AEAudioStopGroup(Group1);
 				gGameStateNext = GS_WORLD;
+				return;
 				
 
 			}
@@ -191,6 +193,7 @@ void GS_MainMenu_Update(void) {
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
 				gGameStateNext = GS_QUIT;
+					return;
 			}
 			//gGameStateNext = GS_WORLD;
 		}
