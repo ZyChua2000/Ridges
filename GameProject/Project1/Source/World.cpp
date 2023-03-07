@@ -1561,9 +1561,7 @@ void GS_World_Draw(void) {
 		}
 	}
 
-	AEMtx33 moo{ 16, 0, 0,
-				0, 16, 0,
-				0, 0, 1 };
+	
 	ParticleSystemDraw(&pchar->transform);   //localtransform
 	
 }
