@@ -39,6 +39,7 @@ extern double	g_appTime;
 #include "collision.h"
 #include "AEVecOverloads.h"
 #include "Enemy.h"
+#include "Globals.h"
 
 
 #endif

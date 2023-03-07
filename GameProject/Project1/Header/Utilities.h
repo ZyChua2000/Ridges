@@ -141,7 +141,7 @@ namespace utilities {
 	\param[in] filename
 		Filename to export texture to. Default parameter is mapText.txt
 	*************************************************************************/
-	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename = "mapText.txt");
+	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename = "mapText.txt");
 
 	/*!***********************************************************************
 	\brief
@@ -155,7 +155,7 @@ namespace utilities {
 	\param[in] filename
 		Filename to export texture to. Default parameter is mapBin.txt
 	*************************************************************************/
-	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, staticObjInst* MapObjInstList, std::string filename = "mapBin.txt");
+	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename = "mapBin.txt");
 
 	/*!***********************************************************************
 	\brief
