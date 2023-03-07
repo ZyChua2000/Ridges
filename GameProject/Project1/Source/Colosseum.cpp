@@ -28,7 +28,7 @@ static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of uniqu
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 12000;	// The total number of static game object instances
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
 
 static const unsigned int	MAX_MOBS;							// The total number of mobs
 static const unsigned int	MAX_CHESTS;							// The total number of chests
@@ -72,7 +72,7 @@ static unsigned long		sGameObjInstNum;							// The number of used dynamic game 
 static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
 static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
-static staticObjInst* MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
+static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
@@ -83,6 +83,7 @@ static GameObjInst* Player;												// Pointer to the "Player" game object in
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static GameObjInst* enemy[2];
+static staticObjInst* RefBox;
 
 
 
@@ -240,36 +241,27 @@ void GS_Colosseum_Init(void) {
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
-			staticObjInstCreate(TYPE_MAP, 1, &Pos, 0);
-			staticObjInst* pInst = sStaticObjInstList + i + j * MAP_CELL_WIDTH;
-			MapObjInstList[i][j] = pInst;
-			// input texture
-			pInst->TextureMap = { 0,0 };
-			mapInput >> MapObjInstList[i][j]->TextureMap.x;
-			mapInput >> MapObjInstList[i][j]->TextureMap.y;
+			mapInput >> MapObjInstList[i][j].x;
+			mapInput >> MapObjInstList[i][j].y;
 		}
 	}
 	mapInput.close();
 
-	// Initialise map binary
-	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryColosseum.txt");
+
+	// =====================================
+	//	Initialize map binary
+	// =====================================
+
+	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 	std::ifstream binInput{ "Assets/binaryColosseum.txt" };
 	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-			binInput >> binaryMap[i][j];
+			binInput >> binaryMap[j][i];
 		}
 	}
 	binInput.close();
 
-	// Initialise reference objects for mesh editor
-	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			AEVec2 Pos = { (float)i + 0.5f , -((float)j + 0.5f) };
-			staticObjInstCreate(TYPE_REF, 1, &Pos, 0);
-
-		}
-	}
+	RefBox = staticObjInstCreate(TYPE_REF, 1, nullptr, 0);
 
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
@@ -382,7 +374,7 @@ void GS_Colosseum_Update(void) {
 					-mouseY - camY >= j &&
 					-mouseY - camY <= j + 1
 					&& AEInputCheckCurr(AEVK_LBUTTON)) {
-					MapObjInstList[i][j]->TextureMap = mapEditorObj->TextureMap;
+					MapObjInstList[i][j] = mapEditorObj->TextureMap;
 				}
 			}
 		}
@@ -393,9 +385,9 @@ void GS_Colosseum_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "textureColosseum.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureColosseum.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, **MapObjInstList, "binaryColosseum.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryColosseum.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
@@ -425,7 +417,7 @@ void GS_Colosseum_Update(void) {
 		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
 	}
 
-	for (unsigned long i = 10416; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
@@ -728,16 +720,37 @@ void GS_Colosseum_Draw(void) {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
 	for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
-		for (unsigned long j = 0; j < MAP_CELL_HEIGHT; j++) {
-			if (utilities::checkWithinCam(MapObjInstList[i][j]->posCurr, camX, camY)) {
+		for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
+			AEVec2 Pos = { i + 0.5f, -j - 0.5f };
+
+			if (utilities::checkWithinCam(Pos, camX, camY)) {
 				continue;
 			}
+
 			AEGfxSetTransparency(1.0f);
-			AEGfxTextureSet(MapObjInstList[i][j]->pObject->pTexture,
-				TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j]->TextureMap.x,
-				TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j]->TextureMap.y);
-			AEGfxSetTransform(MapObjInstList[i][j]->transform.m);
-			AEGfxMeshDraw(MapObjInstList[i][j]->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+
+			AEMtx33 Translate, Scale, Transform;
+			AEMtx33Trans(&Translate, Pos.x, Pos.y);
+			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Concat(&Transform, &Scale, &Translate);
+
+			AEGfxTextureSet(Player->pObject->pTexture,
+				TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j].x,
+				TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j].y);
+
+			AEGfxSetTransform(Transform.m);
+
+			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+
+			if (mapeditor == 1) {
+
+
+				AEGfxTextureSet(RefBox->pObject->pTexture, 0, 0);
+
+				AEGfxSetTransform(Transform.m);
+
+				AEGfxMeshDraw(RefBox->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
 		}
 	}
 
