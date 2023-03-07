@@ -106,6 +106,10 @@ static const float timingTHIRD = 1.2f;
 static const float timingFOURTH = 1.8f;
 
 
+float spikedmgtimer = 0.f;
+float internalTimer = 0.f;
+
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -329,14 +333,13 @@ void GS_Tower_Init(void) {
 
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
-
+	
 	// =====================================
 	//	Initialize objects for new game
 	// =====================================
 	if (loadState == false) {
 		//Initialise Player
-		//AEVec2 PlayerPos = { 58.5,-6 };
-		AEVec2 PlayerPos = { 58,-6 };
+		AEVec2 PlayerPos = { 58.5,-6 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 		Player->TextureMap = { 1,8 };
 
@@ -347,14 +350,10 @@ void GS_Tower_Init(void) {
 		Player->damage = 1;
 		Player->timetracker = 0;
 
-		//Initialise player health.
-		for (int i = 0; i < Player->health; i++) {
-			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-			Health[i]->TextureMap = { 0,11 };
-		}
+
 
 		//Initialise Levers in level
-		AEVec2 pos[2] = { { 67.5f - (1.0f / 16), -8.5 } ,{ 43.5f - (1.0f / 16), -4.5} };
+		AEVec2 pos[2] = { { 42.5f - (1.0f / 16), -4.5} ,{ 67.5f - (1.0f / 16), -8.5 }  };
 		for (int i = 0; i < 2; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
 			Levers[i]->TextureMap = { 2,11 };
@@ -438,6 +437,25 @@ void GS_Tower_Init(void) {
 	// =====================================
 	//	Initialize UI objects
 	// =====================================
+	AEVec2 spikepos[12] = { {64.5,-3.5}, {64.5,-4.5}, {66.5,-3.5},{66.5,-4.5},{68.5,-3.5},{68.5,-4.5},{59,-23.5}, {63,-23.5}, {61,-23.5}, {59, -24.5}, {63, -24.5}, {61,-24.5} };
+	for (int i = 0; i < 12; i++)
+	{
+		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
+	}
+	for (int i = 0; i < sStaticObjInstNum; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_SPIKE)
+		{
+			pInst->TextureMap = { 5,3 };
+		}
+	}
+	//Initialise player health.
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		Health[i]->TextureMap = { 0,11 };
+	}
+
 	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
@@ -453,21 +471,6 @@ void GS_Tower_Init(void) {
 	NumObj[0]->TextureMap = { 2,12 };
 	NumObj[1]->TextureMap = { 2,12 };
 	//NumObj[2]->TextureMap = { , };
-
-
-	AEVec2 spikepos[10] = { {59,-23.5}, { 63,-23.5 }, { 61,-23.5 }, {59, -24.5}, {63, -24.5}, {61,-24.5} };
-	for (int i = 0; i < 10; i++)
-	{
-		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
-	}
-	for (int i = 0; i < sStaticObjInstNum; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->pObject->type == TYPE_SPIKE)
-		{
-			pInst->TextureMap = { 5,3 };
-		}
-	}
 
 }
 
@@ -532,6 +535,17 @@ void GS_Tower_Update(void) {
 			Player->walk();
 		}
 	}
+
+		MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
 	{
@@ -552,7 +566,7 @@ void GS_Tower_Update(void) {
 	if (AEInputCheckTriggered(AEVK_E)) {
 
 		//Interaction with levers
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 2; i++) {
 			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x != 3) {
 				//Switch lever to face down
 				Levers[i]->TextureMap = { 3,11 };
@@ -560,9 +574,9 @@ void GS_Tower_Update(void) {
 				//Remove gates: Change texture & Binary map
 				switch (i) {
 				case 0:
-					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15] = { 0,4 };
-						binaryMap[i][15] = 0;
+					for (int i = 14; i <16; i++) {
+						MapObjInstList[60][i] = { 0,4 };
+						binaryMap[60][i] = 0;
 					}
 					break;
 				case 1:
@@ -578,20 +592,6 @@ void GS_Tower_Update(void) {
 				default:
 					break;
 				}
-			}
-		}
-
-
-		for (int i = 0; i < 6; i++)
-		{
-			//Interaction with Chest
-			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
-			{
-				//change texture of chest
-				Chest[i]->TextureMap = { 8, 7 };
-				AEVec2 Pos = { Chest[i]->posCurr.x, Chest[i]->posCurr.y };
-				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-				Potion->TextureMap = { 6,9 };
 			}
 		}
 	}
@@ -660,9 +660,9 @@ void GS_Tower_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
@@ -867,16 +867,6 @@ void GS_Tower_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -1029,11 +1019,21 @@ void GS_Tower_Update(void) {
 	}*/
 
 
+	spikedmgtimer += g_dt;
+
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
+		if (Player->calculateDistance(*pInst) <= 0.7 && (pInst->Alpha == 0) && spikedmgtimer >= 1) {
+
+			--Player->health;
+			spikedmgtimer = 0.0f;
+		}
+
+
+		//will work for all spikes spawned, find a better way to do the timetracker
 		if (pInst->timetracker2 == 0) {
 			pInst->timetracker += g_dt;
 		}
@@ -1064,6 +1064,7 @@ void GS_Tower_Update(void) {
 			pInst->timetracker2 = 0;
 		}
 		pInst->Alpha = 1.0f - pInst->timetracker / 2;
+
 	}
 
 	// ===================================

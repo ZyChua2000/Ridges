@@ -104,8 +104,8 @@ static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
 
-float spikedmgtimer = 0.f;
-float internalTimer = 0.f;
+static float spikedmgtimer = 0.f;
+static float internalTimer = 0.f;
 
 static staticObjInst* RefBox;
 
