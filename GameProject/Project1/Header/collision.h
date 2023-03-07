@@ -29,7 +29,7 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float 
 
 
 
-bool ShittyCollisionMap(float posx, float posy);
+//bool ShittyCollisionMap(float posx, float posy);
 
 void snaptocelladd(float* coordinate);
 
