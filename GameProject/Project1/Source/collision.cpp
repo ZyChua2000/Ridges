@@ -19,9 +19,7 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	const AABB& aabb2, const AEVec2& vel2)
 {
 
-	//Implement the collision intersection over here.
 
-	//The steps are:	
 	//Step 1: Check for static collision detection between rectangles (before moving). 
 	//			If the check returns no overlap you continue with the following next steps (dynamics).
 	//			Otherwise you return collision true
