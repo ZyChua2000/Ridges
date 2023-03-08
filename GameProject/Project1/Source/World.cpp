@@ -104,8 +104,8 @@ static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
 
-float spikedmgtimer = 0.f;
-float internalTimer = 0.f;
+static float spikedmgtimer = 0.f;
+static float internalTimer = 0.f;
 
 static staticObjInst* RefBox;
 
@@ -393,7 +393,7 @@ void GS_World_Init(void) {
 		// Changing fence textures & binary collision depending on
 		// lever texture
 		for (int i = 0; i < 3; i++) {
-			if (Levers[i]->TextureMap.x == 3) {
+			if (Levers[i]->dirCurr != 0) {
 				//Remove gates: Change texture & Binary map
 				switch (i) {
 				case 0:
@@ -565,9 +565,9 @@ void GS_World_Update(void) {
 
 		//Interaction with levers
 		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x != 3) {
+			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->dirCurr == 0) {
 				//Switch lever to face down
-				Levers[i]->TextureMap = { 3,11 };
+				Levers[i]->dirCurr = -PI / 4;
 				Levers[i]->posCurr.x -= 0.2f;
 				//Remove gates: Change texture & Binary map
 				switch (i) {
@@ -722,7 +722,7 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
-
+	//creating key
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
