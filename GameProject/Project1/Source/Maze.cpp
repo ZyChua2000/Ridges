@@ -91,7 +91,7 @@ AEGfxTexture* DarkRoom;
 AEGfxVertexList* DarkMesh = 0;
 
 static int dark = 0;
-
+float spiketimer = 0.f;
 
 // ---------------------------------------------------------------------------
 
@@ -465,9 +465,9 @@ void GS_Maze_Update(void) {
 
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureMaze.txt");
 
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
@@ -713,6 +713,55 @@ void GS_Maze_Update(void) {
 		snaptocelladd(&Player->posCurr.x);
 
 		//Player->posCurr.x - 0.5;
+	}
+
+	spiketimer += g_dt;
+
+	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
+			continue;
+		}
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && spiketimer >= 1) {
+
+			--Player->health;
+			spiketimer = 0.0f;
+		}
+
+
+		//will work for all spikes spawned, find a better way to do the timetracker
+
+		if (pInst->timetracker2 == 0) {
+			pInst->timetracker += g_dt;
+		}
+		if (pInst->timetracker > 2) {
+			pInst->timetracker = 2;
+		}
+
+		if (pInst->timetracker == 2) {
+			pInst->timetracker2 += g_dt;
+		}
+
+		if (pInst->timetracker2 > 2) {
+			pInst->timetracker2 = 2;
+		}
+
+		if (pInst->timetracker2 == 2) {
+			pInst->timetracker -= g_dt;
+		}
+
+		if (pInst->timetracker < 0) {
+			pInst->timetracker = 0;
+		}
+
+		if (pInst->timetracker == 0) {
+			pInst->timetracker2 -= g_dt;
+		}
+		if (pInst->timetracker2 < 0) {
+			pInst->timetracker2 = 0;
+		}
+		pInst->Alpha = 1.0f - pInst->timetracker / 2;
+
 	}
 
 	// ===================================
