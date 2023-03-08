@@ -213,6 +213,82 @@ void snaptocellsub(float* coordinate) {
 
 
 
+int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[28][29])
+{
+	int Flag = 0;
+	int x1, y1, x2, y2;
+
+	//std::cout << "X: " << PosX << "\tY: " << PosY << std::endl;
+
+	// Check the right side of the object instance
+	//Hotspot 1f
+	x1 = int(PosX + scaleX / 2);
+	y1 = int(PosY + scaleY / 4);
+	//Hotspot 2
+	x2 = int(PosX + scaleX / 2);
+	y2 = int(PosY - scaleY / 4);
+
+	//std::cout << "X1: " << x1 << "\tY1: " << y1 << std::endl;
+	//std::cout << "X2: " << x2 << "\tY2: " << y2 << std::endl;
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_RIGHT;
+		std::cout << "r" << std::endl;
+
+	}
+
+
+	// Check the left side of the object instance
+	//Hotspot 1
+	x1 = int(PosX - scaleX / 2);
+	y1 = int(PosY - scaleY / 4);
+	//Hotspot 2
+	x2 = int(PosX - scaleX / 2);
+	y2 = int(PosY + scaleY / 4);
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_LEFT;
+		std::cout << "l" << std::endl;
+	}
+
+	// Check the top side of the object instance
+	//Hotspot 1
+	x1 = int(PosX - scaleX / 4);
+	y1 = int(PosY + scaleY / 2);
+	//Hotspot 2
+	x2 = int(PosX + scaleX / 4);
+	y2 = int(PosY + scaleY / 2);
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_BOTTOM;
+		std::cout << "b" << std::endl;
+	}
+
+
+	// Check the top side of the object instance
+	//Hotspot 1
+	x1 = int(PosX + scaleX / 4);
+	y1 = int(PosY - scaleY / 2);
+	//Hotspot 2
+	x2 = int(PosX - scaleX / 4);
+	y2 = int(PosY - scaleY / 2);
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_TOP;
+		std::cout << "t" << std::endl;
+	}
+
+	return Flag;
+}
+
+
+
+
+
 //bool ShittyCollisionMap(float posx, float posy) {
 //	if (binaryMap[((int(posx + 8)))][abs((int(posy)))]) {
 //		std::cout << "r" << std::endl;

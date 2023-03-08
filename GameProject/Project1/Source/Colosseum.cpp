@@ -30,7 +30,9 @@ static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of 
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS;							// The total number of mobs
+static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
+static unsigned int			CURRENT_MOBS = MAX_MOBS;			//
+
 static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 
@@ -277,17 +279,28 @@ void GS_Colosseum_Init(void) {
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
-	AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
+	//AEVec2 EnemyPos[2] = { {33.f, -40.f} ,{33.f, -45.f} };
 
-	//Initialise enemy in level
-	for (int i = 0; i < 2; i++) {
-		enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-		enemy[i]->TextureMap = { 0,9 };
-	}
+	////Initialise enemy in level
+	//for (int i = 0; i < 2; i++) {
+	//	enemy[i] = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+	//	enemy[i]->TextureMap = { 0,9 };
+	//}
 
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
+
+
+	//Initialise enemy in level
+	AEVec2 EnemyPos[MAX_MOBS] = { {7,-15},{20,-15},{46,-8} };
+	for (int i = 0; i < MAX_MOBS; i++) {
+		GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+		enemy->TextureMap = { 0,9 };
+		enemy->health = 3;
+	}
+
+	
 
 }
 
@@ -490,6 +503,68 @@ void GS_Colosseum_Update(void) {
 	}
 
 
+
+	//// Pathfinding for Enemy AI
+	//for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
+	//{
+	//	GameObjInst* pEnemy = sGameObjInstList + j;
+
+	//	// skip non-active object
+	//	if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
+	//		continue;
+
+	//	if (Player->calculateDistance(*pEnemy) > 10)
+	//		continue;
+
+	//	// perform pathfinding for this enemy
+	//	pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+
+	//	// update enemy velocity based on path
+	//	if (pEnemy->path.size() > 1)
+	//	{
+	//		Node* pNextNode = pEnemy->path[1];
+
+	//		// calculate the distance between the enemy and player
+	//		float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
+
+	//		// update enemy velocity only if it is farther than the maximum distance
+	//		if (distance > MAX_ENEMY_DISTANCE)
+	//		{
+	//			// check if player is moving or the enemy is already stopped
+	//			if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
+	//			{
+	//				// continue moving
+	//				pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
+	//				pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
+
+	//				// set flag to indicate not stopped
+	//				pEnemy->stopped = false;
+	//			}
+	//			else // player is not moving and enemy is not stopped
+	//			{
+	//				// stop moving
+	//				pEnemy->velCurr.x = 0;
+	//				pEnemy->velCurr.y = 0;
+
+	//				// set flag to indicate stopped
+	//				pEnemy->stopped = true;
+	//			}
+	//		}
+	//		else
+	//		{
+	//			// stop moving if already close to the player
+	//			pEnemy->velCurr.x = 0;
+	//			pEnemy->velCurr.y = 0;
+
+	//			// set flag to indicate stopped
+	//			pEnemy->stopped = true;
+	//		}
+	//	}
+	//}
+
+	////ENEMYAI^^
+
+
 	// ====================
 	// check for collision
 	// ====================
@@ -509,10 +584,75 @@ void GS_Colosseum_Update(void) {
 		}
 	}
 
+	////if player receive damage from collision or from mob, player decrease health
+	//if (AEInputCheckTriggered(AEVK_T))
+	//{
+	//	Player->deducthealth();
+	//	switch (Player->health)
+	//	{
+	//	case 0:
+	//		Health[2]->TextureMap = { 1, 11 };
+	//		break;
+	//	case 1:
+	//		Health[1]->TextureMap = { 1, 11 };
+	//		break;
+	//	case 2:
+	//		Health[0]->TextureMap = { 1, 11 };
+	//	}
+	//}
+
+	static float playerHitTime = 0;
+	playerHitTime -= g_dt;
+	if (playerHitTime < 0) {
+		playerHitTime = 0;
+	}
+
 	//if player receive damage from collision or from mob, player decrease health
-	if (AEInputCheckTriggered(AEVK_T))
-	{
-		Player->deducthealth();
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+
+		if (pInst->pObject->type == TYPE_ENEMY) {
+
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+				&& playerHitTime == 0)
+			{
+				if (Player->health > 0)
+				{
+					Player->deducthealth();
+
+					// Hit cooldown
+					playerHitTime = 0.5f;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+						Player->posCurr += pInst->velCurr / 4;
+					else Player->posCurr -= Player->velCurr / 4;
+
+				}
+			}
+
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+				staticObjInst* jInst = sStaticObjInstList + j;
+				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+					continue;
+				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*jInst) < 0.6f
+					&& jInst->Alpha == 1) {
+					pInst->deducthealth(Player->damage);
+					// Knockback
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
+				}
+			}
+		}
+
+		
+
 		switch (Player->health)
 		{
 		case 0:
@@ -526,78 +666,48 @@ void GS_Colosseum_Update(void) {
 		}
 	}
 
+	
 
-	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
-		//player_direction.x = -player_direction.x;
+	int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-		float player_bottom = Player->posCurr.y + 50;
-		float tiles_bottom = 0 + 50;
-		float player_right = Player->posCurr.x + 50;
-		float tiles_right = -160 + 50;
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
 
-		float b_collision = tiles_bottom - Player->posCurr.y;
-		float t_collision = player_bottom - 0;
-		float l_collision = player_right + 160;
-		float r_collision = tiles_right - Player->posCurr.x;
-
-		if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
-			//Top collision
-			std::cout << "collide top" << std::endl;
-			if (Player->velCurr.y == 1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = -1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
-
-		if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
-			//bottom collision
-			std::cout << "collide botton" << std::endl;
-			if (Player->velCurr.y == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = 1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
-
-		if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
-			//Left collision
-			std::cout << "collide left" << std::endl;
-			if (Player->velCurr.x == 1)
-			{
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = -1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-
-		}
-
-		if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
-			//Right collision
-			std::cout << "collide right" << std::endl;
-			if (Player->velCurr.x == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = 1;
-				Player->posCurr.x += Player->velCurr.x;
-			}
-		}
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
 	}
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x - 0.5;
+	}
+
+
+	
+
+
+	
 
 	// ===================================
 	// update active game object instances
