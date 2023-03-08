@@ -30,22 +30,23 @@ static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of 
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS;							// The total number of mobs
+							
 static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-
+static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
+static unsigned int			CURRENT_MOBS = MAX_MOBS;
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
-static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
+static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
-
+static const float MAX_ENEMY_DISTANCE = 1.0f;
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 // -----------------------------------------------------------------------------
-
+static Node* nodes{};
 
 // -----------------------------------------------------------------------------
 // object flag definition
@@ -289,6 +290,8 @@ void GS_Colosseum_Init(void) {
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
 	ParticleSystemInit();
+
+	NodesInit(binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 }
 
 
@@ -314,7 +317,16 @@ void GS_Colosseum_Update(void) {
 		mapeditor ^= 1;
 	}
 
-
+	if (AEInputCheckTriggered(AEVK_EQUAL))
+	{
+		
+		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+	}
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
@@ -399,6 +411,64 @@ void GS_Colosseum_Update(void) {
 			}
 		}
 		binInput.close();
+	}
+
+	// Pathfinding for Enemy AI
+	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
+	{
+		GameObjInst* pEnemy = sGameObjInstList + j;
+
+		// skip non-active object
+		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
+			continue;
+
+		if (Player->calculateDistance(*pEnemy) > 10)
+			continue;
+
+		// perform pathfinding for this enemy
+		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+
+		// update enemy velocity based on path
+		if (pEnemy->path.size() > 1)
+		{
+			Node* pNextNode = pEnemy->path[1];
+
+			// calculate the distance between the enemy and player
+			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
+
+			// update enemy velocity only if it is farther than the maximum distance
+			if (distance > MAX_ENEMY_DISTANCE)
+			{
+				// check if player is moving or the enemy is already stopped
+				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
+				{
+					// continue moving
+					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
+					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
+
+					// set flag to indicate not stopped
+					pEnemy->stopped = false;
+				}
+				else // player is not moving and enemy is not stopped
+				{
+					// stop moving
+					pEnemy->velCurr.x = 0;
+					pEnemy->velCurr.y = 0;
+
+					// set flag to indicate stopped
+					pEnemy->stopped = true;
+				}
+			}
+			else
+			{
+				// stop moving if already close to the player
+				pEnemy->velCurr.x = 0;
+				pEnemy->velCurr.y = 0;
+
+				// set flag to indicate stopped
+				pEnemy->stopped = true;
+			}
+		}
 	}
 
 	// ======================================================
@@ -525,7 +595,89 @@ void GS_Colosseum_Update(void) {
 			Health[0]->TextureMap = { 1, 11 };
 		}
 	}
+	static float playerHitTime = 0;
+	playerHitTime -= g_dt;
+	if (playerHitTime < 0) {
+		playerHitTime = 0;
+	} 
 
+	//if player receive damage from collision or from mob, player decrease health
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+
+		if (pInst->pObject->type == TYPE_ENEMY) {
+
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+				&& playerHitTime == 0)
+			{
+				if (Player->health > 0)
+				{
+					Player->deducthealth();
+
+					// Hit cooldown
+					playerHitTime = 0.5f;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+						Player->posCurr += pInst->velCurr / 4;
+					else Player->posCurr -= Player->velCurr / 4;
+
+				}
+			}
+
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+				staticObjInst* jInst = sStaticObjInstList + j;
+				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+					continue;
+				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*jInst) < 0.6f
+					&& jInst->Alpha == 1) {
+					pInst->deducthealth(Player->damage);
+					// Knockback
+					printf("dmg mobs");
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
+				}
+			}
+		}
+
+		if (pInst->pObject->type == TYPE_BULLET) {
+			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
+				Player->deducthealth();
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_TOP) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_BOTTOM) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_RIGHT) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_LEFT) {
+				gameObjInstDestroy(pInst);
+			}
+		}
+
+		switch (Player->health)
+		{
+		case 0:
+			Health[2]->TextureMap = { 1, 11 };
+			break;
+		case 1:
+			Health[1]->TextureMap = { 1, 11 };
+			break;
+		case 2:
+			Health[0]->TextureMap = { 1, 11 };
+		}
+	}
 
 	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
 		//player_direction.x = -player_direction.x;
@@ -631,7 +783,36 @@ void GS_Colosseum_Update(void) {
 		std::cout << "collided" << std::endl;
 	}*/
 
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
 
+		if (pInst->pObject->type == TYPE_ENEMY)
+		{
+			if (pInst->health == 0)
+		{
+				gameObjInstDestroy(pInst);
+				CURRENT_MOBS -= 1;
+	//			//randomising potion drop rate when mobs are killed 
+	//			srand(time(NULL));
+	//			if (rand() % 2 == 0)
+	//			{
+	//				AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
+	//				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+	//				Potion->TextureMap = { 6,9 };
+				}
+			}
+	//	}
+
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			pInst->timetracker += g_dt;
+			if (pInst->health == 0) {
+				gGameStateNext = GS_DEATHSCREEN;
+			}
+		}
+	}
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
