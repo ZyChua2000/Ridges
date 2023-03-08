@@ -154,14 +154,17 @@ void GS_MainMenu_Update(void) {
 	
 	if (AEInputCheckTriggered(AEVK_3)) {
 		gGameStateNext = GS_MAZE;
+		return;
 	}
 
 	if (AEInputCheckTriggered(AEVK_4)) {
 		gGameStateNext = GS_COLOSSEUM;
+		return;
 	}
 
 	if (AEInputCheckTriggered(AEVK_5)) {
 		gGameStateNext = GS_TOWER;
+		return;
 	}
 
 	s32 mX, mY;
