@@ -85,7 +85,7 @@ static staticObjInst* Health[3];										// Pointer to the player health statc 
 static GameObjInst* enemy[2];
 static staticObjInst* RefBox;
 
-
+float Timer = 0.f;
 
 // ---------------------------------------------------------------------------
 
@@ -220,7 +220,7 @@ void GS_Colosseum_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
-
+	ParticleSystemLoad();
 }
 
 /******************************************************************************/
@@ -288,7 +288,7 @@ void GS_Colosseum_Init(void) {
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
-
+	ParticleSystemInit();
 }
 
 
@@ -700,6 +700,29 @@ void GS_Colosseum_Update(void) {
 		}
 		testfile.close();
 	}
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		AEVec2 reverse;
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			AEVec2Neg(&reverse, &pInst->velCurr);
+			Timer += g_dt;
+			if (Timer > 0.25f)
+			{
+				AEVec2 particlecoords = pInst->posCurr;
+				particlecoords.y = pInst->posCurr.y - 0.48;
+				Timer -= 0.25f;
+				ParticleSystemRequest(0, 10.6f, &particlecoords,
+					&reverse, 1.0f, 0.15f, 10);
+			}
+			else
+			{
+				Timer += g_dt;
+			}
+		}
+		break;
+
+	}
+	ParticleSystemUpdate();
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
 }
@@ -898,6 +921,16 @@ void GS_Colosseum_Draw(void) {
 			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
+
+	GameObjInst* pchar;
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		pchar = sGameObjInstList + i;
+
+		if (pchar->pObject->type == TYPE_CHARACTER) {
+			break;
+		}
+	}
+	ParticleSystemDraw(&pchar->transform);
 }
 
 /******************************************************************************/
@@ -921,6 +954,7 @@ void GS_Colosseum_Free(void) {
 			staticObjInstDestroy(pInst);
 		}
 	}
+	ParticleSystemFree();
 
 }
 
