@@ -11,10 +11,13 @@ Reproduction or disclosure of this file or its contents without the
 prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
+
 #include "Main.h"
 #include <fstream>
 #include <iostream>
-#include <time.h>
+#include "Globals.h"
+#include "Enemy.h"
+#include "collision.h"
 
 
 /*!
@@ -27,29 +30,28 @@ static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of uniqu
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;		// The total number of static game object instances
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
 
-							
-static const unsigned int	MAX_CHESTS;							// The total number of chests
+
+//static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
 static unsigned int			CURRENT_MOBS = MAX_MOBS;
+
+static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
+
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
-static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
+static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
 static const float MAX_ENEMY_DISTANCE = 1.0f;
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
-
-static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
-
-
+static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 // -----------------------------------------------------------------------------
-static Node* nodes{};
-
+//static Node* nodes{};
 
 // -----------------------------------------------------------------------------
 // object flag definition
@@ -77,43 +79,40 @@ static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each elemen
 static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
-static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];			// 2D array of binary collision mapping
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 static unsigned long		FontListNum;								// The number of used fonts
-
-static float slashCD = 0;
-static float walkCD = 0;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers;										// Pointer to each enemy object instance
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
-static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Key;
-static Inventory Backpack;
-static staticObjInst* Spike;
+static GameObjInst* enemy[2];
 static staticObjInst* RefBox;
+static staticObjInst* Chest[MAX_CHESTS];
+
+
 
 float Timer = 0.f;
+
+int waves = 0;
+float wavestimer = 0.f;
 
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
 
 
-int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-	float scaleX, float scaleY);
+//int CheckInstanceBinaryMapCollision(float PosX, float PosY,
+//	float scaleX, float scaleY);
 
 
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the World level.
-	It should be called once before the start of the level.clic
+	This function loads all necessary assets for the Colosseum level.
+	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
@@ -233,22 +232,31 @@ void GS_Colosseum_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
+	GameObj* Chest;
+	Chest = sGameObjList + sGameObjNum++;
+	Chest->pMesh = Character->pMesh;
+	Chest->pTexture = Character->pTexture;
+	Chest->type = TYPE_CHEST;
+	Chest->refMesh = true;
+	Chest->refTexture = true;
+
 	ParticleSystemLoad();
 }
 
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the World state. It should
+	This function initialises all the values of the Colosseum state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
 void GS_Colosseum_Init(void) {
+	//Initialise Player
+	AEVec2 PlayerPos = { 14,-16 };
+	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
+	Player->TextureMap = { 1,8 };
 
-	// =====================================
-	//	Initialize map textures
-	// =====================================
-
+	//Initialise map textures
 	std::ifstream mapInput{ "Assets/textureColosseum.txt" };
 	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
@@ -258,6 +266,7 @@ void GS_Colosseum_Init(void) {
 		}
 	}
 	mapInput.close();
+
 
 	// =====================================
 	//	Initialize map binary
@@ -277,63 +286,14 @@ void GS_Colosseum_Init(void) {
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
-	// =====================================
-	//	Initialize objects for new game
-	// =====================================
-	if (loadState == false) {
-		//Initialise Player
-		AEVec2 PlayerPos = { 58.5,-6 };
-		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-		Player->TextureMap = { 1,8 };
-
-		Backpack.Potion = 0;
-		Backpack.Key = 0;
-
-		Player->health = 3;
-		Player->damage = 1;
-		Player->timetracker = 0;
-
-
-
-		//Initialise enemy in level
-		AEVec2 EnemyPos[MAX_MOBS] = { {45,-5},{50,-6},{46,-8} };
-		for (int i = 0; i < MAX_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-			enemy->TextureMap = { 0,9 };
-			enemy->health = 3;
-		}
-
-	}
-
-	// =====================================
-	//	Initialize objects for loaded game game
-	// =====================================
-
-	
-
-	//Init pathfinding nodes
-	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-
-	// Initialise camera pos
-	camX = Player->posCurr.x, camY = Player->posCurr.y;
-
-	// =====================================
-	//	Initialize UI objects
-	// =====================================
-	
-	//Initialise player health.
+	//Initialise player health. Printing of hearts.
+	Player->health = 3;
 	for (int i = 0; i < Player->health; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 		Health[i]->TextureMap = { 0,11 };
 	}
 
-	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
-	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
-	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
-	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
-	MenuObj[0]->TextureMap = { 6,9 };
-	MenuObj[1]->TextureMap = { 4,11 };
-	//MenuObj[2]->TextureMap = { , };
+	AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -345,12 +305,22 @@ void GS_Colosseum_Init(void) {
 		enemy[i]->TextureMap = { 0,9 };
 	}
 
+
+	//Initialise chest in level
+	AEVec2 chestpos[1] = { {14,-12} };
+	for (int i = 0; i < MAX_CHESTS; i++)
+	{
+		Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[i], 0);
+		Chest[i]->TextureMap = { 5, 7 };
+	}
+
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
 	ParticleSystemInit();
 
-	NodesInit(binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	int* coloptr = *binaryMap;
+	NodesInit(coloptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 }
 
 
@@ -358,7 +328,7 @@ void GS_Colosseum_Init(void) {
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the World state.
+	the game loop runs for the Colosseum state.
 */
 /******************************************************************************/
 
@@ -376,87 +346,35 @@ void GS_Colosseum_Update(void) {
 		mapeditor ^= 1;
 	}
 
-	if (AEInputCheckTriggered(AEVK_EQUAL))
+	/*if (AEInputCheckTriggered(AEVK_EQUAL))
 	{
-		
+
 		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
 		for (int i = 0; i < 2; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
 		}
-	}
+	}*/
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
-
-	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
-		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
-		Player->TextureMap = { 1,8 };
-	}
-
 
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
-		if (walkCD == 0) {
-			Player->velCurr.y = 1;// this is direction , positive y direction
-			Player->walk();
-		}
+		Player->velCurr.y = 1;// this is direction , positive y direction
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
-		if (walkCD == 0) {
-			Player->velCurr.y = -1;// this is direction , negative y direction
-			Player->walk();
-		}
+		Player->velCurr.y = -1;// this is direction , negative y direction
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
-		if (walkCD == 0) {
-			Player->velCurr.x = -1;// this is direction , negative x direction
-			Player->scale = -1;
-			Player->walk();
-		}
+		Player->velCurr.x = -1;// this is direction , negative x direction
+		Player->scale = -1;
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
-		if (walkCD == 0) {
-			Player->velCurr.x = 1;// this is direction , positive x direction
-			Player->scale = 1;
-			Player->walk();
-		}
-	}
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-	//reducing heath for debugging
-	if (AEInputCheckTriggered(AEVK_MINUS))
-	{
-		Player->deducthealth();
-		switch (Player->health)
-		{
-		case 0:
-			Health[2]->TextureMap = { 1, 11 };
-			break;
-		case 1:
-			Health[1]->TextureMap = { 1, 11 };
-			break;
-		case 2:
-			Health[0]->TextureMap = { 1, 11 };
-		}
-	}
-
-	if (AEInputCheckTriggered(AEVK_E)) {
-		//Interaction with levers
-		for (int i = 0; i < 2; i++) {
-			//interaction with chest
-		}
+		Player->velCurr.x = 1;// this is direction , positive x direction
+		Player->scale = 1;
 	}
 
 	// Normalising mouse to 0,0 at the center
@@ -471,23 +389,8 @@ void GS_Colosseum_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-
-	slashCD -= g_dt;
-	if (slashCD < 0) {
-		slashCD = 0;
-	}
-
-
-	walkCD -= g_dt;
-	if (walkCD < 0) {
-		walkCD = 0;
-	}
-
-	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
+	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
 		SLASH_ACTIVATE = true;
-		slashCD = 0.5f;
-		walkCD = 0.2f;
-		Player->velCurr = { 0,0 };
 	}
 
 	if (mapeditor == 1) {
@@ -529,8 +432,8 @@ void GS_Colosseum_Update(void) {
 	}
 
 	if (AEInputCheckTriggered(AEVK_7)) {
-		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-		std::ifstream binInput{ "Assets/binaryWorld.txt" };
+		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryColosseum.txt");
+		std::ifstream binInput{ "Assets/binaryColosseum.txt" };
 		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
 			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
 				binInput >> binaryMap[j][i];
@@ -538,71 +441,6 @@ void GS_Colosseum_Update(void) {
 		}
 		binInput.close();
 	}
-
-	// Pathfinding for Enemy AI
-	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
-	{
-		GameObjInst* pEnemy = sGameObjInstList + j;
-
-		// skip non-active object
-		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
-			continue;
-
-		if (Player->calculateDistance(*pEnemy) > 10)
-			continue;
-
-		// perform pathfinding for this enemy
-		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-
-		// update enemy velocity based on path
-		if (pEnemy->path.size() > 1)
-		{
-			Node* pNextNode = pEnemy->path[1];
-
-			// calculate the distance between the enemy and player
-			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
-
-			// update enemy velocity only if it is farther than the maximum distance
-			if (distance > MAX_ENEMY_DISTANCE)
-			{
-				// check if player is moving or the enemy is already stopped
-				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
-				{
-					// continue moving
-					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
-
-					// set flag to indicate not stopped
-					pEnemy->stopped = false;
-				}
-				else // player is not moving and enemy is not stopped
-				{
-					// stop moving
-					pEnemy->velCurr.x = 0;
-					pEnemy->velCurr.y = 0;
-
-					// set flag to indicate stopped
-					pEnemy->stopped = true;
-				}
-			}
-			else
-			{
-				// stop moving if already close to the player
-				pEnemy->velCurr.x = 0;
-				pEnemy->velCurr.y = 0;
-
-				// set flag to indicate stopped
-				pEnemy->stopped = true;
-			}
-		}
-	}
-
-	// ======================================================
-	// update physics of all active game object instances
-	//  -- Get the AABB bounding rectangle of every active instance:
-	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-
 
 	// Pathfinding for Enemy AI
 	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
@@ -662,16 +500,20 @@ void GS_Colosseum_Update(void) {
 		}
 	}
 
-
+	// ======================================================
+	// update physics of all active game object instances
+	//  -- Get the AABB bounding rectangle of every active instance:
+	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
-		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
-		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
+		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
 	}
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
@@ -679,7 +521,7 @@ void GS_Colosseum_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
+		if (pInst->pObject->type != TYPE_SLASH) {
 			continue;
 		}
 		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
@@ -689,7 +531,7 @@ void GS_Colosseum_Update(void) {
 	}
 
 	// ======================================================
-	//	-- Positions of the instances are updated here with the already computed velocity (above)col
+	//	-- Positions of the instances are updated here with the already computed velocity (above)
 	// ======================================================
 
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -704,15 +546,17 @@ void GS_Colosseum_Update(void) {
 				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
 			}
 			//invert movement for binary map
-
-			if (pInst->pObject->type == TYPE_ENEMY) {
+			if (pInst->velCurr.x != 0)
+			{
+				binaryPlayerPos.y += pInst->velCurr.x * g_dt;
+			}
+			if (pInst->velCurr.y != 0)
+			{
+				binaryPlayerPos.x -= pInst->velCurr.y * g_dt;
+			}
+			if (pInst->pObject->type == TYPE_NPCS) {
 				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
 				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
-			}
-
-			if (pInst->pObject->type == TYPE_BULLET) {
-				pInst->velCurr.x *= BULLET_SPEED;
-				pInst->velCurr.y *= BULLET_SPEED;
 			}
 		}
 
@@ -720,80 +564,54 @@ void GS_Colosseum_Update(void) {
 		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
+	// Camera position, stops following character when at edge of Colosseum
+	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
+		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
+		camX = Player->posCurr.x;
+	}
+	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
+		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
+		camY = Player->posCurr.y;
+	}
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
+	if (SLASH_ACTIVATE == true) {
+		AEVec2 Pos = Player->posCurr;
+		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
+		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		slashObj->dirCurr = angleMousetoPlayer + PI;
+		slashObj->timetracker = 0;
+		SLASH_ACTIVATE = false;
+	}
+
 
 	// ====================
 	// check for collision
 	// ====================
-	static float playerHitTime = 0;
-	playerHitTime -= g_dt;
-	if (playerHitTime < 0) {
-		playerHitTime = 0;
+
+	//if pickup potion then add player health
+	if (AEInputCheckTriggered(AEVK_R))
+	{
+		Player->recoverhealth();
+		switch (Player->health)
+		{
+		case 2:
+			Health[1]->TextureMap = { 0, 11 };
+			break;
+		case 3:
+			Health[0]->TextureMap = { 0, 11 };
+			break;
+		}
 	}
 
 	//if player receive damage from collision or from mob, player decrease health
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-
-		if (pInst->pObject->type == TYPE_ENEMY) {
-
-			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-				&& playerHitTime == 0)
-			{
-				if (Player->health > 0)
-				{
-					Player->deducthealth();
-
-					// Hit cooldown
-					playerHitTime = 0.5f;
-
-					//knockback
-					AEVec2 nil{ 0,0 };
-					if (Player->velCurr == nil)
-						Player->posCurr += pInst->velCurr / 8;
-					else Player->posCurr -= Player->velCurr / 8;
-
-				}
-			}
-
-			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
-				staticObjInst* jInst = sStaticObjInstList + j;
-				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
-					continue;
-				}
-				AEVec2 velNull = { 0,0 };
-				if (pInst->calculateDistance(*jInst) < 0.6f
-					&& jInst->Alpha == 1) {
-					pInst->deducthealth(Player->damage);
-					// Knockback
-					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
-					pInst->posCurr -= slash2Mob;
-				}
-			}
-		}
-
-		if (pInst->pObject->type == TYPE_BULLET) {
-			int flag = CheckInstanceBinaryMapCollisionCollo(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
-			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
-				Player->deducthealth();
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_TOP) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_BOTTOM) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_RIGHT) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_LEFT) {
-				gameObjInstDestroy(pInst);
-			}
-		}
-
+	if (AEInputCheckTriggered(AEVK_T))
+	{
+		Player->deducthealth();
 		switch (Player->health)
 		{
 		case 0:
@@ -810,7 +628,7 @@ void GS_Colosseum_Update(void) {
 	playerHitTime -= g_dt;
 	if (playerHitTime < 0) {
 		playerHitTime = 0;
-	} 
+	}
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -858,7 +676,7 @@ void GS_Colosseum_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_BULLET) {
-			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
+			int flag = CheckInstanceBinaryMapCollisionCollo(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
@@ -890,77 +708,12 @@ void GS_Colosseum_Update(void) {
 		}
 	}
 
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1) {
-			continue;
-		}
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			AEVec2 vel = { 0,0 };
-			if (pInst->Alpha < 1) {
-				;
-			}
-		}
-	}
 
-	int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
-
-	if (flag & COLLISION_TOP) {
-		//Top collision
-		std::cout << "collide top" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-
-		std::cout << Player->posCurr.y << std::endl;
-		//Player->posCurr.y + 0.5;
-	}
-
-	if (flag & COLLISION_BOTTOM) {
-		//bottom collision
-		std::cout << "collide botton" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-
-		//Player->posCurr.y - 0.5;
-	}
-
-	if (flag & COLLISION_LEFT) {
-		//Left collision
-		std::cout << "collide left" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-
-		//Player->posCurr.x + 0.5;
-
-	}
-	if (flag & COLLISION_RIGHT) {
-		//Right collision
-		std::cout << "collide right" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-
-		//Player->posCurr.x - 0.5;
-	}
-
-
-	/*AEVec2 PlayerMaxX{ Player->posCurr.x + 0.5 };
-	AEVec2 PlayerMinX{ Player->posCurr.x - 0.5 };
-	AEVec2 PlayerMaxY{ Player->posCurr.y - 0.5 };
-	AEVec2 PlayerMinY{ Player->posCurr.y + 0.5 };
-	struct AABB playerAABB {};*/
-
-
-
-	/*AEVec2 novelo{ 0.0001, 0.0001 };
-
-	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
-			std::cout << "DOG\n";
-	}*/
-
-
-
-	
 
 	// ===================================
 	// update active game object instances
 	// Example:
 	//		-- Removing effects after certain time
-	//		-- Removing dead objects
 	// ===================================
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
@@ -971,49 +724,23 @@ void GS_Colosseum_Update(void) {
 
 		if (pInst->pObject->type == TYPE_SLASH) {
 			pInst->timetracker += g_dt;
-			if (pInst->timetracker >= 0.2f) {
+			if (pInst->timetracker >= 0.2) {
 				pInst->Alpha = (pInst->timetracker - 0.2f) / 0.4f;
 			}
-			if (pInst->timetracker >= 0.6f) {
-				staticObjInstDestroy(pInst);
-			}
 		}
 
-		if (pInst->pObject->type == TYPE_TOWER) {
-			pInst->timetracker += g_dt;
-
-			if (pInst->timetracker > 2) {
-				pInst->timetracker = 0;
-			}
-
-			if (pInst->timetracker == 0) {
-				AEVec2 vel;
-				AEVec2 pos = pInst->posCurr;
-				switch ((int)(pInst->dirCurr * 57)) {
-				case 0: // facing down
-					vel = { 0, -1 };
-					pos.y -= 0.25f;
-					break;
-				case 89: // facing right
-					vel = { 1, 0 };
-					pos.x += 0.25f;
-					break;
-				case 179: // facing up
-					vel = { 0, 1 };
-					pos.y += 0.25f;
-					break;
-				case -89: // facing left
-					vel = { -1, 0 };
-					pos.x -= 0.25f;
-					break;
-				default:
-					break;
-				}
-				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
-				jInst->TextureMap = { 5,12 };
-			}
+		if (pInst->timetracker >= 0.6) {
+			staticObjInstDestroy(pInst);
 		}
+
 	}
+	/*if (CheckInstanceBinaryMapCollision(Player->posCurr.x, Player->posCurr.y,
+		SPRITE_SCALE, SPRITE_SCALE) == 1)
+	{
+		Player->posCurr.x = Player->posCurr.x;
+		Player->posCurr.y = Player->posCurr.y;
+		std::cout << "collided" << std::endl;
+	}*/
 
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
@@ -1027,39 +754,16 @@ void GS_Colosseum_Update(void) {
 			{
 				gameObjInstDestroy(pInst);
 				CURRENT_MOBS -= 1;
-				//randomising potion drop rate when mobs are killed 
-				srand(time(NULL));
-				if (rand() % 2 == 0)
-				{
-					AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
-					staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-					Potion->TextureMap = { 6,9 };
-				}
+				//			//randomising potion drop rate when mobs are killed 
+				//			srand(time(NULL));
+				//			if (rand() % 2 == 0)
+				//			{
+				//				AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
+				//				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+				//				Potion->TextureMap = { 6,9 };
 			}
 		}
-
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-
-		if (pInst->pObject->type == TYPE_ENEMY)
-		{
-			if (pInst->health == 0)
-		{
-				gameObjInstDestroy(pInst);
-				CURRENT_MOBS -= 1;
-	//			//randomising potion drop rate when mobs are killed 
-	//			srand(time(NULL));
-	//			if (rand() % 2 == 0)
-	//			{
-	//				AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
-	//				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-	//				Potion->TextureMap = { 6,9 };
-				}
-			}
-	//	}
+		//	}
 
 		if (pInst->pObject->type == TYPE_CHARACTER) {
 			pInst->timetracker += g_dt;
@@ -1120,40 +824,21 @@ void GS_Colosseum_Update(void) {
 		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
 	}
 
-	// Camera position and UI items
+	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
-	switch (Backpack.Potion)
-	{
-	case 0:
-		NumObj[0]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[0]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[0]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	case 4:
-		NumObj[0]->TextureMap = { 8,11 };
-		break;
-	case 5:
-		NumObj[0]->TextureMap = { 9,11 };
-		break;
-	case 6:
-		NumObj[0]->TextureMap = { 10,11 };
-		break;
-	case 7:
-		NumObj[0]->TextureMap = { 11,11 };
-		break;
-	case 8:
-		NumObj[0]->TextureMap = { 0,12 };
-		break;
-	case 9:
-		NumObj[0]->TextureMap = { 1,12 };
-		break;
+	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
+
+	if (AEInputCheckTriggered(AEVK_F)) {
+		static int test = 2;
+		std::ofstream testfile{ "test.txt" };
+		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
+		for (int i = 0; i < 42; i++) {
+			for (int j = 0; j < 124; j++) {
+				testfile << binaryMap[j][i];
+			}
+			testfile << std::endl;
+		}
+		testfile.close();
 	}
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
@@ -1177,6 +862,116 @@ void GS_Colosseum_Update(void) {
 		break;
 
 	}
+
+
+	if (AEInputCheckTriggered(AEVK_E)) {
+		for (int i = 0; i < 1; i++)
+		{
+			//Interaction with Chest
+			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+			{
+				//change texture of chest
+				Chest[i]->TextureMap = { 8, 7 };
+				AEVec2 Pos = { Chest[i]->posCurr.x, Chest[i]->posCurr.y };
+				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+				Potion->TextureMap = { 6,9 };
+				waves = 1;
+			}
+		}
+	}
+
+	int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
+	}
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x - 0.5;
+	}
+
+
+	//WAVES///////////////////
+	if (waves >= 1) {
+		wavestimer += g_dt;
+	}
+	if (wavestimer >= 5.f) {
+		if (waves == 15) {
+			waves = 2;
+		}
+	}
+
+	if (wavestimer >= 10.f) {
+		if (waves == 17) {
+			waves = 3;
+		}
+	}
+
+	if (wavestimer >= 15.f) {
+		waves = 99;
+	}
+
+	if (waves == 1) {
+		//Initialise enemy in level
+		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+		waves = 15;
+	}
+
+	if (waves == 2) {
+		//Initialise enemy in level
+		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+
+		waves = 17;
+	}
+
+	if (waves == 3) {
+		//Initialise enemy in level
+		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+
+		waves = 99;
+	}
+
+	//WAVESSSSSSSSS//////////////////////////////////
 	ParticleSystemUpdate();
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
@@ -1249,21 +1044,22 @@ void GS_Colosseum_Draw(void) {
 		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
-		if (pInst->pObject->type == TYPE_REF) {
+		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP) {
 			continue;
 		}
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 			continue;
 		}
 		// for any transparent textures
-		if (pInst->pObject->type == TYPE_SLASH || pInst->pObject->type == TYPE_SPIKE) {
+		if (pInst->pObject->type == TYPE_SLASH) {
 			AEGfxSetTransparency(1.0f - pInst->Alpha);
 		}
 		else {
 			AEGfxSetTransparency(1.0f);
 		}
 		// For any types using spritesheet
-		if (pInst->pObject->type != TYPE_SLASH)
+		if (pInst->pObject->type == TYPE_HEALTH ||
+			pInst->pObject->type == TYPE_LEVERS)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
@@ -1293,13 +1089,19 @@ void GS_Colosseum_Draw(void) {
 			continue;
 		}
 		// for any sprite textures
-		if (pInst->pObject->type != TYPE_NUM) {
+		if (pInst->pObject->type == TYPE_CHARACTER) {
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
 		}
 
+		else if (pInst->pObject->type == TYPE_ENEMY) {
+			//std::cout << " ghost is spawnned near cam" << std::endl;
+			AEGfxTextureSet(pInst->pObject->pTexture,
+				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
 
+		}
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
@@ -1384,7 +1186,7 @@ void GS_Colosseum_Draw(void) {
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the World level.
+	This function frees all the instances created for the Colosseum level.
 */
 /******************************************************************************/
 void GS_Colosseum_Free(void) {
@@ -1410,7 +1212,7 @@ void GS_Colosseum_Free(void) {
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	World level.
+	Colosseum level.
 */
 /******************************************************************************/
 void GS_Colosseum_Unload(void) {
@@ -1422,8 +1224,6 @@ void GS_Colosseum_Unload(void) {
 			AEGfxTextureUnload((sGameObjList + i)->pTexture);
 	}
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	AEGfxSetCamPosition(0, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -1530,8 +1330,6 @@ static staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec
 			pInst->scale = scale;
 			pInst->dirCurr = dir;
 			pInst->posCurr = pPos ? *pPos : zero;
-			pInst->Alpha = 1.0f;
-			pInst->timetracker = 0.0f;
 
 			// return the newly created instance
 			sStaticObjInstNum++; //Increment the number of game object instance
@@ -1559,3 +1357,56 @@ static void staticObjInstDestroy(staticObjInst* pInst)
 	sStaticObjInstNum--; //Decrement the number of game object instance
 	pInst->flag = 0;
 }
+
+//int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
+//{
+//	int Flag = 0;
+//	int x1, y1, x2, y2;
+//
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 2;	//To reach the right side
+//	y1 = PosY + scaleY / 4;	//To go up 1 / 4 of the height
+//
+//	//- hotspot 2
+//	x2 = PosX + scaleX / 2;	//To reach the right side
+//	y2 = PosY - scaleY / 4;	//To go down 1 / 4 of the height
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_RIGHT;
+//	}
+//
+//	//-hotspot 1
+//	x1 = PosX - scaleX / 2;
+//	y1 = PosY - scaleY / 4;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 2;
+//	y2 = PosY + scaleY / 4;
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_LEFT;
+//	}
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 4;
+//	y1 = PosY + scaleY / 2;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 4;
+//	y2 = PosY + scaleY / 2;
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_TOP;
+//	}
+//	//-hotspot 1
+//	x1 = PosX + scaleX / 4;
+//	y1 = PosY - scaleY / 2;
+//
+//	//- hotspot 2
+//	x2 = PosX - scaleX / 4;
+//	y2 = PosY - scaleY / 2;
+//
+//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
+//		Flag |= COLLISION_BOTTOM;
+//	}
+//	return Flag;
+//}
+
