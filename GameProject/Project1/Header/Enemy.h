@@ -36,8 +36,8 @@ struct Node
 	Node* parent;
 };
 
-void NodesInit(int grid[][42] , int width, int height);
-std::vector<Node*> pathfind(int grid[][42], float x, float y, float x1, float y1);
+void NodesInit(int *grid , int width, int height);
+std::vector<Node*> pathfind(float x, float y, float x1, float y1);
 float distance(Node* a, Node* b);
 float heuristic(Node* a, Node* b);
 void deletenodes();

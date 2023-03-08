@@ -429,7 +429,7 @@ void GS_Tower_Init(void) {
 	}
 
 	//Init pathfinding nodes
-	NodesInit(binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -759,7 +759,7 @@ void GS_Tower_Update(void) {
 			continue;
 
 		// perform pathfinding for this enemy
-		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+		pEnemy->path = pathfind( pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
 
 		// update enemy velocity based on path
 		if (pEnemy->path.size() > 1)
@@ -894,8 +894,8 @@ void GS_Tower_Update(void) {
 					//knockback
 					AEVec2 nil{ 0,0 };
 					if (Player->velCurr == nil)
-						Player->posCurr += pInst->velCurr / 4;
-					else Player->posCurr -= Player->velCurr / 4;
+						Player->posCurr += pInst->velCurr / 8;
+					else Player->posCurr -= Player->velCurr / 8;
 
 				}
 			}
