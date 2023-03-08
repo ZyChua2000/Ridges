@@ -322,6 +322,7 @@ void GS_Tower_Update(void) {
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
 		Player->velCurr.y = 1;// this is direction , positive y direction
+		//AEVec2Normalize(&Player->dirCurr, &Player->velCurr);
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
