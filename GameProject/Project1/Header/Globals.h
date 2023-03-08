@@ -20,6 +20,15 @@ extern const float			PLAYER_SPEED;			// Player movement sped
 extern const float			NPC_SPEED;				// Mob movement speed
 extern const float			BULLET_SPEED;
 
+extern const float			SLASH_COOLDOWN_t;		// Time for slash to cooldown
+extern const float			WALK_COOLDOWN_t;		// Time for walk to be stopped after slash
+extern const float			DAMAGE_COODLDOWN_t;		// Time for damage invulenrability to reset
+extern const float			SPIKE_TRANSITION_t;		// Time for spike to fade in/out
+extern const float			SPIKE_DEATH_t;			// Duration for spike to be non-existent
+extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
+
+extern const float			TOWER_REFRESH;			// Rate at which tower shoot bullets
+
 static float				mouseX;					// Position of mouse X
 static float				mouseY;					// Position of mouse Y
 
