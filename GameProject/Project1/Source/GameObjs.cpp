@@ -52,15 +52,44 @@ void GameObjInst::recoverhealth(int recover)
 }
 
 //player walk
-void GameObjInst::walk()
+void GameObjInst::walk(float walkCD)
 {
-	if ((int)(timetracker*4) % 2 == 1) {
-		TextureMap.x = 3;
-		TextureMap.y = 12;
-	}
-	else {
-		TextureMap.x = 4;
-		TextureMap.y = 12;
+	if (walkCD == 0) {
+		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
+		{
+			velCurr.y = 1;// this is direction , positive y direction
+			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			velCurr.y *= (g_dt * PLAYER_SPEED);
+		}
+		if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
+		{
+			velCurr.y = -1;// this is direction , negative y direction
+			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			velCurr.y *= (g_dt * PLAYER_SPEED);
+		}
+		if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
+		{
+			velCurr.x = -1;// this is direction , negative x direction
+			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			velCurr.x *= (g_dt * PLAYER_SPEED);
+			scale = -1;
+		}
+		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
+		{
+			velCurr.x = 1;// this is direction , positive x direction
+			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			velCurr.x *= (g_dt * PLAYER_SPEED);
+			scale = 1;
+		}
+
+		if ((int)(timetracker * 4) % 2 == 1) {
+			TextureMap.x = 3;
+			TextureMap.y = 12;
+		}
+		else {
+			TextureMap.x = 4;
+			TextureMap.y = 12;
+		}
 	}
 }
 
@@ -99,7 +128,7 @@ void GameObjInst::calculateTransMatrix() {
 	float scaleY;
 	// Compute the scaling matrix
 	if (scale < 0) {
-		scaleY = scale;
+		scaleY = -scale;
 	}
 	else {
 		scaleY = scale;
@@ -126,5 +155,22 @@ void staticObjInst::calculateTransMatrix() {
 	// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 	AEMtx33Concat(&transform, &rotMat, &scaleMat);
 	AEMtx33Concat(&transform, &transMat, &transform);
+}
+
+void staticObjInst::mapEditorObjectSpawn() {
+	scale = 0.7f;
+	posCurr = { mouseX + camX + 0.3f, mouseY + camY + 0.3f };
+	if (AEInputCheckTriggered(AEVK_K) && TextureMap.y < TEXTURE_MAXHEIGHT / TEXTURE_CELLSIZE) {
+		TextureMap.y += 1;
+	}
+	if (AEInputCheckTriggered(AEVK_I) && TextureMap.y > 0) {
+		TextureMap.y -= 1;
+	}
+	if (AEInputCheckTriggered(AEVK_J) && TextureMap.x > 0) {
+		TextureMap.x -= 1;
+	}
+	if (AEInputCheckTriggered(AEVK_L) && TextureMap.x < TEXTURE_MAXWIDTH / TEXTURE_CELLSIZE) {
+		TextureMap.x += 1;
+	}
 }
 

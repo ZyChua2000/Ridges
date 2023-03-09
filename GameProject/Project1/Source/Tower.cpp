@@ -503,37 +503,7 @@ void GS_Tower_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
-
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
-	{
-		if (walkCD == 0) {
-			Player->velCurr.y = 1;// this is direction , positive y direction
-			Player->walk();
-		}
-	}
-	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-	{
-		if (walkCD == 0) {
-			Player->velCurr.y = -1;// this is direction , negative y direction
-			Player->walk();
-		}
-	}
-	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
-	{
-		if (walkCD == 0) {
-			Player->velCurr.x = -1;// this is direction , negative x direction
-			Player->scale = -1;
-			Player->walk();
-		}
-	}
-	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
-	{
-		if (walkCD == 0) {
-			Player->velCurr.x = 1;// this is direction , positive x direction
-			Player->scale = 1;
-			Player->walk();
-		}
-	}
+	Player->walk(walkCD);
 
 	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
 	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
@@ -603,16 +573,8 @@ void GS_Tower_Update(void) {
 	}
 
 
-	slashCD -= g_dt;
-	if (slashCD < 0) {
-		slashCD = 0;
-	}
-
-
-	walkCD -= g_dt;
-	if (walkCD < 0) {
-		walkCD = 0;
-	}
+	utilities::decreaseTime(slashCD);
+	utilities::decreaseTime(walkCD);
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;

@@ -46,6 +46,8 @@ struct staticObjInst
 	void calculateBB();
 
 	void calculateTransMatrix();
+
+	void mapEditorObjectSpawn();
 };
 
 
@@ -116,7 +118,7 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
-	void walk();
+	void walk(float walkCD);
 
 	void calculateBB();
 

@@ -105,6 +105,7 @@ static float prevY = 0.0f;
 float currX = 0.0f;
 float currY = 0.0f;
 float angle = 0.0f;
+static float walkCD = 0;
 
 // ---------------------------------------------------------------------------
 
@@ -370,10 +371,6 @@ void GS_Maze_Init(void) {
 
 void GS_Maze_Update(void) {
 	
-	
-	// =====================================
-	// User Input
-	// =====================================
 	//Debugging mode
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		state ^= 1;
@@ -382,38 +379,15 @@ void GS_Maze_Update(void) {
 	if (AEInputCheckTriggered(AEVK_9)) {
 		mapeditor ^= 1;
 	}
-	//Dark Mesh toggle
-	if (AEInputCheckTriggered(AEVK_1))
-	{
-		dark ^= 1;
-	}
-
-	//Minimap toggle
-	if (AEInputCheckTriggered(AEVK_M))
-	{
-		minimap ^= 1;
-	}
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
-	{
-		Player->velCurr.y = 1;// this is direction , positive y direction
+	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
+		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
+		Player->TextureMap = { 1,8 };
 	}
-	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-	{
-		Player->velCurr.y = -1;// this is direction , negative y direction
-	}
-	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
-	{
-		Player->velCurr.x = -1;// this is direction , negative x direction
-		Player->scale = -1;
-	}
-	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
-	{
-		Player->velCurr.x = 1;// this is direction , positive x direction
-		Player->scale = 1;
-	}
+
+	Player->walk(walkCD);
 
 	if (AEInputCheckTriggered(AEVK_E)) {
 
@@ -458,6 +432,8 @@ void GS_Maze_Update(void) {
 	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
 	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+
+	utilities::decreaseTime(walkCD);
 
 	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;

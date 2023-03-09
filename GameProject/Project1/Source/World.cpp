@@ -516,46 +516,9 @@ void GS_World_Update(void) {
 		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
 		Player->TextureMap = { 1,8 };
 	}
+	
+	Player->walk(walkCD);
 
-
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
-	{
-		if (walkCD == 0) {
-			Player->velCurr.y = 1;// this is direction , positive y direction
-			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
-			Player->velCurr.y *= (g_dt * PLAYER_SPEED);
-			Player->walk();
-		}
-	}
-	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-	{
-		if (walkCD == 0) {
-			Player->velCurr.y = -1;// this is direction , negative y direction
-			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
-			Player->velCurr.y *= (g_dt * PLAYER_SPEED);
-			Player->walk();
-		}
-	}
-	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
-	{
-		if (walkCD == 0) {
-			Player->velCurr.x = -1;// this is direction , negative x direction
-			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
-			Player->velCurr.x *= (g_dt * PLAYER_SPEED);
-			Player->scale = -1;
-			Player->walk();
-		}
-	}
-	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
-	{
-		if (walkCD == 0) {
-			Player->velCurr.x = 1;// this is direction , positive x direction
-			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
-			Player->velCurr.x *= (g_dt * PLAYER_SPEED);
-			Player->scale = 1;
-			Player->walk();
-		}
-	}
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
 	{
@@ -645,31 +608,10 @@ void GS_World_Update(void) {
 	}
 
 	if (mapeditor == 1) {
-		mapEditorObj->scale = 0.7f;
-		mapEditorObj->posCurr = { mouseX + camX + 0.3f, mouseY + camY + 0.3f };
-		if (AEInputCheckTriggered(AEVK_K) && mapEditorObj->TextureMap.y < TEXTURE_MAXHEIGHT / TEXTURE_CELLSIZE) {
-			mapEditorObj->TextureMap.y += 1;
-		}
-		if (AEInputCheckTriggered(AEVK_I) && mapEditorObj->TextureMap.y > 0) {
-			mapEditorObj->TextureMap.y -= 1;
-		}
-		if (AEInputCheckTriggered(AEVK_J) && mapEditorObj->TextureMap.x > 0) {
-			mapEditorObj->TextureMap.x -= 1;
-		}
-		if (AEInputCheckTriggered(AEVK_L) && mapEditorObj->TextureMap.x < TEXTURE_MAXWIDTH / TEXTURE_CELLSIZE) {
-			mapEditorObj->TextureMap.x += 1;
-		}
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				if (mouseX + camX >= i &&
-					mouseX + camX <= i + 1 &&
-					-mouseY - camY >= j &&
-					-mouseY - camY <= j + 1
-					&& AEInputCheckCurr(AEVK_LBUTTON)) {
-					MapObjInstList[i][j]= mapEditorObj->TextureMap;
-				}
-			}
-		}
+		mapEditorObj->mapEditorObjectSpawn();
+
+		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
 	}
 	else {
 		mapEditorObj->scale = 0;
@@ -1099,7 +1041,7 @@ void GS_World_Update(void) {
 			if (pInst->timetracker == 0) {
 				AEVec2 vel;
 				AEVec2 pos = pInst->posCurr;
-				utilities::initBullet(&pos, &vel, *pInst);
+				utilities::initBullet(pos, vel, *pInst);
 
 				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
 				jInst->TextureMap = { 5,12 };

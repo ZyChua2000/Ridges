@@ -98,6 +98,7 @@ float Timer = 0.f;
 
 int waves = 0;
 float wavestimer = 0.f;
+static float walkCD = 0;
 
 // ---------------------------------------------------------------------------
 
@@ -346,36 +347,14 @@ void GS_Colosseum_Update(void) {
 		mapeditor ^= 1;
 	}
 
-	/*if (AEInputCheckTriggered(AEVK_EQUAL))
-	{
-
-		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
-		for (int i = 0; i < 2; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
-			enemy->TextureMap = { 0,9 };
-			enemy->health = 3;
-		}
-	}*/
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
-	{
-		Player->velCurr.y = 1;// this is direction , positive y direction
+	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
+		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
+		Player->TextureMap = { 1,8 };
 	}
-	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-	{
-		Player->velCurr.y = -1;// this is direction , negative y direction
-	}
-	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
-	{
-		Player->velCurr.x = -1;// this is direction , negative x direction
-		Player->scale = -1;
-	}
-	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
-	{
-		Player->velCurr.x = 1;// this is direction , positive x direction
-		Player->scale = 1;
-	}
+
+	Player->walk(walkCD);
 
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
@@ -384,6 +363,8 @@ void GS_Colosseum_Update(void) {
 	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
 	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+
+	utilities::decreaseTime(walkCD);
 
 	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
