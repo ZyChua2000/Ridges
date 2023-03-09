@@ -633,16 +633,9 @@ void GS_World_Update(void) {
 	}
 
 
-	slashCD -= g_dt;
-	if (slashCD < 0) {
-		slashCD = 0;
-	}
+	utilities::decreaseTime(slashCD);
+	utilities::decreaseTime(walkCD);
 
-
-	walkCD -= g_dt;
-	if (walkCD < 0) {
-		walkCD = 0;
-	}
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
