@@ -36,6 +36,12 @@ struct staticObjInst
 	float				timetracker2;
 	float				Alpha;		// object's transparency value
 	AABB				boundingBox;// object bouding box that encapsulates the object
+
+
+	// Member functions
+
+
+	void spikeUpdate();
 };
 
 
@@ -57,6 +63,11 @@ struct GameObjInst
 	float				timetracker;// object's time of existence
 	bool				stopped; //to check if enemy stopped moving
 	bool				enemy_dead; // flag to check if enemy is alive or not
+	bool				is_hit;//check if enemy is hit
+	float				hit_time;//time got hit
+	float				pathfindtime;//buffer time for enemies
+	float				pathtimer; //timer to count down
+	int					target_node;// node checker for path finding
 
 
 	// Member functions

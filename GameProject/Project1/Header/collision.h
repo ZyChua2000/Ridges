@@ -27,9 +27,11 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 
 int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[124][42]);
 
+int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[28][29]);
 
 
-bool ShittyCollisionMap(float posx, float posy);
+
+//bool ShittyCollisionMap(float posx, float posy);
 
 void snaptocelladd(float* coordinate);
 

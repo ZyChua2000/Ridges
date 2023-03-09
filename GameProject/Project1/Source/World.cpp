@@ -48,6 +48,8 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 
 static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
 
+static const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
+
 bool loadState;
 
 // -----------------------------------------------------------------------------
@@ -104,8 +106,8 @@ static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
 
-float spikedmgtimer = 0.f;
-float internalTimer = 0.f;
+static float spikedmgtimer = 0.f;
+static float internalTimer = 0.f;
 
 static staticObjInst* RefBox;
 
@@ -243,6 +245,7 @@ void GS_World_Load(void) {
 	Enemy->type = TYPE_ENEMY;
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
+	
 
 	GameObj* Chest;
 	Chest = sGameObjList + sGameObjNum++;
@@ -373,6 +376,8 @@ void GS_World_Init(void) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
+			enemy->pathfindtime = 0.25f;
+			enemy->pathtimer = enemy->pathfindtime;
 		}
 
 		//Initialise chest in level
@@ -385,7 +390,7 @@ void GS_World_Init(void) {
 	}
 
 	// =====================================
-	//	Initialize objects for loaded game game
+	//	Initialize objects for loaded game
 	// =====================================
 	if (loadState == true) {
 		loadData(data);
@@ -393,7 +398,7 @@ void GS_World_Init(void) {
 		// Changing fence textures & binary collision depending on
 		// lever texture
 		for (int i = 0; i < 3; i++) {
-			if (Levers[i]->TextureMap.x == 3) {
+			if (Levers[i]->dirCurr != 0) {
 				//Remove gates: Change texture & Binary map
 				switch (i) {
 				case 0:
@@ -418,16 +423,38 @@ void GS_World_Init(void) {
 			}
 		}
 	}
-	// Initialise towers
-	Pos = { 49, -4 };
-	staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
-	jInst->TextureMap = { 2,6 };
-	Pos = { 50, -4 };
-	jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
-	jInst->TextureMap = { 2,6 };
 
+	// Initialise Towers
+	AEVec2 towerPos[] = {
+		{49.5f,-4.5f},
+		{50.5f,-4.5f}
+	};
+
+	float towerRot[] = {
+		TOWER_DOWN,
+		TOWER_DOWN
+	};
+
+	for (int i = 0; i < sizeof(towerRot) / sizeof(towerRot[0]); i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], towerRot[i]);
+		jInst->TextureMap = { 2,6 };
+		binaryMap[(int)towerPos[i].x][(int)-towerPos[i].y] = 1;
+	}
+
+	// Initialise Spikes
+	AEVec2 spikePos[] = {
+		{20,-10} 
+	};
+
+	for (int i = 0; i < sizeof(spikePos) / sizeof(spikePos[0]); i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &spikePos[i], 0);
+		jInst->TextureMap = { 5,3 };
+	}
+
+
+	int* gridptr = *binaryMap;
 	//Init pathfinding nodes
-	NodesInit(binaryMap,  MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	NodesInit(gridptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -449,30 +476,7 @@ void GS_World_Init(void) {
 	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
 	NumObj[0]->TextureMap = { 2,12 };
 	NumObj[1]->TextureMap = { 2,12 };
-	//NumObj[2]->TextureMap = { , };
 
-	////spawning of keys
-	//AEVec2 keypos = { 28,-14 };
-	//staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
-	//for (int i = 0; i < sStaticObjInstNum; i++)
-	//{
-	//	staticObjInst* pInst = sStaticObjInstList + i;
-	//	if (pInst->pObject->type == TYPE_KEY)
-	//	{
-	//		pInst->TextureMap = { 4,11 };
-	//	}
-	//}
-
-	AEVec2 spikepos = { 20,-10 };
-	staticObjInstCreate(TYPE_SPIKE, 1, &spikepos, 0);
-	for (int i = 0; i < sStaticObjInstNum; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->pObject->type == TYPE_SPIKE)
-		{
-			pInst->TextureMap = { 5,3 };
-		}
-	}
 
 
 	ParticleSystemInit();
@@ -518,6 +522,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.y = 1;// this is direction , positive y direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.y *= (g_dt * PLAYER_SPEED);
 			Player->walk();
 		}
 	}
@@ -525,6 +531,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.y = -1;// this is direction , negative y direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.y *= (g_dt * PLAYER_SPEED);
 			Player->walk();
 		}
 	}
@@ -532,6 +540,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.x = -1;// this is direction , negative x direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.x *= (g_dt * PLAYER_SPEED);
 			Player->scale = -1;
 			Player->walk();
 		}
@@ -540,6 +550,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.x = 1;// this is direction , positive x direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.x *= (g_dt * PLAYER_SPEED);
 			Player->scale = 1;
 			Player->walk();
 		}
@@ -565,9 +577,9 @@ void GS_World_Update(void) {
 
 		//Interaction with levers
 		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->TextureMap.x != 3) {
+			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->dirCurr == 0) {
 				//Switch lever to face down
-				Levers[i]->TextureMap = { 3,11 };
+				Levers[i]->dirCurr = -PI / 4;
 				Levers[i]->posCurr.x -= 0.2f;
 				//Remove gates: Change texture & Binary map
 				switch (i) {
@@ -634,8 +646,8 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
-		slashCD = 0.5f;
-		walkCD = 0.2f;
+		slashCD = SLASH_COOLDOWN_t;
+		walkCD = WALK_COOLDOWN_t;
 		Player->velCurr = { 0,0 };
 	}
 
@@ -716,13 +728,13 @@ void GS_World_Update(void) {
 		AEVec2 Pos = Player->posCurr + Player->velCurr;
 		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
 		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
 		SLASH_ACTIVATE = false;
 	}
 
-
+	//creating key
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -767,6 +779,7 @@ void GS_World_Update(void) {
 	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 	{
 		GameObjInst* pEnemy = sGameObjInstList + j;
+		pEnemy->pathtimer -= g_dt; // timer counting down 
 
 		// skip non-active object
 		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
@@ -775,39 +788,85 @@ void GS_World_Update(void) {
 		if (Player->calculateDistance(*pEnemy) > 10)
 			continue;
 
-		// perform pathfinding for this enemy
-		pEnemy->path = pathfind(binaryMap, pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-
-		// update enemy velocity based on path
-		if (pEnemy->path.size() > 1)
+		//bool is_at_end = false;
+		if (pEnemy->pathtimer <= 0)
 		{
-			Node* pNextNode = pEnemy->path[1];
+			// perform pathfinding for this enemy
+			pEnemy->path.clear();
+			pEnemy->path = pathfind(pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y); //pathfind function
+			pEnemy->pathtimer = pEnemy->pathfindtime; // set timer back to default;
+			pEnemy->target_node=0; // target node for enemy to find the next node
+			//is_at_end = false;
+		}
+		// update enemy velocity based on path
+		if (!pEnemy->path.empty())// as long as path not empty 
+		{
+			//Node* pNextNode = pEnemy->path[1];
 
 			// calculate the distance between the enemy and player
 			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
 
+			AEVec2 target_pos;
+			AEVec2Set(&target_pos, 0, 0);
+
 			// update enemy velocity only if it is farther than the maximum distance
 			if (distance > MAX_ENEMY_DISTANCE)
 			{
+				float dist=AEVec2Distance(&pEnemy->posCurr, &pEnemy->path[pEnemy->target_node]->ae_NodePos);
+				
+				// to check the enemy is at the node 
+				if (dist <= RANGE_FROM_PLAYER)
+				{
+					//reached the node!!!!
+					//find the next node
+					if (pEnemy->target_node + 1 < pEnemy->path.size())
+					{
+						pEnemy->target_node++;
+						//is_at_end = false;
+					}
+
+					//its the last node!
+					else
+					{
+						//is_at_end = true;
+						target_pos.x = Player->posCurr.x;
+						target_pos.y = Player->posCurr.y;
+					}
+				}
+				else /*if(is_at_end)*/
+				{
+					target_pos.x = pEnemy->path[pEnemy->target_node]->ae_NodePos.x;//
+					target_pos.y = pEnemy->path[pEnemy->target_node]->ae_NodePos.y;//
+				}
+				pEnemy->velCurr.x = target_pos.x - pEnemy->posCurr.x;
+				pEnemy->velCurr.y = target_pos.y - pEnemy->posCurr.y;
+				AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
+				pEnemy->velCurr.x *= (g_dt * NPC_SPEED); //
+				pEnemy->velCurr.y *= (g_dt * NPC_SPEED);
+
 				// check if player is moving or the enemy is already stopped
-				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
-				{
-					// continue moving
-					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
+				//if (/*abs(Player->velCurr.x )> 0 || abs(Player->velCurr.y) > 0 ||*/ pEnemy->stopped)
+				//{
+				//	if (pNextNode->parent)
+				//	{
+				//		//// continue moving
+				//		//pEnemy->velCurr.x -= (g_dt * NPC_SPEED * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
+				//		//pEnemy->velCurr.y -= (g_dt * NPC_SPEED * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
+				//		//AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
 
-					// set flag to indicate not stopped
-					pEnemy->stopped = false;
-				}
-				else // player is not moving and enemy is not stopped
-				{
-					// stop moving
-					pEnemy->velCurr.x = 0;
-					pEnemy->velCurr.y = 0;
+				//		//// set flag to indicate not stopped
+				//		//pEnemy->stopped = false;
+				//	}
+				//}
+				//else // player is not moving and enemy is not stopped
+				//{
+				//	// stop moving
+				//	pEnemy->velCurr.x = 0;
+				//	pEnemy->velCurr.y = 0;
 
-					// set flag to indicate stopped
-					pEnemy->stopped = true;
-				}
+				//	// set flag to indicate stopped
+				//	pEnemy->stopped = true;
+				//}
 			}
 			else
 			{
@@ -915,8 +974,8 @@ void GS_World_Update(void) {
 				{
 					Player->deducthealth();
 
-					// Hit cooldown
-					playerHitTime = 0.5f;
+					//Hit cooldown
+					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
 					AEVec2 nil{ 0,0 };
@@ -933,7 +992,7 @@ void GS_World_Update(void) {
 					continue;
 				}
 				AEVec2 velNull = { 0,0 };
-				if (pInst->calculateDistance(*jInst) < 0.6f
+				if (pInst->calculateDistance(*jInst) < 0.9f
 					&& jInst->Alpha == 1) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
@@ -976,20 +1035,6 @@ void GS_World_Update(void) {
 		}
 	}
 
-	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1) {
-			continue;
-		}
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			AEVec2 vel = { 0,0 };
-			if (pInst->Alpha < 1 ) {
-				;
-			}
-		}
-	}
-
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (flag & COLLISION_TOP) {
@@ -1024,81 +1069,20 @@ void GS_World_Update(void) {
 
 		//Player->posCurr.x - 0.5;
 	}
-
-	//AEVec2 novelo{ 0.0001, 0.0001 };
-
-
-	/*double PlayerMaxX{ Player->posCurr.x + 0.5 };
-	double PlayerMinX{ Player->posCurr.x - 0.5 };
-	double PlayerMaxY{ Player->posCurr.y - 0.5 };
-	double PlayerMinY{ Player->posCurr.y + 0.5 };
-	AEVec2 PlayerMax{ PlayerMaxX, PlayerMaxY };
-	AEVec2 PlayerMin{ PlayerMinX, PlayerMinY };
-	struct AABB PlayerAABB {PlayerMin, PlayerMax};
-
-	double SpikeMaxX{ Spike->posCurr.x + 0.5};
-	double SpikeMinX{ Spike->posCurr.x - 0.5 };
-	double SpikeMaxY{ Spike->posCurr.y - 0.5 };
-	double SpikeMinY{ Spike->posCurr.y + 0.5 };
-	AEVec2 SpikeMax{ SpikeMaxX, SpikeMaxY };
-	AEVec2 SpikeMin{ SpikeMinX, SpikeMinY };
-	struct AABB spikeAABB {SpikeMin, SpikeMax};
-
-	if (CollisionIntersection_RectRect(PlayerAABB, Player->velCurr, spikeAABB, novelo)) {
-		std::cout << "DOG\n";
-	/*AEVec2 novelo{ 0.0001, 0.0001 };
-
-	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
-			std::cout << "DOG\n";
-	}*/
-
-
-	spikedmgtimer += g_dt;
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
-		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && spikedmgtimer>=1) {
-			
-			--Player->health;
-			spikedmgtimer = 0.0f;
-		}
 
+		pInst->spikeUpdate(); // Updates alpha of spikes
 
-		//will work for all spikes spawned, find a better way to do the timetracker
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
-		if (pInst->timetracker2 == 0) {
-			pInst->timetracker += g_dt;
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
-		if (pInst->timetracker > 2) {
-			pInst->timetracker = 2;
-		}
-
-		if (pInst->timetracker == 2) {
-			pInst->timetracker2 += g_dt;
-		}
-
-		if (pInst->timetracker2 > 2) {
-			pInst->timetracker2 = 2;
-		}
-
-		if (pInst->timetracker2 == 2) {
-			pInst->timetracker -= g_dt;
-		}
-
-		if (pInst->timetracker < 0) {
-			pInst->timetracker = 0;
-		}
-
-		if (pInst->timetracker == 0) {
-			pInst->timetracker2 -= g_dt;
-		}
-		if (pInst->timetracker2 < 0) {
-			pInst->timetracker2 = 0;
-		}
-		pInst->Alpha = 1.0f - pInst->timetracker / 2;
 
 	}
 
@@ -1130,7 +1114,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type == TYPE_TOWER) {
 			pInst->timetracker += g_dt;
 
-			if (pInst->timetracker > 1) {
+			if (pInst->timetracker > TOWER_REFRESH) {
 				pInst->timetracker = 0;
 			}
 
@@ -1342,7 +1326,7 @@ void GS_World_Update(void) {
 
 	}
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
 
 
 
@@ -1374,12 +1358,17 @@ void GS_World_Draw(void) {
 			if (utilities::checkWithinCam(Pos, camX, camY)) {
 				continue;
 			}
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+			if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY+camY) == (int)Pos.y) {
+				AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
+			}
 
 			AEGfxSetTransparency(1.0f);
 
 			AEMtx33 Translate, Scale, Transform;
 			AEMtx33Trans(&Translate, Pos.x, Pos.y);
-			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Scale(&Scale, (f32)SPRITE_SCALE, (f32)SPRITE_SCALE);
 			AEMtx33Concat(&Transform, &Scale, &Translate);
 
 			AEGfxTextureSet(Player->pObject->pTexture,
@@ -1390,26 +1379,9 @@ void GS_World_Draw(void) {
 
 			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
-			if (mapeditor == 1) {
 
-				
-				AEGfxTextureSet(RefBox->pObject->pTexture, 0, 0);
-				
-				AEGfxSetTransform(Transform.m);
-
-				AEGfxMeshDraw(RefBox->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-			}
 		}
 	}
-
-	// map editor object
-	AEGfxSetTransparency(0.4f);
-	AEGfxTextureSet(mapEditorObj->pObject->pTexture,
-		TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * mapEditorObj->TextureMap.x,
-		TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * mapEditorObj->TextureMap.y);
-	AEGfxSetTransform(mapEditorObj->transform.m);
-	AEGfxMeshDraw(mapEditorObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-
 
 	// Spawn Static entities
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
