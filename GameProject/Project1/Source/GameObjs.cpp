@@ -374,7 +374,12 @@ void staticObjInstDestroy(staticObjInst* pInst)
 	pInst->flag = 0;
 }
 
-void Inventory::itemPickUp(staticObjInst *item) {
+void staticObjInst::tilt45() {
+	dirCurr -= PI / 4;
+	posCurr.x -= 0.2f;
+}
+
+void Inventory::itemPickUp(staticObjInst* item) {
 	switch (item->pObject->type) {
 	case TYPE_ITEMS:
 		Potion++;

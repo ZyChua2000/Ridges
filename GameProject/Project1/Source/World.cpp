@@ -533,8 +533,7 @@ void GS_World_Update(void) {
 		for (int lev = 0; lev < 3; lev++) {
 			if (Player->calculateDistance(*Levers[lev]) < 1 && Levers[lev]->dirCurr == 0) {
 				//Switch lever to face down
-				Levers[lev]->dirCurr = -PI / 4;
-				Levers[lev]->posCurr.x -= 0.2f;
+				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 					for (int i = Gates[lev*2].x; i < Gates[lev*2+1].x+1; i++) {
 						for (int j = Gates[lev*2].y; j < Gates[lev * 2 +1].y + 1; j++) {

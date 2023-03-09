@@ -52,6 +52,8 @@ struct staticObjInst
 	void chest2Potion();
 
 	void shootBullet();
+
+	void tilt45();
 };
 
 
@@ -135,6 +137,8 @@ struct GameObjInst
 	void dustParticles();
 
 	void mobsKilled();
+
+	
 };
 
 // This enum is a list of the different types of game objects
