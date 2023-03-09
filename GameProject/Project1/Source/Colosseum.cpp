@@ -627,6 +627,13 @@ void GS_Colosseum_Update(void) {
 					else Player->posCurr -= Player->velCurr / 4;
 
 				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*pInst) < 0.6f) {
+					pInst->deducthealth(Player->damage);
+					// Knockback
+					AEVec2 slash2Mob = pInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
+				}
 			}
 
 			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
@@ -1027,7 +1034,7 @@ void GS_Colosseum_Draw(void) {
 		}
 
 		else if (pInst->pObject->type == TYPE_ENEMY) {
-			std::cout << " ghost is spawnned near cam" << std::endl;
+			
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
