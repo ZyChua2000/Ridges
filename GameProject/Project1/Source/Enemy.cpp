@@ -4,31 +4,14 @@
 #include <list>
 #include <vector>
 
-extern Node* nodes{};
-
-// for enemy 
-// FOR FUTURE USE MAYBE ???
-//void enemy_Init()
-//{
-//	AEVec2 pos {0,0};
-//	int hp = 100;
-//	int damage = 10;
-//
-//}
-//
-//void enemy_update()
-//{
-//
-//}
-//
-//void enemy_draw()
-//{
 
 //Node *nodes = nullptr; // Pointer to hold an array of nodes,  need this in world.cpp
-int path_width{};//
-int path_height{};//
-float dist{};//
 
+int path_width{};
+int path_height{};
+float dist{};
+
+extern Node* nodes{};
 Node n_enemy{};
 Node n_player{};
 
@@ -53,8 +36,8 @@ void NodesInit(int *grid, int width, int height)
 			int index = y * path_width + x;
 			Node* node = &nodes[index];
 
-			nodes[index].ae_NodePos.x = x+0.5f; //init pos x for node
-			nodes[index].ae_NodePos.y = -y-0.5f; //init pos y for node
+			nodes[index].ae_NodePos.x = x+0.5f; //init pos x for node, + 0.5 offset to set node in the middle of x axis grid
+			nodes[index].ae_NodePos.y = -y-0.5f; //init pos y for node, - 0.5 offset to set node in the middle of y axis grid
 			nodes[index].parent = nullptr; //init parent to point to nothing first 
 			nodes[index].b_Closed = false; //init closed node to false
 
@@ -79,6 +62,7 @@ void NodesInit(int *grid, int width, int height)
 		{
 			Node* node = &nodes[y * path_width + x];
 
+			//connecting the nodes together horizontally and vertically
 			if (y > 0)//checking to prevent adding nodes that dont exist
 				nodes[y * path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x + 0)]); // connecting with node above current
 
@@ -92,18 +76,18 @@ void NodesInit(int *grid, int width, int height)
 				nodes[y * path_width + x].v_Neighbours.push_back(&nodes[(y + 0) * path_width + (x + 1)]); // connecting with left node
 
 			//std::cout << "Size: " << nodes[y * path_width + x].v_Neighbours.size() << std::endl;
-			  //connect diagonally
-			
-			if (y>0 && x>0)
+			  
+			//connect diagonally
+			if (y>0 && x>0)//checking to prevent adding nodes that dont exist
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x - 1)]);
 
-			if (y<path_height-1 && x>0)
+			if (y<path_height-1 && x>0)//checking to prevent adding nodes that dont exist
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y + 1) * path_width + (x - 1)]);
 
-			if (y>0 && x<path_width-1)
+			if (y>0 && x<path_width-1)//checking to prevent adding nodes that dont exist
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x + 1)]);
 
-			if (y<path_height - 1 && x<width-1)
+			if (y<path_height - 1 && x<width-1)//checking to prevent adding nodes that dont exist
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y + 1) * path_width + (x + 1)]);
 			
 		}
@@ -158,9 +142,9 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 
 	}
 
-	Node* current = nodesrc; 
-	nodesrc->f_fcost = 0.0f;
-	nodesrc->f_hcost = heuristic(nodesrc, nodedesc);
+	Node* current = nodesrc; // create Node ptr current and set nodesrc 
+	nodesrc->f_fcost = 0.0f; // init f_fcost 
+	nodesrc->f_hcost = heuristic(nodesrc, nodedesc); // set h_cost of current using heuricstic func
 
 	std::list<Node*> NodesNotTested; //list to store nodes that needs to be tested
 	NodesNotTested.push_back(current);//source node does not need to be tested as it is the starting node

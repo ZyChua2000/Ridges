@@ -798,6 +798,7 @@ void GS_World_Update(void) {
 			pEnemy->target_node=0; // target node for enemy to find the next node
 			//is_at_end = false;
 		}
+
 		// update enemy velocity based on path
 		if (!pEnemy->path.empty())// as long as path not empty 
 		{

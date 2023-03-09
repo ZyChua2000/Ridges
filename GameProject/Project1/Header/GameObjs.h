@@ -42,6 +42,8 @@ struct staticObjInst
 
 
 	void spikeUpdate();
+
+	void Movement(*);
 };
 
 
