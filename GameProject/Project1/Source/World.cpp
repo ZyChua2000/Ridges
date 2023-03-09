@@ -308,6 +308,9 @@ void GS_World_Load(void) {
 /******************************************************************************/
 void GS_World_Init(void) {
 
+	AEVec2* pos = nullptr;
+	int num;
+
 	// =====================================
 	//	Initialize map textures
 	// =====================================
@@ -363,30 +366,36 @@ void GS_World_Init(void) {
 		}
 
 		//Initialise Levers in level
-		AEVec2 pos[3] = { {17.5f - (1.0f / 16),-13} ,{ 66.5f - (1.0f / 16), -11 } ,{ 43.5f - (1.0f / 16), -6} };
-		for (int i = 0; i < 3; i++) {
+		utilities::loadObjs(pos, num, "worldLevers.txt");
+
+		for (int i = 0; i < num; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
 			Levers[i]->TextureMap = { 2,11 };
 		}
 
+		utilities::unloadObjs(pos);
+
 		//Initialise enemy in level
-		AEVec2 EnemyPos[MAX_MOBS] = { {33.f, -16.f} ,{33.f, -21.f}, {50.f, -18.f}, {52.f,-18.5f}, {44.4f, -5.4f}, {54.5f,-5.2f},
-		{67.5f, -11.3f},  {71.4f, -10.4f} , {88.7f, -14.5f} , {108.4f,  -20.4f}, {105.5f, -20.4f} };
+		utilities::loadObjs(pos, num, "worldEnemy.txt");
 		for (int i = 0; i < MAX_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
 			enemy->pathfindtime = 0.25f;
 			enemy->pathtimer = enemy->pathfindtime;
 		}
+		utilities::unloadObjs(pos);
 
 		//Initialise chest in level
+		utilities::loadObjs(pos, num, "worldChest.txt");
 		AEVec2 chestpos[6] = { {13,-8} , {53,-5} , {70,-11}, {80,-14}, {84,-33}, {107,-24} };
-		for (int i = 0; i < MAX_CHESTS; i++)
+		for (int i = 0; i < num; i++)
 		{
-			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[i], 0);
+			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos[i], 0);
 			Chest[i]->TextureMap = { 5, 7 };
 		}
+
+		utilities::unloadObjs(pos);
 	}
 
 	// =====================================
@@ -442,14 +451,12 @@ void GS_World_Init(void) {
 	}
 
 	// Initialise Spikes
-	AEVec2 spikePos[] = {
-		{20,-10} 
-	};
-
-	for (int i = 0; i < sizeof(spikePos) / sizeof(spikePos[0]); i++) {
-		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &spikePos[i], 0);
+	utilities::loadObjs(pos, num, "worldSpikes.txt");
+	for (int i = 0; i < num; i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
 		jInst->TextureMap = { 5,3 };
 	}
+	utilities::unloadObjs(pos);
 
 
 	int* gridptr = *binaryMap;
@@ -663,8 +670,7 @@ void GS_World_Update(void) {
 		AEVec2 Pos = Player->posCurr + Player->velCurr;
 		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
 		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, 0);
-		slashObj->dirCurr = angleMousetoPlayer + PI;
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angleMousetoPlayer + PI);
 		slashObj->timetracker = 0;
 		SLASH_ACTIVATE = false;
 	}
@@ -1331,13 +1337,6 @@ void GS_World_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
-
-
-	
-
-
-
-
 
 
 	if (state == 1)

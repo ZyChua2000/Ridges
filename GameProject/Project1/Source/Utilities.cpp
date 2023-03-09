@@ -161,4 +161,22 @@ namespace utilities {
 			}
 		}
 	}
+
+	void loadObjs(AEVec2*& Positions, int& num, std::string filename) {
+		filename = "Assets/" + filename;
+		std::ifstream fileInput{ filename };
+		fileInput >> num;
+		Positions = new AEVec2[num];
+
+		for (int i = 0; i < num; i++) {
+			fileInput >> Positions[i].x;
+			fileInput >> Positions[i].y;
+		}
+
+		fileInput.close();
+	}
+
+	void unloadObjs(AEVec2* Position) {
+		delete[] Position;
+	}
 }
