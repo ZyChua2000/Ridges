@@ -408,7 +408,7 @@ void GS_Tower_Init(void) {
 	timingFOURTH,
 	timingSECOND,
 	timingTHIRD };
-	for (int i = 0; i < 14; i++)
+	for (int i = 0; i < sizeof(towerdowntiming)/sizeof(towerdowntiming[0]); i++)
 	{
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerdownpos[i], 0);
 		jInst->TextureMap = { 2,6 };
@@ -420,9 +420,9 @@ void GS_Tower_Init(void) {
 		timingSECOND
 	};
 	AEVec2 towerrightpos[2] = { {50, -13.5}, {50,-14.5} };
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < sizeof(towerrightpos)/sizeof(towerrightpos[0]); i++)
 	{
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], 1.57f);
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], TOWER_RIGHT);
 		jInst->TextureMap = { 2,6 };
 		jInst->timetracker = towerrighttiming[i];
 	}
@@ -437,7 +437,7 @@ void GS_Tower_Init(void) {
 	//	Initialize UI objects
 	// =====================================
 	AEVec2 spikepos[12] = { {64.5,-3.5}, {64.5,-4.5}, {66.5,-3.5},{66.5,-4.5},{68.5,-3.5},{68.5,-4.5},{59,-23.5}, {63,-23.5}, {61,-23.5}, {59, -24.5}, {63, -24.5}, {61,-24.5} };
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < sizeof(spikepos)/sizeof(spikepos[0]); i++)
 	{
 		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
 	}

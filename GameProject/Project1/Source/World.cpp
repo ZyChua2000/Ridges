@@ -390,7 +390,7 @@ void GS_World_Init(void) {
 	}
 
 	// =====================================
-	//	Initialize objects for loaded game game
+	//	Initialize objects for loaded game
 	// =====================================
 	if (loadState == true) {
 		loadData(data);
@@ -423,13 +423,34 @@ void GS_World_Init(void) {
 			}
 		}
 	}
-	// Initialise towers
-	Pos = { 49, -4 };
-	staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
-	jInst->TextureMap = { 2,6 };
-	Pos = { 50, -4 };
-	jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
-	jInst->TextureMap = { 2,6 };
+
+	// Initialise Towers
+	AEVec2 towerPos[] = {
+		{49.5f,-4.5f},
+		{50.5f,-4.5f}
+	};
+
+	float towerRot[] = {
+		TOWER_DOWN,
+		TOWER_DOWN
+	};
+
+	for (int i = 0; i < sizeof(towerRot) / sizeof(towerRot[0]); i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], towerRot[i]);
+		jInst->TextureMap = { 2,6 };
+		binaryMap[(int)towerPos[i].x][(int)-towerPos[i].y] = 1;
+	}
+
+	// Initialise Spikes
+	AEVec2 spikePos[] = {
+		{20,-10} 
+	};
+
+	for (int i = 0; i < sizeof(spikePos) / sizeof(spikePos[0]); i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &spikePos[i], 0);
+		jInst->TextureMap = { 5,3 };
+	}
+
 	int* yy = *binaryMap;
 	//Init pathfinding nodes
 	NodesInit(yy, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
@@ -454,30 +475,7 @@ void GS_World_Init(void) {
 	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
 	NumObj[0]->TextureMap = { 2,12 };
 	NumObj[1]->TextureMap = { 2,12 };
-	//NumObj[2]->TextureMap = { , };
 
-	////spawning of keys
-	//AEVec2 keypos = { 28,-14 };
-	//staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
-	//for (int i = 0; i < sStaticObjInstNum; i++)
-	//{
-	//	staticObjInst* pInst = sStaticObjInstList + i;
-	//	if (pInst->pObject->type == TYPE_KEY)
-	//	{
-	//		pInst->TextureMap = { 4,11 };
-	//	}
-	//}
-
-	AEVec2 spikepos = { 20,-10 };
-	staticObjInstCreate(TYPE_SPIKE, 1, &spikepos, 0);
-	for (int i = 0; i < sStaticObjInstNum; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->pObject->type == TYPE_SPIKE)
-		{
-			pInst->TextureMap = { 5,3 };
-		}
-	}
 
 
 	ParticleSystemInit();
@@ -721,7 +719,7 @@ void GS_World_Update(void) {
 		AEVec2 Pos = Player->posCurr + Player->velCurr;
 		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
 		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
 		SLASH_ACTIVATE = false;
@@ -963,7 +961,7 @@ void GS_World_Update(void) {
 				{
 					Player->deducthealth();
 
-					// Hit cooldown
+					//Hit cooldown
 					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
@@ -981,7 +979,7 @@ void GS_World_Update(void) {
 					continue;
 				}
 				AEVec2 velNull = { 0,0 };
-				if (pInst->calculateDistance(*jInst) < 0.6f
+				if (pInst->calculateDistance(*jInst) < 0.9f
 					&& jInst->Alpha == 1) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
@@ -1315,7 +1313,7 @@ void GS_World_Update(void) {
 
 	}
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
 
 
 
@@ -1352,7 +1350,7 @@ void GS_World_Draw(void) {
 
 			AEMtx33 Translate, Scale, Transform;
 			AEMtx33Trans(&Translate, Pos.x, Pos.y);
-			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Scale(&Scale, (f32)SPRITE_SCALE, (f32)SPRITE_SCALE);
 			AEMtx33Concat(&Transform, &Scale, &Translate);
 
 			AEGfxTextureSet(Player->pObject->pTexture,
