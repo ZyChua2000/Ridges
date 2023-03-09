@@ -88,6 +88,9 @@ static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
 
+static AEVec2* Gates;
+static int gatesNum;
+
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
 
@@ -293,12 +296,13 @@ void GS_World_Init(void) {
 	AEVec2* pos = nullptr;
 	int num;
 
+	utilities::loadObjs(Gates, gatesNum, "worldGates.txt");
+
 	// =====================================
 	//	Initialize map textures
 	// =====================================
 
 	std::ifstream mapInput{ "Assets/textureWorld.txt" };
-	//std::ifstream mapInput{ "../Assets/map1.txt" };
 	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
 			mapInput >> MapObjInstList[i][j].x;
@@ -357,7 +361,7 @@ void GS_World_Init(void) {
 
 		//Initialise enemy in level
 		utilities::loadObjs(pos, num, "worldEnemy.txt");
-		for (int i = 0; i < MAX_MOBS; i++) {
+		for (int i = 0; i < num; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
 			enemy->TextureMap = TEXTURE_ENEMY;
 			enemy->health = 3;
@@ -449,18 +453,16 @@ void GS_World_Init(void) {
 	// =====================================
 	//	Initialize UI objects
 	// =====================================
-	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
-	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
-	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
-	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
+
+
+	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
+	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	MenuObj[0]->TextureMap = TEXTURE_POTION;
 	MenuObj[1]->TextureMap = TEXTURE_KEYS;
-	//MenuObj[2]->TextureMap = { , };
 
-	AEVec2 NumPos[3] = { {3,-2},{6,-2},{9,-2} };
-	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[0], 0); // Potions
-	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, &NumPos[1], 0); // Keys
-	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
+
+	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
+	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[0];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[0];
 
@@ -528,32 +530,18 @@ void GS_World_Update(void) {
 	if (AEInputCheckTriggered(AEVK_E)) {
 
 		//Interaction with levers
-		for (int i = 0; i < 3; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->dirCurr == 0) {
+		for (int lev = 0; lev < 3; lev++) {
+			if (Player->calculateDistance(*Levers[lev]) < 1 && Levers[lev]->dirCurr == 0) {
 				//Switch lever to face down
-				Levers[i]->dirCurr = -PI / 4;
-				Levers[i]->posCurr.x -= 0.2f;
+				Levers[lev]->dirCurr = -PI / 4;
+				Levers[lev]->posCurr.x -= 0.2f;
 				//Remove gates: Change texture & Binary map
-				switch (i) {
-				case 0:
-					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15] = { 0,4 };
-						binaryMap[i][15] = 0;
+					for (int i = Gates[lev*2].x; i < Gates[lev*2+1].x+1; i++) {
+						for (int j = Gates[lev*2].y; j < Gates[lev * 2 +1].y + 1; j++) {
+							MapObjInstList[i][j] = TEXTURE_FLOOR;
+							binaryMap[i][j] = 0;
+						}
 					}
-					break;
-				case 1:
-					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i] = { 0,4 };
-						binaryMap[81][i] = 0;
-					}
-					MapObjInstList[81][56] = { 2,4 };
-					break;
-					//WIP for 3rd gate
-				case 2:
-					break;
-				default:
-					break;
-				}
 			}
 		}
 
@@ -892,7 +880,7 @@ void GS_World_Update(void) {
 				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 					continue;
 				}
-				AEVec2 velNull = { 0,0 };
+
 				if (pInst->calculateDistance(*jInst) < 0.9f
 					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
@@ -996,16 +984,9 @@ void GS_World_Update(void) {
 		{
 			if (pInst->health == 0) 
 			{
-				gameObjInstDestroy(pInst);
+				pInst->mobsKilled();
 				CURRENT_MOBS -= 1;
-				//randomising potion drop rate when mobs are killed 
-				srand(time(NULL));
-				if (rand() % 2 == 0)
-				{
-					AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
-					staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-					Potion->TextureMap = TEXTURE_POTION;
-				}
+
 			}
 		}
 
@@ -1068,29 +1049,8 @@ void GS_World_Update(void) {
 	}
 
 
-	
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList+i;
-		AEVec2 reverse;
-		if (pInst->pObject->type == TYPE_CHARACTER) {
-			AEVec2Neg(&reverse, &pInst->velCurr);
-			internalTimer += g_dt;
-			if (internalTimer > 0.25f)
-			{
-				AEVec2 particlecoords = pInst->posCurr;
-				particlecoords.y = pInst->posCurr.y - 0.48;
-				internalTimer -= 0.25f;
-				ParticleSystemRequest(0,10.6f, &particlecoords,
-					&reverse, 1.0f, 0.15f, 10);
-			}
-			else
-			{
-				internalTimer += g_dt;
-			}
-		}
-		break;
+	Player->dustParticles();
 
-	}
 	ParticleSystemUpdate();
 	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
 
@@ -1283,17 +1243,17 @@ void GS_World_Draw(void) {
 		}
 	}
 
-	//GameObjInst* pchar;
-	//for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-	//	pchar = sGameObjInstList + i;
+	GameObjInst* pchar;
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		pchar = sGameObjInstList + i;
 
-	//	if (pchar->pObject->type == TYPE_CHARACTER) {
-	//		break;
-	//	}
-	//}
+		if (pchar->pObject->type == TYPE_CHARACTER) {
+			break;
+		}
+	}
 
-	//
-	//ParticleSystemDraw(&pchar->transform);   //localtransform
+	
+	ParticleSystemDraw(&pchar->transform);   //localtransform
 	
 }
 
@@ -1320,6 +1280,7 @@ void GS_World_Free(void) {
 	}
 	deletenodes();
 
+	utilities::unloadObjs(Gates);
 
 	ParticleSystemFree();
 }

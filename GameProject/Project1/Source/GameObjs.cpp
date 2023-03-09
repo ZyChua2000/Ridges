@@ -157,6 +157,37 @@ void staticObjInst::shootBullet() {
 	jInst->TextureMap = TEXTURE_BULLET;
 }
 
+void GameObjInst::dustParticles() {
+	AEVec2 reverse;
+	AEVec2Neg(&reverse, &velCurr);
+	internalTimer += g_dt;
+	if (internalTimer > 0.25f)
+	{
+		AEVec2 particlecoords = posCurr;
+		particlecoords.y = posCurr.y - 0.48;
+		internalTimer -= 0.25f;
+		ParticleSystemRequest(0, 10.6f, &particlecoords,
+			&reverse, 1.0f, 0.15f, 10);
+	}
+	else
+	{
+		internalTimer += g_dt;
+	}
+}
+
+void GameObjInst::mobsKilled() {
+
+	srand(time(NULL));
+	if (rand() % 2 == 0)
+	{
+		AEVec2 Pos = { posCurr.x, posCurr.y };
+		staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+		Potion->TextureMap = TEXTURE_POTION;
+	}
+
+	gameObjInstDestroy(this);
+}
+
 void GameObjInst::calculateTransMatrix() {
 	AEMtx33		 transMat = { 0 }, rotMat = { 0 }, scaleMat = { 0 };
 

@@ -131,6 +131,10 @@ struct GameObjInst
 	void calculateTransMatrix();
 
 	void Player_Slash(float angle);
+
+	void dustParticles();
+
+	void mobsKilled();
 };
 
 // This enum is a list of the different types of game objects

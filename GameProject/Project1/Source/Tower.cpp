@@ -87,8 +87,6 @@ static const float timingTHIRD = 1.2f;
 static const float timingFOURTH = 1.8f;
 
 
-float internalTimer = 0.f;
-
 
 // ---------------------------------------------------------------------------
 

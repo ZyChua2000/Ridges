@@ -71,6 +71,7 @@ extern const AEVec2			TEXTURE_LEVERS;
 extern const AEVec2			TEXTURE_KEYS;
 extern const AEVec2			TEXTURE_NUMBERS[10];
 extern const AEVec2			TEXTURE_PLAYER;
+extern const AEVec2			TEXTURE_FLOOR;
 
 
 static float				mouseX;					// Position of mouse X
