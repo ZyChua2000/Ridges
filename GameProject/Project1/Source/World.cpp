@@ -1358,6 +1358,11 @@ void GS_World_Draw(void) {
 			if (utilities::checkWithinCam(Pos, camX, camY)) {
 				continue;
 			}
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+			if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY+camY) == (int)Pos.y) {
+				AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
+			}
 
 			AEGfxSetTransparency(1.0f);
 
@@ -1374,26 +1379,9 @@ void GS_World_Draw(void) {
 
 			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
-			if (mapeditor == 1) {
 
-				
-				AEGfxTextureSet(RefBox->pObject->pTexture, 0, 0);
-				
-				AEGfxSetTransform(Transform.m);
-
-				AEGfxMeshDraw(RefBox->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-			}
 		}
 	}
-
-	// map editor object
-	AEGfxSetTransparency(0.4f);
-	AEGfxTextureSet(mapEditorObj->pObject->pTexture,
-		TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * mapEditorObj->TextureMap.x,
-		TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * mapEditorObj->TextureMap.y);
-	AEGfxSetTransform(mapEditorObj->transform.m);
-	AEGfxMeshDraw(mapEditorObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-
 
 	// Spawn Static entities
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
