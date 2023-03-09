@@ -12,6 +12,11 @@ extern const int			COLLISION_RIGHT;		// 0010
 extern const int			COLLISION_TOP;			// 0100
 extern const int			COLLISION_BOTTOM;		// 1000
 
+extern const float			TOWER_RIGHT;
+extern const float			TOWER_LEFT;
+extern const float			TOWER_UP;
+extern const float			TOWER_DOWN;
+
 extern const int			CAM_CELL_WIDTH;			// Number of cells in viewport for width
 extern const int			CAM_CELL_HEIGHT;		// Number of cells in viewport for height
 

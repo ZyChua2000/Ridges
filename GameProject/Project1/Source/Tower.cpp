@@ -408,7 +408,7 @@ void GS_Tower_Init(void) {
 	timingFOURTH,
 	timingSECOND,
 	timingTHIRD };
-	for (int i = 0; i < 14; i++)
+	for (int i = 0; i < sizeof(towerdowntiming)/sizeof(towerdowntiming[0]); i++)
 	{
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerdownpos[i], 0);
 		jInst->TextureMap = { 2,6 };
@@ -420,9 +420,9 @@ void GS_Tower_Init(void) {
 		timingSECOND
 	};
 	AEVec2 towerrightpos[2] = { {50, -13.5}, {50,-14.5} };
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < sizeof(towerrightpos)/sizeof(towerrightpos[0]); i++)
 	{
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], 1.57f);
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], TOWER_RIGHT);
 		jInst->TextureMap = { 2,6 };
 		jInst->timetracker = towerrighttiming[i];
 	}
@@ -437,7 +437,7 @@ void GS_Tower_Init(void) {
 	//	Initialize UI objects
 	// =====================================
 	AEVec2 spikepos[12] = { {64.5,-3.5}, {64.5,-4.5}, {66.5,-3.5},{66.5,-4.5},{68.5,-3.5},{68.5,-4.5},{59,-23.5}, {63,-23.5}, {61,-23.5}, {59, -24.5}, {63, -24.5}, {61,-24.5} };
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < sizeof(spikepos)/sizeof(spikepos[0]); i++)
 	{
 		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
 	}
@@ -1228,6 +1228,7 @@ void GS_Tower_Update(void) {
 */
 /******************************************************************************/
 void GS_Tower_Draw(void) {
+
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
@@ -1242,12 +1243,17 @@ void GS_Tower_Draw(void) {
 			if (utilities::checkWithinCam(Pos, camX, camY)) {
 				continue;
 			}
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+			if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
+				AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
+			}
 
 			AEGfxSetTransparency(1.0f);
 
 			AEMtx33 Translate, Scale, Transform;
 			AEMtx33Trans(&Translate, Pos.x, Pos.y);
-			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Scale(&Scale, (f32)SPRITE_SCALE, (f32)SPRITE_SCALE);
 			AEMtx33Concat(&Transform, &Scale, &Translate);
 
 			AEGfxTextureSet(Player->pObject->pTexture,
@@ -1258,25 +1264,9 @@ void GS_Tower_Draw(void) {
 
 			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
-			if (mapeditor == 1) {
 
-
-				AEGfxTextureSet(RefBox->pObject->pTexture, 0, 0);
-
-				AEGfxSetTransform(Transform.m);
-
-				AEGfxMeshDraw(RefBox->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-			}
 		}
 	}
-
-	// map editor object
-	AEGfxSetTransparency(0.4f);
-	AEGfxTextureSet(mapEditorObj->pObject->pTexture,
-		TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * mapEditorObj->TextureMap.x,
-		TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * mapEditorObj->TextureMap.y);
-	AEGfxSetTransform(mapEditorObj->transform.m);
-	AEGfxMeshDraw(mapEditorObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
 
 	// Spawn Static entities

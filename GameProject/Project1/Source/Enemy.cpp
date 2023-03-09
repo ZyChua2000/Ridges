@@ -94,7 +94,7 @@ void NodesInit(int *grid, int width, int height)
 			//std::cout << "Size: " << nodes[y * path_width + x].v_Neighbours.size() << std::endl;
 			  //connect diagonally
 			
-			/*if (y>0 && x>0)
+			if (y>0 && x>0)
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x - 1)]);
 
 			if (y<path_height-1 && x>0)
@@ -104,7 +104,7 @@ void NodesInit(int *grid, int width, int height)
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x + 1)]);
 
 			if (y<path_height - 1 && x<width-1)
-				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y + 1) * path_width + (x + 1)]);*/
+				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y + 1) * path_width + (x + 1)]);
 			
 		}
 	}
