@@ -106,7 +106,6 @@ static const float timingTHIRD = 1.2f;
 static const float timingFOURTH = 1.8f;
 
 
-float spikedmgtimer = 0.f;
 float internalTimer = 0.f;
 
 
@@ -409,7 +408,7 @@ void GS_Tower_Init(void) {
 	timingFOURTH,
 	timingSECOND,
 	timingTHIRD };
-	for (int i = 0; i < 14; i++)
+	for (int i = 0; i < sizeof(towerdowntiming)/sizeof(towerdowntiming[0]); i++)
 	{
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerdownpos[i], 0);
 		jInst->TextureMap = { 2,6 };
@@ -421,9 +420,9 @@ void GS_Tower_Init(void) {
 		timingSECOND
 	};
 	AEVec2 towerrightpos[2] = { {50, -13.5}, {50,-14.5} };
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < sizeof(towerrightpos)/sizeof(towerrightpos[0]); i++)
 	{
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], 1.57f);
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], TOWER_RIGHT);
 		jInst->TextureMap = { 2,6 };
 		jInst->timetracker = towerrighttiming[i];
 	}
@@ -438,7 +437,7 @@ void GS_Tower_Init(void) {
 	//	Initialize UI objects
 	// =====================================
 	AEVec2 spikepos[12] = { {64.5,-3.5}, {64.5,-4.5}, {66.5,-3.5},{66.5,-4.5},{68.5,-3.5},{68.5,-4.5},{59,-23.5}, {63,-23.5}, {61,-23.5}, {59, -24.5}, {63, -24.5}, {61,-24.5} };
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < sizeof(spikepos)/sizeof(spikepos[0]); i++)
 	{
 		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
 	}
@@ -536,7 +535,7 @@ void GS_Tower_Update(void) {
 		}
 	}
 
-		MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
 	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
 
 	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
@@ -617,8 +616,8 @@ void GS_Tower_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
-		slashCD = 0.5f;
-		walkCD = 0.2f;
+		slashCD = SLASH_COOLDOWN_t;
+		walkCD = WALK_COOLDOWN_t;
 		Player->velCurr = { 0,0 };
 	}
 
@@ -889,7 +888,7 @@ void GS_Tower_Update(void) {
 					Player->deducthealth();
 
 					// Hit cooldown
-					playerHitTime = 0.5f;
+					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
 					AEVec2 nil{ 0,0 };
@@ -949,20 +948,6 @@ void GS_Tower_Update(void) {
 		}
 	}
 
-	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1) {
-			continue;
-		}
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			AEVec2 vel = { 0,0 };
-			if (pInst->Alpha < 1) {
-				;
-			}
-		}
-	}
-
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (flag & COLLISION_TOP) {
@@ -998,67 +983,20 @@ void GS_Tower_Update(void) {
 		//Player->posCurr.x - 0.5;
 	}
 
-
-	/*AEVec2 PlayerMaxX{ Player->posCurr.x + 0.5 };
-	AEVec2 PlayerMinX{ Player->posCurr.x - 0.5 };
-	AEVec2 PlayerMaxY{ Player->posCurr.y - 0.5 };
-	AEVec2 PlayerMinY{ Player->posCurr.y + 0.5 };
-	struct AABB playerAABB {};*/
-
-
-
-	/*AEVec2 novelo{ 0.0001, 0.0001 };
-
-	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
-			std::cout << "DOG\n";
-	}*/
-
-
-	spikedmgtimer += g_dt;
-
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
-		if (Player->calculateDistance(*pInst) <= 0.7 && (pInst->Alpha == 0) && spikedmgtimer >= 1) {
 
-			--Player->health;
-			spikedmgtimer = 0.0f;
-		}
+		pInst->spikeUpdate(); // Updates alpha of spikes
 
+		if (Player->calculateDistance(*pInst) <= 0.7 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
-		//will work for all spikes spawned, find a better way to do the timetracker
-		if (pInst->timetracker2 == 0) {
-			pInst->timetracker += g_dt;
-		}
-		if (pInst->timetracker > 2) {
-			pInst->timetracker = 2;
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
 
-		if (pInst->timetracker == 2) {
-			pInst->timetracker2 += g_dt;
-		}
-
-		if (pInst->timetracker2 > 2) {
-			pInst->timetracker2 = 2;
-		}
-
-		if (pInst->timetracker2 == 2) {
-			pInst->timetracker -= g_dt;
-		}
-
-		if (pInst->timetracker < 0) {
-			pInst->timetracker = 0;
-		}
-
-		if (pInst->timetracker == 0) {
-			pInst->timetracker2 -= g_dt;
-		}
-		if (pInst->timetracker2 < 0) {
-			pInst->timetracker2 = 0;
-		}
-		pInst->Alpha = 1.0f - pInst->timetracker / 2;
 
 	}
 
@@ -1088,7 +1026,7 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_TOWER) {
 			pInst->timetracker += g_dt;
 
-			if (pInst->timetracker > 2) {
+			if (pInst->timetracker > TOWER_REFRESH) {
 				pInst->timetracker = 0;
 			}
 

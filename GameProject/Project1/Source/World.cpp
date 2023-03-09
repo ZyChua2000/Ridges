@@ -390,7 +390,7 @@ void GS_World_Init(void) {
 	}
 
 	// =====================================
-	//	Initialize objects for loaded game game
+	//	Initialize objects for loaded game
 	// =====================================
 	if (loadState == true) {
 		loadData(data);
@@ -423,14 +423,35 @@ void GS_World_Init(void) {
 			}
 		}
 	}
-	// Initialise towers
-	Pos = { 49, -4 };
-	staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
-	jInst->TextureMap = { 2,6 };
-	Pos = { 50, -4 };
-	jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
-	jInst->TextureMap = { 2,6 };
-	int* gridptr = *binaryMap;
+
+	// Initialise Towers
+	AEVec2 towerPos[] = {
+		{49.5f,-4.5f},
+		{50.5f,-4.5f}
+	};
+
+	float towerRot[] = {
+		TOWER_DOWN,
+		TOWER_DOWN
+	};
+
+	for (int i = 0; i < sizeof(towerRot) / sizeof(towerRot[0]); i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], towerRot[i]);
+		jInst->TextureMap = { 2,6 };
+		binaryMap[(int)towerPos[i].x][(int)-towerPos[i].y] = 1;
+	}
+
+	// Initialise Spikes
+	AEVec2 spikePos[] = {
+		{20,-10} 
+	};
+
+	for (int i = 0; i < sizeof(spikePos) / sizeof(spikePos[0]); i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &spikePos[i], 0);
+		jInst->TextureMap = { 5,3 };
+	}
+
+	int* yy = *binaryMap;
 	//Init pathfinding nodes
 	NodesInit(gridptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
@@ -454,30 +475,7 @@ void GS_World_Init(void) {
 	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
 	NumObj[0]->TextureMap = { 2,12 };
 	NumObj[1]->TextureMap = { 2,12 };
-	//NumObj[2]->TextureMap = { , };
 
-	////spawning of keys
-	//AEVec2 keypos = { 28,-14 };
-	//staticObjInstCreate(TYPE_KEY, 1, &keypos, 0);
-	//for (int i = 0; i < sStaticObjInstNum; i++)
-	//{
-	//	staticObjInst* pInst = sStaticObjInstList + i;
-	//	if (pInst->pObject->type == TYPE_KEY)
-	//	{
-	//		pInst->TextureMap = { 4,11 };
-	//	}
-	//}
-
-	AEVec2 spikepos = { 20,-10 };
-	staticObjInstCreate(TYPE_SPIKE, 1, &spikepos, 0);
-	for (int i = 0; i < sStaticObjInstNum; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->pObject->type == TYPE_SPIKE)
-		{
-			pInst->TextureMap = { 5,3 };
-		}
-	}
 
 
 	ParticleSystemInit();
@@ -647,8 +645,8 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
-		slashCD = 0.5f;
-		walkCD = 0.2f;
+		slashCD = SLASH_COOLDOWN_t;
+		walkCD = WALK_COOLDOWN_t;
 		Player->velCurr = { 0,0 };
 	}
 
@@ -729,7 +727,7 @@ void GS_World_Update(void) {
 		AEVec2 Pos = Player->posCurr + Player->velCurr;
 		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
 		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
 		SLASH_ACTIVATE = false;
@@ -975,8 +973,8 @@ void GS_World_Update(void) {
 				{
 					Player->deducthealth();
 
-					// Hit cooldown
-					playerHitTime = 0.5f;
+					//Hit cooldown
+					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
 					AEVec2 nil{ 0,0 };
@@ -993,7 +991,7 @@ void GS_World_Update(void) {
 					continue;
 				}
 				AEVec2 velNull = { 0,0 };
-				if (pInst->calculateDistance(*jInst) < 0.6f
+				if (pInst->calculateDistance(*jInst) < 0.9f
 					&& jInst->Alpha == 1) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
@@ -1036,20 +1034,6 @@ void GS_World_Update(void) {
 		}
 	}
 
-	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1) {
-			continue;
-		}
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			AEVec2 vel = { 0,0 };
-			if (pInst->Alpha < 1 ) {
-				;
-			}
-		}
-	}
-
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (flag & COLLISION_TOP) {
@@ -1084,81 +1068,20 @@ void GS_World_Update(void) {
 
 		//Player->posCurr.x - 0.5;
 	}
-
-	//AEVec2 novelo{ 0.0001, 0.0001 };
-
-
-	/*double PlayerMaxX{ Player->posCurr.x + 0.5 };
-	double PlayerMinX{ Player->posCurr.x - 0.5 };
-	double PlayerMaxY{ Player->posCurr.y - 0.5 };
-	double PlayerMinY{ Player->posCurr.y + 0.5 };
-	AEVec2 PlayerMax{ PlayerMaxX, PlayerMaxY };
-	AEVec2 PlayerMin{ PlayerMinX, PlayerMinY };
-	struct AABB PlayerAABB {PlayerMin, PlayerMax};
-
-	double SpikeMaxX{ Spike->posCurr.x + 0.5};
-	double SpikeMinX{ Spike->posCurr.x - 0.5 };
-	double SpikeMaxY{ Spike->posCurr.y - 0.5 };
-	double SpikeMinY{ Spike->posCurr.y + 0.5 };
-	AEVec2 SpikeMax{ SpikeMaxX, SpikeMaxY };
-	AEVec2 SpikeMin{ SpikeMinX, SpikeMinY };
-	struct AABB spikeAABB {SpikeMin, SpikeMax};
-
-	if (CollisionIntersection_RectRect(PlayerAABB, Player->velCurr, spikeAABB, novelo)) {
-		std::cout << "DOG\n";
-	/*AEVec2 novelo{ 0.0001, 0.0001 };
-
-	if (CollisionIntersection_RectRect(Spike->boundingBox, novelo, Player->boundingBox, Player->velCurr)) {
-			std::cout << "DOG\n";
-	}*/
-
-
-	spikedmgtimer += g_dt;
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
-		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && spikedmgtimer>=1) {
-			
-			--Player->health;
-			spikedmgtimer = 0.0f;
-		}
 
+		pInst->spikeUpdate(); // Updates alpha of spikes
 
-		//will work for all spikes spawned, find a better way to do the timetracker
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
-		if (pInst->timetracker2 == 0) {
-			pInst->timetracker += g_dt;
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
-		if (pInst->timetracker > 2) {
-			pInst->timetracker = 2;
-		}
-
-		if (pInst->timetracker == 2) {
-			pInst->timetracker2 += g_dt;
-		}
-
-		if (pInst->timetracker2 > 2) {
-			pInst->timetracker2 = 2;
-		}
-
-		if (pInst->timetracker2 == 2) {
-			pInst->timetracker -= g_dt;
-		}
-
-		if (pInst->timetracker < 0) {
-			pInst->timetracker = 0;
-		}
-
-		if (pInst->timetracker == 0) {
-			pInst->timetracker2 -= g_dt;
-		}
-		if (pInst->timetracker2 < 0) {
-			pInst->timetracker2 = 0;
-		}
-		pInst->Alpha = 1.0f - pInst->timetracker / 2;
 
 	}
 
@@ -1190,7 +1113,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type == TYPE_TOWER) {
 			pInst->timetracker += g_dt;
 
-			if (pInst->timetracker > 1) {
+			if (pInst->timetracker > TOWER_REFRESH) {
 				pInst->timetracker = 0;
 			}
 
@@ -1402,7 +1325,7 @@ void GS_World_Update(void) {
 
 	}
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
 
 
 
@@ -1439,7 +1362,7 @@ void GS_World_Draw(void) {
 
 			AEMtx33 Translate, Scale, Transform;
 			AEMtx33Trans(&Translate, Pos.x, Pos.y);
-			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Scale(&Scale, (f32)SPRITE_SCALE, (f32)SPRITE_SCALE);
 			AEMtx33Concat(&Transform, &Scale, &Translate);
 
 			AEGfxTextureSet(Player->pObject->pTexture,
