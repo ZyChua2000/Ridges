@@ -938,7 +938,7 @@ void GS_Colosseum_Update(void) {
 
 	if (waves == 1) {
 		//Initialise enemy in level
-		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		AEVec2 Enemypos[2] = { {14.f, -14.f} ,{20.f, -14.f} };
 		for (int i = 0; i < 2; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
@@ -949,8 +949,8 @@ void GS_Colosseum_Update(void) {
 
 	if (waves == 2) {
 		//Initialise enemy in level
-		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
-		for (int i = 0; i < 2; i++) {
+		AEVec2 Enemypos[4] = { {14.f, -14.f} ,{20.f, -14.f}, {14.f, -17.f} ,{20.f, -17.f} };
+		for (int i = 0; i < 4; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
