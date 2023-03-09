@@ -127,6 +127,8 @@ void staticObjInst::calculateBB() {
 }
 
 void GameObjInst::velToPos(float speed) {
+	AEVec2 temp_velo{velCurr};
+	AEVec2Normalize(&velCurr, &temp_velo); // normalize
 	posCurr += velCurr * g_dt * speed;
 }
 
@@ -370,4 +372,18 @@ void staticObjInstDestroy(staticObjInst* pInst)
 	// zero out the flag
 	sStaticObjInstNum--; //Decrement the number of game object instance
 	pInst->flag = 0;
+}
+
+void Inventory::itemPickUp(staticObjInst *item) {
+	switch (item->pObject->type) {
+	case TYPE_ITEMS:
+		Potion++;
+		break;
+	case TYPE_KEY:
+		Key++;
+		break;
+	default:
+		break;
+	}
+	staticObjInstDestroy(item);
 }

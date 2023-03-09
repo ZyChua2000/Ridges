@@ -173,6 +173,8 @@ struct Inventory {
 		Key = 0;
 		lastItem = 0;
 	}
+
+	void itemPickUp(staticObjInst *item);
 };
 
 

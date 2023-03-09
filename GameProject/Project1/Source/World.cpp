@@ -638,37 +638,18 @@ void GS_World_Update(void) {
 		SLASH_ACTIVATE = false;
 	}
 
-	//creating key
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_KEY)
-		{
-			continue;
-		}
-		//Interaction with key
-		if (Player->calculateDistance(*pInst) < 1)
-		{
-			//remove texture of key
-			staticObjInstDestroy(pInst);
-			Backpack.Key++;
-		}
-	}
 
-	//creating potions
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS)
+		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
 		{
 			continue;
 		}
-		//Interaction with potion
+		//Interaction with items
 		if (Player->calculateDistance(*pInst) < 0.5f)
 		{
-			//remove texture of potion
-			staticObjInstDestroy(pInst);
-			Backpack.Potion++;
+			Backpack.itemPickUp(pInst);
 		}
 	}
 
@@ -812,9 +793,6 @@ void GS_World_Update(void) {
 		GameObjInst* pInst = sGameObjInstList + i;
 		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 		{
-			AEVec2 temp_velo{ pInst->velCurr.x, pInst->velCurr.y };
-			AEVec2Normalize(&pInst->velCurr, &temp_velo); // normalize
-
 			if (pInst->pObject->type == TYPE_CHARACTER) {
 				pInst->velToPos(PLAYER_SPEED);
 			}
@@ -902,6 +880,10 @@ void GS_World_Update(void) {
 			}
 		}
 
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
+		}
+
 		switch (Player->health)
 		{
 		case 0:
@@ -935,8 +917,6 @@ void GS_World_Update(void) {
 
 	}
 
-	
-
 	// ===================================
 	// update active game object instances
 	// Example:
@@ -961,15 +941,13 @@ void GS_World_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_TOWER) {
-			pInst->timetracker += g_dt;
+			utilities::decreaseTime(pInst->timetracker);
 
-			if (pInst->timetracker > TOWER_REFRESH) {
-				pInst->timetracker = 0;
-			}
-
-			if (pInst->timetracker == 0) {
+			if (pInst->timetracker > 0) {
+				pInst->timetracker = TOWER_REFRESH;
 				pInst->shootBullet();
 			}
+
 		}
 
 	}
@@ -986,15 +964,11 @@ void GS_World_Update(void) {
 			{
 				pInst->mobsKilled();
 				CURRENT_MOBS -= 1;
-
 			}
 		}
 
 		if (pInst->pObject->type == TYPE_CHARACTER) {
 				pInst->timetracker += g_dt;
-			if (pInst->health == 0) {
-				gGameStateNext = GS_DEATHSCREEN;
-			}
 		}
 	}
 
