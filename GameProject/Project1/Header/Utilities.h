@@ -172,4 +172,7 @@ namespace utilities {
 	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
 
 	void decreaseTime(float input);
+
+	void initBullet(AEVec2* position, AEVec2* velocity, staticObjInst Tower);
 }
+

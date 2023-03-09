@@ -879,10 +879,7 @@ void GS_World_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
-		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
-		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
+		pInst->calculateBB();
 	}
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
@@ -893,10 +890,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
-			pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-			pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
-			pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-			pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+		pInst->calculateBB();
 	}
 
 	// ======================================================
@@ -911,24 +905,18 @@ void GS_World_Update(void) {
 			AEVec2Normalize(&pInst->velCurr, &temp_velo); // normalize
 
 			if (pInst->pObject->type == TYPE_CHARACTER) {
-				pInst->velCurr.x *= PLAYER_SPEED; // magnitude/speed of velo.x
-				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
+				pInst->velToPos(PLAYER_SPEED);
 			}
 			//invert movement for binary map
 
 			if (pInst->pObject->type == TYPE_ENEMY) {
-				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
-				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
+				pInst->velToPos(NPC_SPEED);
 			}
 
 			if (pInst->pObject->type == TYPE_BULLET) {
-				pInst->velCurr.x *= BULLET_SPEED;
-				pInst->velCurr.y *= BULLET_SPEED;
+				pInst->velToPos(BULLET_SPEED);
 			}
 		}
-
-		pInst->posCurr.x += pInst->velCurr.x * g_dt;
-		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
 	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
@@ -946,10 +934,7 @@ void GS_World_Update(void) {
 	// check for collision
 	// ====================
 	static float playerHitTime = 0;
-	playerHitTime -= g_dt;
-	if (playerHitTime < 0) {
-		playerHitTime = 0;
-	}
+	utilities::decreaseTime(playerHitTime);
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -1114,26 +1099,8 @@ void GS_World_Update(void) {
 			if (pInst->timetracker == 0) {
 				AEVec2 vel;
 				AEVec2 pos = pInst->posCurr;
-				switch ((int)(pInst->dirCurr * 57)) {
-				case 0: // facing down
-					vel = { 0, -1 };
-					pos.y -= 0.25f;
-					break;
-				case 89: // facing right
-					vel = { 1, 0 };
-					pos.x += 0.25f;
-					break;
-				case 179: // facing up
-					vel = { 0, 1 };
-					pos.y += 0.25f;
-					break;
-				case -89: // facing left
-					vel = { -1, 0 };
-					pos.x -= 0.25f;
-					break;
-				default:
-					break;
-				}
+				utilities::initBullet(&pos, &vel, *pInst);
+
 				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
 				jInst->TextureMap = { 5,12 };
 			}
@@ -1186,49 +1153,24 @@ void GS_World_Update(void) {
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
 	{
 		GameObjInst* pInst = sGameObjInstList + i;
-		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
-
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-		float scaleY;
-		// Compute the scaling matrix
-		if (pInst->scale < 0) {
-			scaleY = -pInst->scale;
-		}
-		else {
-			scaleY = pInst->scale;
-		}
-		AEMtx33Scale(&scale, pInst->scale * SPRITE_SCALE, scaleY * SPRITE_SCALE);
-		// Compute the rotation matrix 
-		AEMtx33Rot(&rot, pInst->dirCurr);
-		// Compute the translation matrix
-		AEMtx33Trans(&trans, pInst->posCurr.x * SPRITE_SCALE, pInst->posCurr.y * SPRITE_SCALE);
-		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
-		AEMtx33Concat(&pInst->transform, &rot, &scale);
-		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
-
+		pInst->calculateTransMatrix();
 	}
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
-		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
+
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-		AEMtx33Scale(&scale, pInst->scale * SPRITE_SCALE, pInst->scale * SPRITE_SCALE);
-		// Compute the rotation matrix 
-		AEMtx33Rot(&rot, pInst->dirCurr);
-		// Compute the translation matrix
-		AEMtx33Trans(&trans, pInst->posCurr.x * SPRITE_SCALE, pInst->posCurr.y * SPRITE_SCALE);
-		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
-		AEMtx33Concat(&pInst->transform, &rot, &scale);
-		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+		pInst->calculateTransMatrix();
 	}
 		
 	// Camera position and UI items

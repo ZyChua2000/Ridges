@@ -125,3 +125,26 @@ namespace utilities {
 		}
 	}
 }
+
+void initBullet(AEVec2* position, AEVec2* velocity, staticObjInst Tower) {
+	switch ((int)(Tower.dirCurr * 57)) {
+	case 0: // facing down
+		*velocity = { 0, -1 };
+		position->y -= 0.25f;
+		break;
+	case 89: // facing right
+		*velocity = { 1, 0 };
+		position->x += 0.25f;
+		break;
+	case 179: // facing up
+		*velocity = { 0, 1 };
+		position->y += 0.25f;
+		break;
+	case -89: // facing left
+		*velocity = { -1, 0 };
+		position->x -= 0.25f;
+		break;
+	default:
+		break;
+	}
+}

@@ -42,6 +42,10 @@ struct staticObjInst
 
 
 	void spikeUpdate();
+
+	void calculateBB();
+
+	void calculateTransMatrix();
 };
 
 
@@ -113,6 +117,12 @@ struct GameObjInst
 	float calculateDistance(staticObjInst staticObj);
 
 	void walk();
+
+	void calculateBB();
+
+	void velToPos(float speed);
+
+	void calculateTransMatrix();
 };
 
 // This enum is a list of the different types of game objects
