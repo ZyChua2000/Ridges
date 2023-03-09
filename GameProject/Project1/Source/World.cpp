@@ -48,7 +48,7 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 
 static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
 
-static const float RANGE_FROM_PLAYER = 0.01f;
+static const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
 
 bool loadState;
 
@@ -430,9 +430,9 @@ void GS_World_Init(void) {
 	Pos = { 50, -4 };
 	jInst = staticObjInstCreate(TYPE_TOWER, 1, &Pos, 0);
 	jInst->TextureMap = { 2,6 };
-	int* yy = *binaryMap;
+	int* gridptr = *binaryMap;
 	//Init pathfinding nodes
-	NodesInit(yy, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	NodesInit(gridptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -523,6 +523,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.y = 1;// this is direction , positive y direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.y *= (g_dt * PLAYER_SPEED);
 			Player->walk();
 		}
 	}
@@ -530,6 +532,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.y = -1;// this is direction , negative y direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.y *= (g_dt * PLAYER_SPEED);
 			Player->walk();
 		}
 	}
@@ -537,6 +541,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.x = -1;// this is direction , negative x direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.x *= (g_dt * PLAYER_SPEED);
 			Player->scale = -1;
 			Player->walk();
 		}
@@ -545,6 +551,8 @@ void GS_World_Update(void) {
 	{
 		if (walkCD == 0) {
 			Player->velCurr.x = 1;// this is direction , positive x direction
+			AEVec2Normalize(&Player->velCurr, &Player->velCurr);// normalise velocity
+			Player->velCurr.x *= (g_dt * PLAYER_SPEED);
 			Player->scale = 1;
 			Player->walk();
 		}
@@ -786,9 +794,9 @@ void GS_World_Update(void) {
 		{
 			// perform pathfinding for this enemy
 			pEnemy->path.clear();
-			pEnemy->path = pathfind(pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+			pEnemy->path = pathfind(pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y); //pathfind function
 			pEnemy->pathtimer = pEnemy->pathfindtime; // set timer back to default;
-			pEnemy->target_node=0;
+			pEnemy->target_node=0; // target node for enemy to find the next node
 			//is_at_end = false;
 		}
 		// update enemy velocity based on path
@@ -798,12 +806,15 @@ void GS_World_Update(void) {
 
 			// calculate the distance between the enemy and player
 			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
+
 			AEVec2 target_pos;
 			AEVec2Set(&target_pos, 0, 0);
+
 			// update enemy velocity only if it is farther than the maximum distance
 			if (distance > MAX_ENEMY_DISTANCE)
 			{
 				float dist=AEVec2Distance(&pEnemy->posCurr, &pEnemy->path[pEnemy->target_node]->ae_NodePos);
+				
 				// to check the enemy is at the node 
 				if (dist <= RANGE_FROM_PLAYER)
 				{
@@ -814,6 +825,7 @@ void GS_World_Update(void) {
 						pEnemy->target_node++;
 						//is_at_end = false;
 					}
+
 					//its the last node!
 					else
 					{
@@ -824,13 +836,13 @@ void GS_World_Update(void) {
 				}
 				else /*if(is_at_end)*/
 				{
-					target_pos.x = pEnemy->path[pEnemy->target_node]->ae_NodePos.x;
-					target_pos.y = pEnemy->path[pEnemy->target_node]->ae_NodePos.y;
+					target_pos.x = pEnemy->path[pEnemy->target_node]->ae_NodePos.x;//
+					target_pos.y = pEnemy->path[pEnemy->target_node]->ae_NodePos.y;//
 				}
 				pEnemy->velCurr.x = target_pos.x - pEnemy->posCurr.x;
 				pEnemy->velCurr.y = target_pos.y - pEnemy->posCurr.y;
 				AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
-				pEnemy->velCurr.x *= (g_dt * NPC_SPEED);
+				pEnemy->velCurr.x *= (g_dt * NPC_SPEED); //
 				pEnemy->velCurr.y *= (g_dt * NPC_SPEED);
 
 				// check if player is moving or the enemy is already stopped
