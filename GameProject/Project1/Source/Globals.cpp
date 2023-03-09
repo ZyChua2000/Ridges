@@ -11,8 +11,8 @@ const int			COLLISION_BOTTOM = 0x00000008;	// 1000
 
 const float			TOWER_RIGHT = PI/2;
 const float			TOWER_LEFT = -PI/2;
-const float			TOWER_UP = 0;
-const float			TOWER_DOWN = PI;
+const float			TOWER_UP = PI;
+const float			TOWER_DOWN = 0;
 
 const int			CAM_CELL_WIDTH = 20;			// Number of cells in viewport for width
 const int			CAM_CELL_HEIGHT = 12;			// Number of cells in viewport for height
@@ -29,4 +29,21 @@ const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
 
+const AEVec2		TEXTURE_POTION = { 6,9 };
+const AEVec2		TEXTURE_TOWER = { 2,6 };
+const AEVec2		TEXTURE_BULLET = { 5,12 };
+const AEVec2		TEXTURE_ENEMY = { 0,9 };
+const AEVec2		TEXTURE_SPIKE = { 5,3 };
+const AEVec2		TEXTURE_UNOPENEDCHEST = { 5,7 };
+const AEVec2		TEXTURE_OPENEDCHEST = { 8,7 };
+const AEVec2		TEXTURE_FULLHEART = { 0,11 };
+const AEVec2		TEXTURE_DEADHEART = { 1,11 };
+const AEVec2		TEXTURE_LEVERS = { 2,11 };
+const AEVec2		TEXTURE_KEYS = { 4,11 };
+const AEVec2		TEXTURE_NUMBERS[10] = { {2,12},{5,11},{6,11},
+											{7,11},{8,11},{9,11},
+											{10,11},{11,11},{0,12},
+											{1,12} };
+
+const AEVec2		TEXTURE_PLAYER = { 1,8 };
 const float			TOWER_REFRESH = 2.f;			// Rate at which tower shoot bullets

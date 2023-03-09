@@ -34,6 +34,21 @@ extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
 
 extern const float			TOWER_REFRESH;			// Rate at which tower shoot bullets
 
+extern const AEVec2			TEXTURE_POTION;
+extern const AEVec2			TEXTURE_TOWER;
+extern const AEVec2			TEXTURE_BULLET;
+extern const AEVec2			TEXTURE_ENEMY;
+extern const AEVec2			TEXTURE_SPIKE;
+extern const AEVec2			TEXTURE_UNOPENEDCHEST;
+extern const AEVec2			TEXTURE_OPENEDCHEST;
+extern const AEVec2			TEXTURE_FULLHEART;
+extern const AEVec2			TEXTURE_DEADHEART;
+extern const AEVec2			TEXTURE_LEVERS;
+extern const AEVec2			TEXTURE_KEYS;
+extern const AEVec2			TEXTURE_NUMBERS[10];
+extern const AEVec2			TEXTURE_PLAYER;
+
+
 static float				mouseX;					// Position of mouse X
 static float				mouseY;					// Position of mouse Y
 

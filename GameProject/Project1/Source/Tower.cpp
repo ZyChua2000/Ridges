@@ -300,7 +300,8 @@ void GS_Tower_Load(void) {
 */
 /******************************************************************************/
 void GS_Tower_Init(void) {
-
+	AEVec2* pos = nullptr;
+	int num;
 	// =====================================
 	//	Initialize map textures
 	// =====================================
@@ -436,11 +437,12 @@ void GS_Tower_Init(void) {
 	// =====================================
 	//	Initialize UI objects
 	// =====================================
-	AEVec2 spikepos[12] = { {64.5,-3.5}, {64.5,-4.5}, {66.5,-3.5},{66.5,-4.5},{68.5,-3.5},{68.5,-4.5},{59,-23.5}, {63,-23.5}, {61,-23.5}, {59, -24.5}, {63, -24.5}, {61,-24.5} };
-	for (int i = 0; i < sizeof(spikepos)/sizeof(spikepos[0]); i++)
+	utilities::loadObjs(pos, num, "towerSpikes.txt");
+	for (int i = 0; i < num; i++)
 	{
-		staticObjInstCreate(TYPE_SPIKE, 1, &spikepos[i], 0);
+		staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
 	}
+	utilities::unloadObjs(pos);
 	for (int i = 0; i < sStaticObjInstNum; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;

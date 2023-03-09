@@ -362,7 +362,7 @@ void GS_World_Init(void) {
 		//Initialise player health.
 		for (int i = 0; i < Player->health; i++) {
 			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-			Health[i]->TextureMap = { 0,11 };
+			Health[i]->TextureMap = TEXTURE_FULLHEART;
 		}
 
 		//Initialise Levers in level
@@ -370,7 +370,7 @@ void GS_World_Init(void) {
 
 		for (int i = 0; i < num; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-			Levers[i]->TextureMap = { 2,11 };
+			Levers[i]->TextureMap = TEXTURE_LEVERS;
 		}
 
 		utilities::unloadObjs(pos);
@@ -379,7 +379,7 @@ void GS_World_Init(void) {
 		utilities::loadObjs(pos, num, "worldEnemy.txt");
 		for (int i = 0; i < MAX_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->TextureMap = { 0,9 };
+			enemy->TextureMap = TEXTURE_ENEMY;
 			enemy->health = 3;
 			enemy->pathfindtime = 0.25f;
 			enemy->pathtimer = enemy->pathfindtime;
@@ -392,7 +392,7 @@ void GS_World_Init(void) {
 		for (int i = 0; i < num; i++)
 		{
 			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos[i], 0);
-			Chest[i]->TextureMap = { 5, 7 };
+			Chest[i]->TextureMap = TEXTURE_UNOPENEDCHEST;
 		}
 
 		utilities::unloadObjs(pos);
@@ -435,7 +435,7 @@ void GS_World_Init(void) {
 
 	// Initialise Towers
 	AEVec2 towerPos[] = {
-		{49.5f,-4.5f},
+		{18.5f,-12.5f},
 		{50.5f,-4.5f}
 	};
 
@@ -445,8 +445,8 @@ void GS_World_Init(void) {
 	};
 
 	for (int i = 0; i < sizeof(towerRot) / sizeof(towerRot[0]); i++) {
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], towerRot[i]);
-		jInst->TextureMap = { 2,6 };
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], 0);
+		jInst->TextureMap = TEXTURE_TOWER;
 		binaryMap[(int)towerPos[i].x][(int)-towerPos[i].y] = 1;
 	}
 
@@ -454,7 +454,7 @@ void GS_World_Init(void) {
 	utilities::loadObjs(pos, num, "worldSpikes.txt");
 	for (int i = 0; i < num; i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
-		jInst->TextureMap = { 5,3 };
+		jInst->TextureMap = TEXTURE_SPIKE;
 	}
 	utilities::unloadObjs(pos);
 
@@ -473,16 +473,16 @@ void GS_World_Init(void) {
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
 	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
-	MenuObj[0]->TextureMap = { 6,9 };
-	MenuObj[1]->TextureMap = { 4,11 };
+	MenuObj[0]->TextureMap = TEXTURE_POTION;
+	MenuObj[1]->TextureMap = TEXTURE_KEYS;
 	//MenuObj[2]->TextureMap = { , };
 
 	AEVec2 NumPos[3] = { {3,-2},{6,-2},{9,-2} };
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[0], 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, &NumPos[1], 0); // Keys
 	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
-	NumObj[0]->TextureMap = { 2,12 };
-	NumObj[1]->TextureMap = { 2,12 };
+	NumObj[0]->TextureMap = TEXTURE_NUMBERS[0];
+	NumObj[1]->TextureMap = TEXTURE_NUMBERS[0];
 
 
 
@@ -521,7 +521,7 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
 		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
-		Player->TextureMap = { 1,8 };
+		Player->TextureMap = TEXTURE_PLAYER;
 	}
 	
 	Player->walk(walkCD);
@@ -533,13 +533,13 @@ void GS_World_Update(void) {
 		switch (Player->health)
 		{
 		case 0:
-			Health[2]->TextureMap = { 1, 11 };
+			Health[2]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 1:
-			Health[1]->TextureMap = { 1, 11 };
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 2:
-			Health[0]->TextureMap = { 1, 11 };
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
 
@@ -582,10 +582,10 @@ void GS_World_Update(void) {
 			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
 			{
 				//change texture of chest
-				Chest[i]->TextureMap = { 8, 7 };
+				Chest[i]->TextureMap = TEXTURE_OPENEDCHEST;
 				AEVec2 Pos = { Chest[i]->posCurr.x, Chest[i]->posCurr.y };
 				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-				Potion->TextureMap = { 6,9 };
+				Potion->TextureMap = TEXTURE_POTION;
 			}
 		}
 	}
@@ -656,10 +656,10 @@ void GS_World_Update(void) {
 			switch (Player->health)
 			{
 			case 2:
-				Health[1]->TextureMap = { 0, 11 };
+				Health[1]->TextureMap = TEXTURE_FULLHEART;
 				break;
 			case 3:
-				Health[0]->TextureMap = { 0, 11 };
+				Health[0]->TextureMap = TEXTURE_FULLHEART;
 				break;
 			}
 			Backpack.Potion--;
@@ -934,16 +934,7 @@ void GS_World_Update(void) {
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
 			}
-			if (flag & COLLISION_TOP) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_BOTTOM) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_RIGHT) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_LEFT) {
+			if (snapCollision(*pInst, flag)) {
 				gameObjInstDestroy(pInst);
 			}
 		}
@@ -951,50 +942,19 @@ void GS_World_Update(void) {
 		switch (Player->health)
 		{
 		case 0:
-			Health[2]->TextureMap = { 1, 11 };
+			Health[2]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 1:
-			Health[1]->TextureMap = { 1, 11 };
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 2:
-			Health[0]->TextureMap = { 1, 11 };
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-	if (flag & COLLISION_TOP) {
-		//Top collision
-		std::cout << "collide top" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-
-		std::cout << Player->posCurr.y << std::endl;
-		//Player->posCurr.y + 0.5;
-	}
-
-	if (flag & COLLISION_BOTTOM) {
-		//bottom collision
-		std::cout << "collide botton" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-
-		//Player->posCurr.y - 0.5;
-	}
-
-	if (flag & COLLISION_LEFT) {
-		//Left collision
-		std::cout << "collide left" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-
-		//Player->posCurr.x + 0.5;
-
-	}
-	if (flag & COLLISION_RIGHT) {
-		//Right collision
-		std::cout << "collide right" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-
-		//Player->posCurr.x - 0.5;
-	}
+	snapCollision(*Player, flag);
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -1050,7 +1010,7 @@ void GS_World_Update(void) {
 				utilities::initBullet(pos, vel, *pInst);
 
 				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
-				jInst->TextureMap = { 5,12 };
+				jInst->TextureMap = TEXTURE_BULLET;
 			}
 		}
 
@@ -1074,7 +1034,7 @@ void GS_World_Update(void) {
 				{
 					AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
 					staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-					Potion->TextureMap = { 6,9 };
+					Potion->TextureMap = TEXTURE_POTION;
 				}
 			}
 		}
@@ -1123,57 +1083,10 @@ void GS_World_Update(void) {
 		
 	// Camera position and UI items
 
-	switch (Backpack.Potion)
-	{
-	case 0:
-		NumObj[0]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[0]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[0]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	case 4:
-		NumObj[0]->TextureMap = { 8,11 };
-		break;
-	case 5:
-		NumObj[0]->TextureMap = { 9,11 };
-		break;
-	case 6:
-		NumObj[0]->TextureMap = { 10,11 };
-		break;
-	case 7:
-		NumObj[0]->TextureMap = { 11,11 };
-		break;
-	case 8:
-		NumObj[0]->TextureMap = { 0,12 };
-		break;
-	case 9:
-		NumObj[0]->TextureMap = { 1,12 };
-		break;
-	}
 
-	switch (Backpack.Key)
-	{
-	case 0:
-		NumObj[1]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[1]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[1]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	}
-
-
+	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
+	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
+	
 
 	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
 		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
@@ -1777,14 +1690,14 @@ void loadData(saveData data) {
 
 	AEVec2 PlayerPos = { data.playerPosition.x,data.playerPosition.y};
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-	Player->TextureMap = { 1,8 };
+	Player->TextureMap = TEXTURE_PLAYER;
 
 
 	Player->health = data.playerHealth;
 
 	for (int i = 0; i < Player->health; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		Health[i]->TextureMap = { 0,11 };
+		Health[i]->TextureMap = TEXTURE_FULLHEART;
 	}
 
 	saveText >> data.mobsNum;
