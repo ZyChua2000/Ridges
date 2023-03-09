@@ -16,7 +16,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <fstream>
 #include <iostream>
 #include <time.h>
-#include "ParticleSystem.h"
+
 
 /*!
 	Defines
@@ -24,13 +24,9 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 /******************************************************************************/
 static saveData				data;
 static Node* nodes{};
-static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
-static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
-static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
-static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;		// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS =11;							// The total number of mobs
+
+static const unsigned int	MAX_MOBS =11;						// The total number of mobs
 static unsigned int			CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
@@ -63,8 +59,6 @@ void loadData(saveData data);
 // -----------------------------------------------------------------------------
 // object flag definition
 
-static const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object instance is active
-
 /******************************************************************************/
 /*!
 	Struct/Class Definitions
@@ -73,23 +67,11 @@ static const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object ins
 
 // ---------------------------------------------------------------------------
 
-// list of original object
-static GameObj				sGameObjList[GAME_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sGameObjNum;								// The number of defined game objects
-
-// list of object instances
-static GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a dynamic unique game object instance (sprite)
-static unsigned long		sGameObjInstNum;							// The number of used dynamic game object instances
-
-// list of static instances
-static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
-static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
-static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
-static unsigned long		FontListNum;								// The number of used fonts
+
 
 static float slashCD = 0;
 static float walkCD = 0;
@@ -338,8 +320,6 @@ void GS_World_Init(void) {
 	}
 	binInput.close();
 
-	RefBox = staticObjInstCreate(TYPE_REF, 1, nullptr, 0);
-
 	AEVec2 Pos = { 9.f , 3.f };
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
 
@@ -519,12 +499,14 @@ void GS_World_Update(void) {
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
-	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
-		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
+	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
+		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
+		Player->walk(walkCD);
+	}
+	else {
 		Player->TextureMap = TEXTURE_PLAYER;
 	}
 	
-	Player->walk(walkCD);
 
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
@@ -582,10 +564,7 @@ void GS_World_Update(void) {
 			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
 			{
 				//change texture of chest
-				Chest[i]->TextureMap = TEXTURE_OPENEDCHEST;
-				AEVec2 Pos = { Chest[i]->posCurr.x, Chest[i]->posCurr.y };
-				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-				Potion->TextureMap = TEXTURE_POTION;
+				Chest[i]->chest2Potion();
 			}
 		}
 	}
@@ -667,11 +646,7 @@ void GS_World_Update(void) {
 	}
 
 	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr + Player->velCurr;
-		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
-		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angleMousetoPlayer + PI);
-		slashObj->timetracker = 0;
+		Player->Player_Slash(angleMousetoPlayer);
 		SLASH_ACTIVATE = false;
 	}
 
@@ -919,7 +894,7 @@ void GS_World_Update(void) {
 				}
 				AEVec2 velNull = { 0,0 };
 				if (pInst->calculateDistance(*jInst) < 0.9f
-					&& jInst->Alpha == 1) {
+					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
 					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
@@ -1005,12 +980,7 @@ void GS_World_Update(void) {
 			}
 
 			if (pInst->timetracker == 0) {
-				AEVec2 vel;
-				AEVec2 pos = pInst->posCurr;
-				utilities::initBullet(pos, vel, *pInst);
-
-				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
-				jInst->TextureMap = TEXTURE_BULLET;
+				pInst->shootBullet();
 			}
 		}
 
@@ -1313,17 +1283,17 @@ void GS_World_Draw(void) {
 		}
 	}
 
-	GameObjInst* pchar;
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		pchar = sGameObjInstList + i;
+	//GameObjInst* pchar;
+	//for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+	//	pchar = sGameObjInstList + i;
 
-		if (pchar->pObject->type == TYPE_CHARACTER) {
-			break;
-		}
-	}
+	//	if (pchar->pObject->type == TYPE_CHARACTER) {
+	//		break;
+	//	}
+	//}
 
-	
-	ParticleSystemDraw(&pchar->transform);   //localtransform
+	//
+	//ParticleSystemDraw(&pchar->transform);   //localtransform
 	
 }
 
@@ -1380,188 +1350,6 @@ void GS_World_Unload(void) {
 // ---------------------------------------------------------------------------
 
 
-
-
-
-/******************************************************************************/
-/*!
-	This function creates a game object instance.
-
-	It takes in input of the type
-	of object, the scale, a vector of the position, a vector of the velocity and
-	a float of the direction
-
-	It returns a pointer to the GameObjInst that is stored in the Game object
-	Instance List.
-*/
-/******************************************************************************/
-static GameObjInst* gameObjInstCreate(unsigned long type,
-	float scale,
-	AEVec2* pPos,
-	AEVec2* pVel,
-	float dir)
-{
-	AEVec2 zero;
-	AEVec2Zero(&zero);
-
-	AE_ASSERT_PARM(type < sGameObjNum);
-
-	// loop through the object instance list to find a non-used object instance
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	{
-		GameObjInst* pInst = sGameObjInstList + i;
-
-		// check if current instance is not used
-		if (pInst->flag == 0)
-		{
-			// it is not used => use it to create the new instance
-			pInst->pObject = sGameObjList + type;
-			pInst->flag = FLAG_ACTIVE;
-			pInst->scale = scale;
-			pInst->posCurr = pPos ? *pPos : zero;
-			pInst->velCurr = pVel ? *pVel : zero;
-			pInst->dirCurr = dir;
-
-			// return the newly created instance
-			sGameObjInstNum++; //Increment the number of game object instance
-			return pInst;
-		}
-	}
-
-	// cannot find empty slot => return 0
-	return 0;
-}
-
-/******************************************************************************/
-/*!
-	This function destroys a Game Object Instance pointed to inside the Game
-	Object Instance List.
-*/
-/******************************************************************************/
-static void gameObjInstDestroy(GameObjInst* pInst)
-{
-	// if instance is destroyed before, just return
-	if (pInst->flag == 0)
-		return;
-
-	// zero out the flag
-	sGameObjInstNum--; //Decrement the number of game object instance
-	pInst->flag = 0;
-}
-
-/******************************************************************************/
-/*!
-	This function creates a game object instance.
-
-	It takes in input of the type
-	of object, the scale, a vector of the position, a vector of the velocity and
-	a float of the direction
-
-	It returns a pointer to the GameObjInst that is stored in the Game object
-	Instance List.
-*/
-
-/******************************************************************************/
-static staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
-{
-	AEVec2 zero;
-	AEVec2Zero(&zero);
-
-	// loop through the object instance list to find a non-used object instance
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-		// check if current instance is not used
-		if (pInst->flag == 0)
-		{
-			// it is not used => use it to create the new instance
-			pInst->pObject = sGameObjList + type;
-			pInst->flag = FLAG_ACTIVE;
-			pInst->scale = scale;
-			pInst->dirCurr = dir;
-			pInst->posCurr = pPos ? *pPos : zero;
-			pInst->Alpha = 1.0f;
-			pInst->timetracker = 0.0f;
-
-			// return the newly created instance
-			sStaticObjInstNum++; //Increment the number of game object instance
-			return pInst;
-		}
-	}
-
-	// cannot find empty slot => return 0
-	return 0;
-}
-
-/******************************************************************************/
-/*!
-	This function destroys a Game Object Instance pointed to inside the Game
-	Object Instance List.
-*/
-/******************************************************************************/
-static void staticObjInstDestroy(staticObjInst* pInst)
-{
-	// if instance is destroyed before, just return
-	if (pInst->flag == 0)
-		return;
-
-	// zero out the flag
-	sStaticObjInstNum--; //Decrement the number of game object instance
-	pInst->flag = 0;
-}
-
-//int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
-//{
-//	int Flag = 0;
-//	int x1, y1, x2, y2;
-//
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 2;	//To reach the right side
-//	y1 = PosY + scaleY / 4;	//To go up 1 / 4 of the height
-//
-//	//- hotspot 2
-//	x2 = PosX + scaleX / 2;	//To reach the right side
-//	y2 = PosY - scaleY / 4;	//To go down 1 / 4 of the height
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_RIGHT;
-//	}
-//
-//	//-hotspot 1
-//	x1 = PosX - scaleX / 2;
-//	y1 = PosY - scaleY / 4;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 2;
-//	y2 = PosY + scaleY / 4;
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_LEFT;
-//	}
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 4;
-//	y1 = PosY + scaleY / 2;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 4;
-//	y2 = PosY + scaleY / 2;
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_TOP;
-//	}
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 4;
-//	y1 = PosY - scaleY / 2;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 4;
-//	y2 = PosY - scaleY / 2;
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_BOTTOM;
-//	}
-//	return Flag;
-//}
 
 void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax) {
 	// Put data into struct

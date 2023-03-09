@@ -48,6 +48,10 @@ struct staticObjInst
 	void calculateTransMatrix();
 
 	void mapEditorObjectSpawn();
+
+	void chest2Potion();
+
+	void shootBullet();
 };
 
 
@@ -125,6 +129,8 @@ struct GameObjInst
 	void velToPos(float speed);
 
 	void calculateTransMatrix();
+
+	void Player_Slash(float angle);
 };
 
 // This enum is a list of the different types of game objects
@@ -165,3 +171,9 @@ struct Inventory {
 	}
 };
 
+
+
+void gameObjInstDestroy(GameObjInst* pInst);
+staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+void gameObjInstDestroy(GameObjInst* pInst);
+GameObjInst* gameObjInstCreate(unsigned long type,float scale,AEVec2* pPos,AEVec2* pVel,float dir);

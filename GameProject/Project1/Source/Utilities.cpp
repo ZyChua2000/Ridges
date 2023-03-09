@@ -125,29 +125,6 @@ namespace utilities {
 		}
 	}
 
-	void initBullet(AEVec2& position, AEVec2& velocity, staticObjInst Tower) {
-		switch ((int)(Tower.dirCurr * 57)) {
-		case 0: // facing down
-			velocity = { 0, -1 };
-			position.y -= 0.6f;
-			break;
-		case 89: // facing right
-			velocity = { 1, 0 };
-			position.x += 0.6f;
-			break;
-		case 179: // facing up
-			velocity = { 0, 1 };
-			position.y += 0.6f;
-			break;
-		case -89: // facing left
-			velocity = { -1, 0 };
-			position.x -= 0.6f;
-			break;
-		default:
-			break;
-		}
-	}
-
 	void changeMapObj(float mouseX, float mouseY, int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, staticObjInst mapeditorObj) {
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 			for (int i = 0; i < MAP_CELL_WIDTH; i++) {

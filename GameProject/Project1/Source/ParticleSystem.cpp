@@ -27,7 +27,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 const unsigned int	PARTICLE_OBJ_NUM_MAX = 16;			//The total number of different objects (Shapes)
 const unsigned int	PARTICLE_OBJ_INST_NUM_MAX = 516;	//The total number of different game object instances
 
-const unsigned int	FLAG_ACTIVE = 0x00000001;			//Active Flag
+
 const unsigned int	FLAG_INACTIVE = 0x00000000;			//Inactive flag
 
 const float PARTICLE_GRAVITY = 0.01f;

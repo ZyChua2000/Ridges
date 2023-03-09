@@ -93,6 +93,14 @@ void GameObjInst::walk(float walkCD)
 	}
 }
 
+void GameObjInst::Player_Slash(float angle) {
+	AEVec2 Pos = posCurr + velCurr;
+	Pos.x += -cos(angle) / 1.3f;
+	Pos.y += -sin(angle) / 1.3f;
+	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
+	slashObj->timetracker = 0;
+}
+
 
 float GameObjInst::calculateDistance(GameObjInst dynamicObj) {
 	return sqrt((posCurr.x - dynamicObj.posCurr.x) * (posCurr.x - dynamicObj.posCurr.x) +
@@ -120,6 +128,33 @@ void staticObjInst::calculateBB() {
 
 void GameObjInst::velToPos(float speed) {
 	posCurr += velCurr * g_dt * speed;
+}
+
+void staticObjInst::shootBullet() {
+	AEVec2 velocity;
+	AEVec2 position = posCurr;
+	switch ((int)(dirCurr * 57)) {
+	case 0: // facing down
+		velocity = { 0, -1 };
+		position.y -= 0.6f;
+		break;
+	case 89: // facing right
+		velocity = { 1, 0 };
+		position.x += 0.6f;
+		break;
+	case 179: // facing up
+		velocity = { 0, 1 };
+		position.y += 0.6f;
+		break;
+	case -89: // facing left
+		velocity = { -1, 0 };
+		position.x -= 0.6f;
+		break;
+	default:
+		break;
+	}
+	GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &position, &velocity, 0);
+	jInst->TextureMap = TEXTURE_BULLET;
 }
 
 void GameObjInst::calculateTransMatrix() {
@@ -174,3 +209,134 @@ void staticObjInst::mapEditorObjectSpawn() {
 	}
 }
 
+void staticObjInst:: chest2Potion() {
+	TextureMap = TEXTURE_OPENEDCHEST;
+	staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &posCurr, 0);
+	Potion->TextureMap = TEXTURE_POTION;
+}
+
+/******************************************************************************/
+/*!
+	This function creates a game object instance.
+
+	It takes in input of the type
+	of object, the scale, a vector of the position, a vector of the velocity and
+	a float of the direction
+
+	It returns a pointer to the GameObjInst that is stored in the Game object
+	Instance List.
+*/
+/******************************************************************************/
+GameObjInst* gameObjInstCreate(unsigned long type,
+	float scale,
+	AEVec2* pPos,
+	AEVec2* pVel,
+	float dir)
+{
+	AEVec2 zero;
+	AEVec2Zero(&zero);
+
+	AE_ASSERT_PARM(type < sGameObjNum);
+
+	// loop through the object instance list to find a non-used object instance
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+	{
+		GameObjInst* pInst = sGameObjInstList + i;
+
+		// check if current instance is not used
+		if (pInst->flag == 0)
+		{
+			// it is not used => use it to create the new instance
+			pInst->pObject = sGameObjList + type;
+			pInst->flag = FLAG_ACTIVE;
+			pInst->scale = scale;
+			pInst->posCurr = pPos ? *pPos : zero;
+			pInst->velCurr = pVel ? *pVel : zero;
+			pInst->dirCurr = dir;
+
+			// return the newly created instance
+			sGameObjInstNum++; //Increment the number of game object instance
+			return pInst;
+		}
+	}
+
+	// cannot find empty slot => return 0
+	return 0;
+}
+
+/******************************************************************************/
+/*!
+	This function destroys a Game Object Instance pointed to inside the Game
+	Object Instance List.
+*/
+/******************************************************************************/
+void gameObjInstDestroy(GameObjInst* pInst)
+{
+	// if instance is destroyed before, just return
+	if (pInst->flag == 0)
+		return;
+
+	// zero out the flag
+	sGameObjInstNum--; //Decrement the number of game object instance
+	pInst->flag = 0;
+}
+
+/******************************************************************************/
+/*!
+	This function creates a game object instance.
+
+	It takes in input of the type
+	of object, the scale, a vector of the position, a vector of the velocity and
+	a float of the direction
+
+	It returns a pointer to the GameObjInst that is stored in the Game object
+	Instance List.
+*/
+
+/******************************************************************************/
+staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
+{
+	AEVec2 zero;
+	AEVec2Zero(&zero);
+
+	// loop through the object instance list to find a non-used object instance
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+
+		// check if current instance is not used
+		if (pInst->flag == 0)
+		{
+			// it is not used => use it to create the new instance
+			pInst->pObject = sGameObjList + type;
+			pInst->flag = FLAG_ACTIVE;
+			pInst->scale = scale;
+			pInst->dirCurr = dir;
+			pInst->posCurr = pPos ? *pPos : zero;
+
+			// return the newly created instance
+			sStaticObjInstNum++; //Increment the number of game object instance
+			return pInst;
+		}
+	}
+
+	// cannot find empty slot => return 0
+	return 0;
+}
+
+/******************************************************************************/
+/*!
+	This function destroys a Game Object Instance pointed to inside the Game
+	Object Instance List.
+*/
+/******************************************************************************/
+void staticObjInstDestroy(staticObjInst* pInst)
+{
+	// if instance is destroyed before, just return
+	if (pInst->flag == 0)
+		return;
+
+	// zero out the flag
+	sStaticObjInstNum--; //Decrement the number of game object instance
+	pInst->flag = 0;
+}

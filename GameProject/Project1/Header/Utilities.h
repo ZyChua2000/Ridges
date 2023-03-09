@@ -173,8 +173,6 @@ namespace utilities {
 
 	void decreaseTime(float& input);
 
-	void initBullet(AEVec2& position, AEVec2& velocity, staticObjInst Tower);
-
 	void changeMapObj(float mouseX, float mouseY, int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, staticObjInst mapeditorObj);
 
 	void loadObjs(AEVec2*& Positions, int& num, std::string filename);

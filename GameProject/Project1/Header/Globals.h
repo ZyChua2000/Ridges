@@ -2,6 +2,30 @@
 #ifndef GLOBALS
 #define GLOBALS
 
+static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
+static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
+static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;			// The total number of dynamic game object instances
+static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
+static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;		// The total number of static game object instances
+
+// list of original object
+extern GameObj				sGameObjList[GAME_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
+extern unsigned long		sGameObjNum;								// The number of defined game objects
+
+// list of object instances
+extern GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a dynamic unique game object instance (sprite)
+extern unsigned long		sGameObjInstNum;							// The number of used dynamic game object instances
+
+// list of static instances
+extern staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
+extern unsigned long		sStaticObjInstNum;							// The number of used static game object instances
+
+extern s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
+extern unsigned long		FontListNum;								// The number of used fonts
+
+extern const unsigned long FLAG_ACTIVE;			// For whether object instance is active
+
+
 extern const int			SPRITE_SCALE;			// Scale of sprites
 extern const int			TEXTURE_MAXWIDTH;		// Canvas Width of sprite sheet
 extern const int			TEXTURE_MAXHEIGHT;		// Canvas Height of sprite sheet

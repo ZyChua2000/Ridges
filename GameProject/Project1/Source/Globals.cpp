@@ -1,4 +1,22 @@
 #include "main.h"
+
+// list of original object
+GameObj				sGameObjList[GAME_OBJ_NUM_MAX] = { 0 };				// Each element in this array represents a unique game object (shape)
+unsigned long		sGameObjNum = 0;								// The number of defined game objects
+
+// list of object instances
+GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX] = { 0 };	// Each element in this array represents a dynamic unique game object instance (sprite)
+unsigned long		sGameObjInstNum = 0;							// The number of used dynamic game object instances
+
+// list of static instances
+staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX] = { 0 };// Each element in this array represents a unique static game object instance (sprite)
+unsigned long		sStaticObjInstNum = 0;							// The number of used static game object instances
+
+s8					FontList[FONT_NUM_MAX] = { 0 };						// Each element in this array represents a Font
+unsigned long		FontListNum = 0;								// The number of used fonts
+
+const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object instance is active
+
 const int			SPRITE_SCALE = 80;				// Scale of sprites
 const int			TEXTURE_MAXWIDTH = 192;			// Canvas Width of sprite sheet
 const int			TEXTURE_MAXHEIGHT = 208;		// Canvas Height of sprite sheet
