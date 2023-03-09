@@ -1,6 +1,5 @@
-#include "AEEngine.h" //For AE types
 #include <fstream> //For printing
-#include "Utilities.h" // For externs
+#include "Main.h" // For externs
 
 
 namespace utilities {
@@ -119,4 +118,10 @@ namespace utilities {
 		mapInput.close();
 	}*/
 
+	void decreaseTime(float input) {
+		input -= g_dt;
+		if (input < 0) {
+			input = 0;
+		}
+	}
 }

@@ -40,6 +40,7 @@ extern double	g_appTime;
 #include "AEVecOverloads.h"
 #include "Enemy.h"
 #include "Globals.h"
+#include "ParticleSystem.h"
 
 
 #endif
