@@ -1,4 +1,38 @@
-#include "GameObjs.h"
+#include "main.h"
+
+void staticObjInst::spikeUpdate() {
+	if (timetracker2 == 0) {
+		timetracker += g_dt;
+	}
+	if (timetracker > SPIKE_TRANSITION_t) {
+		timetracker = SPIKE_TRANSITION_t;
+	}
+
+	if (timetracker == SPIKE_TRANSITION_t) {
+		timetracker2 += g_dt;
+	}
+
+	if (timetracker2 > SPIKE_LIFE_t) {
+		timetracker2 = SPIKE_LIFE_t;
+	}
+
+	if (timetracker2 == SPIKE_LIFE_t) {
+		timetracker -= g_dt;
+	}
+
+	if (timetracker < 0) {
+		timetracker = 0;
+	}
+
+	if (timetracker == 0) {
+		timetracker2 -= (g_dt / SPIKE_DEATH_t) * SPIKE_LIFE_t;
+	}
+	if (timetracker2 < 0) {
+		timetracker2 = 0;
+	}
+
+	Alpha = 1.0f - timetracker / SPIKE_TRANSITION_t;
+}
 
 //player health 
 void GameObjInst::deducthealth(int damage)
