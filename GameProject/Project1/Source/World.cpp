@@ -639,8 +639,8 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
-		slashCD = 0.5f;
-		walkCD = 0.2f;
+		slashCD = SLASH_COOLDOWN_t;
+		walkCD = WALK_COOLDOWN_t;
 		Player->velCurr = { 0,0 };
 	}
 
@@ -964,7 +964,7 @@ void GS_World_Update(void) {
 					Player->deducthealth();
 
 					// Hit cooldown
-					playerHitTime = 0.5f;
+					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
 					AEVec2 nil{ 0,0 };
@@ -1024,20 +1024,6 @@ void GS_World_Update(void) {
 		}
 	}
 
-	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1) {
-			continue;
-		}
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			AEVec2 vel = { 0,0 };
-			if (pInst->Alpha < 1 ) {
-				;
-			}
-		}
-	}
-
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
 	if (flag & COLLISION_TOP) {
@@ -1072,56 +1058,20 @@ void GS_World_Update(void) {
 
 		//Player->posCurr.x - 0.5;
 	}
-
-	
-
-
-	spikedmgtimer += g_dt;
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
-		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && spikedmgtimer>=1) {
-			
-			--Player->health;
-			spikedmgtimer = 0.0f;
-		}
 
+		pInst->spikeUpdate(); // Updates alpha of spikes
 
-		//will work for all spikes spawned, find a better way to do the timetracker
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
-		if (pInst->timetracker2 == 0) {
-			pInst->timetracker += g_dt;
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
-		if (pInst->timetracker > 2) {
-			pInst->timetracker = 2;
-		}
-
-		if (pInst->timetracker == 2) {
-			pInst->timetracker2 += g_dt;
-		}
-
-		if (pInst->timetracker2 > 2) {
-			pInst->timetracker2 = 2;
-		}
-
-		if (pInst->timetracker2 == 2) {
-			pInst->timetracker -= g_dt;
-		}
-
-		if (pInst->timetracker < 0) {
-			pInst->timetracker = 0;
-		}
-
-		if (pInst->timetracker == 0) {
-			pInst->timetracker2 -= g_dt;
-		}
-		if (pInst->timetracker2 < 0) {
-			pInst->timetracker2 = 0;
-		}
-		pInst->Alpha = 1.0f - pInst->timetracker / 2;
 
 	}
 
@@ -1153,7 +1103,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type == TYPE_TOWER) {
 			pInst->timetracker += g_dt;
 
-			if (pInst->timetracker > 1) {
+			if (pInst->timetracker > TOWER_REFRESH) {
 				pInst->timetracker = 0;
 			}
 

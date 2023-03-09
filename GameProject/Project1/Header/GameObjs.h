@@ -36,6 +36,12 @@ struct staticObjInst
 	float				timetracker2;
 	float				Alpha;		// object's transparency value
 	AABB				boundingBox;// object bouding box that encapsulates the object
+
+
+	// Member functions
+
+
+	void spikeUpdate();
 };
 
 
