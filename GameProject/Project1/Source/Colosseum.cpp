@@ -24,28 +24,34 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
+static saveData				data;
+static Node* nodes{};
 static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
 static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
 static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
 static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
 static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
 
-static const unsigned int	MAX_MOBS;							// The total number of mobs
-static const unsigned int	MAX_CHESTS;							// The total number of chests
+
+//static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
+static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
+static unsigned int			CURRENT_MOBS = MAX_MOBS;
+
+static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
 
 static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
-
+static const float MAX_ENEMY_DISTANCE = 1.0f;
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 // -----------------------------------------------------------------------------
-
+//static Node* nodes{};
 
 // -----------------------------------------------------------------------------
 // object flag definition
@@ -84,8 +90,14 @@ static staticObjInst* mapEditorObj;										// Pointer to the reference map edi
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static GameObjInst* enemy[2];
 static staticObjInst* RefBox;
+static staticObjInst* Chest[MAX_CHESTS];
 
 
+
+float Timer = 0.f;
+
+int waves = 0;
+float wavestimer = 0.f;
 
 // ---------------------------------------------------------------------------
 
@@ -220,7 +232,15 @@ void GS_Colosseum_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
+	GameObj* Chest;
+	Chest = sGameObjList + sGameObjNum++;
+	Chest->pMesh = Character->pMesh;
+	Chest->pTexture = Character->pTexture;
+	Chest->type = TYPE_CHEST;
+	Chest->refMesh = true;
+	Chest->refTexture = true;
 
+	ParticleSystemLoad();
 }
 
 /******************************************************************************/
@@ -285,10 +305,22 @@ void GS_Colosseum_Init(void) {
 		enemy[i]->TextureMap = { 0,9 };
 	}
 
+
+	//Initialise chest in level
+	AEVec2 chestpos[1] = { {14,-12} };
+	for (int i = 0; i < MAX_CHESTS; i++)
+	{
+		Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &chestpos[i], 0);
+		Chest[i]->TextureMap = { 5, 7 };
+	}
+
 	//binaryMap[(int)(Player->posCurr.x+20)][(int)(Player->posCurr.y-58)] = test++;
 	//{ 12,-31 };
 	binaryPlayerPos = { 32,-89 };
+	ParticleSystemInit();
 
+	int* coloptr = *binaryMap;
+	NodesInit(coloptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 }
 
 
@@ -314,7 +346,16 @@ void GS_Colosseum_Update(void) {
 		mapeditor ^= 1;
 	}
 
+	/*if (AEInputCheckTriggered(AEVK_EQUAL))
+	{
 
+		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+	}*/
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
 
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
@@ -399,6 +440,64 @@ void GS_Colosseum_Update(void) {
 			}
 		}
 		binInput.close();
+	}
+
+	// Pathfinding for Enemy AI
+	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
+	{
+		GameObjInst* pEnemy = sGameObjInstList + j;
+
+		// skip non-active object
+		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
+			continue;
+
+		if (Player->calculateDistance(*pEnemy) > 10)
+			continue;
+
+		// perform pathfinding for this enemy
+		pEnemy->path = pathfind(pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+
+		// update enemy velocity based on path
+		if (pEnemy->path.size() > 1)
+		{
+			Node* pNextNode = pEnemy->path[1];
+
+			// calculate the distance between the enemy and player
+			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
+
+			// update enemy velocity only if it is farther than the maximum distance
+			if (distance > MAX_ENEMY_DISTANCE)
+			{
+				// check if player is moving or the enemy is already stopped
+				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
+				{
+					// continue moving
+					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
+					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
+
+					// set flag to indicate not stopped
+					pEnemy->stopped = false;
+				}
+				else // player is not moving and enemy is not stopped
+				{
+					// stop moving
+					pEnemy->velCurr.x = 0;
+					pEnemy->velCurr.y = 0;
+
+					// set flag to indicate stopped
+					pEnemy->stopped = true;
+				}
+			}
+			else
+			{
+				// stop moving if already close to the player
+				pEnemy->velCurr.x = 0;
+				pEnemy->velCurr.y = 0;
+
+				// set flag to indicate stopped
+				pEnemy->stopped = true;
+			}
+		}
 	}
 
 	// ======================================================
@@ -525,79 +624,98 @@ void GS_Colosseum_Update(void) {
 			Health[0]->TextureMap = { 1, 11 };
 		}
 	}
+	static float playerHitTime = 0;
+	playerHitTime -= g_dt;
+	if (playerHitTime < 0) {
+		playerHitTime = 0;
+	}
 
-
-	if ((Player->posCurr.y - SPRITE_SCALE / 2) <= 45 && (Player->posCurr.y + SPRITE_SCALE / 2) >= -65 && (Player->posCurr.x - SPRITE_SCALE / 2) <= -85 && (Player->posCurr.x + SPRITE_SCALE / 2) >= -215) {
-		//player_direction.x = -player_direction.x;
-
-		float player_bottom = Player->posCurr.y + 50;
-		float tiles_bottom = 0 + 50;
-		float player_right = Player->posCurr.x + 50;
-		float tiles_right = -160 + 50;
-
-		float b_collision = tiles_bottom - Player->posCurr.y;
-		float t_collision = player_bottom - 0;
-		float l_collision = player_right + 160;
-		float r_collision = tiles_right - Player->posCurr.x;
-
-		if (t_collision < b_collision && t_collision < l_collision && t_collision < r_collision) {
-			//Top collision
-			std::cout << "collide top" << std::endl;
-			if (Player->velCurr.y == 1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = -1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
+	//if player receive damage from collision or from mob, player decrease health
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
 		}
 
-		if (b_collision < t_collision && b_collision < l_collision && b_collision < r_collision) {
-			//bottom collision
-			std::cout << "collide botton" << std::endl;
-			if (Player->velCurr.y == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.y = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.y = 1;
-				Player->posCurr.y += Player->velCurr.y;
-			}
-		}
+		if (pInst->pObject->type == TYPE_ENEMY) {
 
-		if (l_collision < r_collision && l_collision < t_collision && l_collision < b_collision) {
-			//Left collision
-			std::cout << "collide left" << std::endl;
-			if (Player->velCurr.x == 1)
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+				&& playerHitTime == 0)
 			{
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
-			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = -1;
-				Player->posCurr.x += Player->velCurr.x;
+				if (Player->health > 0)
+				{
+					Player->deducthealth();
+
+					// Hit cooldown
+					playerHitTime = 0.5f;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+						Player->posCurr += pInst->velCurr / 4;
+					else Player->posCurr -= Player->velCurr / 4;
+
+				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*pInst) < 0.6f) {
+					pInst->deducthealth(Player->damage);
+					// Knockback
+					AEVec2 slash2Mob = pInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
+				}
 			}
 
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+				staticObjInst* jInst = sStaticObjInstList + j;
+				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+					continue;
+				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*jInst) < 0.6f
+					&& jInst->Alpha == 1) {
+					pInst->deducthealth(Player->damage);
+					// Knockback
+					printf("dmg mobs");
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
+				}
+			}
 		}
 
-		if (r_collision < l_collision && r_collision < t_collision && r_collision < b_collision) {
-			//Right collision
-			std::cout << "collide right" << std::endl;
-			if (Player->velCurr.x == -1) {
-				std::cout << "move top" << std::endl;
-				Player->velCurr.x = 0;
+		if (pInst->pObject->type == TYPE_BULLET) {
+			int flag = CheckInstanceBinaryMapCollisionCollo(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
+				Player->deducthealth();
+				gameObjInstDestroy(pInst);
 			}
-			else {
-				std::cout << "move bot" << std::endl;
-				Player->velCurr.x = 1;
-				Player->posCurr.x += Player->velCurr.x;
+			if (flag & COLLISION_TOP) {
+				gameObjInstDestroy(pInst);
 			}
+			if (flag & COLLISION_BOTTOM) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_RIGHT) {
+				gameObjInstDestroy(pInst);
+			}
+			if (flag & COLLISION_LEFT) {
+				gameObjInstDestroy(pInst);
+			}
+		}
+
+		switch (Player->health)
+		{
+		case 0:
+			Health[2]->TextureMap = { 1, 11 };
+			break;
+		case 1:
+			Health[1]->TextureMap = { 1, 11 };
+			break;
+		case 2:
+			Health[0]->TextureMap = { 1, 11 };
 		}
 	}
+
+
 
 	// ===================================
 	// update active game object instances
@@ -631,7 +749,36 @@ void GS_Colosseum_Update(void) {
 		std::cout << "collided" << std::endl;
 	}*/
 
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
 
+		if (pInst->pObject->type == TYPE_ENEMY)
+		{
+			if (pInst->health == 0)
+			{
+				gameObjInstDestroy(pInst);
+				CURRENT_MOBS -= 1;
+				//			//randomising potion drop rate when mobs are killed 
+				//			srand(time(NULL));
+				//			if (rand() % 2 == 0)
+				//			{
+				//				AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
+				//				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+				//				Potion->TextureMap = { 6,9 };
+			}
+		}
+		//	}
+
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			pInst->timetracker += g_dt;
+			if (pInst->health == 0) {
+				gGameStateNext = GS_DEATHSCREEN;
+			}
+		}
+	}
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -700,6 +847,139 @@ void GS_Colosseum_Update(void) {
 		}
 		testfile.close();
 	}
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		AEVec2 reverse;
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			AEVec2Neg(&reverse, &pInst->velCurr);
+			Timer += g_dt;
+			if (Timer > 0.25f)
+			{
+				AEVec2 particlecoords = pInst->posCurr;
+				particlecoords.y = pInst->posCurr.y - 0.48;
+				Timer -= 0.25f;
+				ParticleSystemRequest(0, 10.6f, &particlecoords,
+					&reverse, 1.0f, 0.15f, 10);
+			}
+			else
+			{
+				Timer += g_dt;
+			}
+		}
+		break;
+
+	}
+
+
+	if (AEInputCheckTriggered(AEVK_E)) {
+		for (int i = 0; i < 1; i++)
+		{
+			//Interaction with Chest
+			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+			{
+				//change texture of chest
+				Chest[i]->TextureMap = { 8, 7 };
+				AEVec2 Pos = { Chest[i]->posCurr.x, Chest[i]->posCurr.y };
+				staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
+				Potion->TextureMap = { 6,9 };
+				waves = 1;
+			}
+		}
+	}
+
+	int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		std::cout << Player->posCurr.y << std::endl;
+		//Player->posCurr.y + 0.5;
+	}
+
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Player->posCurr.y);
+
+		//Player->posCurr.y - 0.5;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Player->posCurr.x);
+
+		//Player->posCurr.x - 0.5;
+	}
+
+
+	//WAVES///////////////////
+	if (waves >= 1) {
+		wavestimer += g_dt;
+	}
+	if (wavestimer >= 5.f) {
+		if (waves == 15) {
+			waves = 2;
+		}
+	}
+
+	if (wavestimer >= 10.f) {
+		if (waves == 17) {
+			waves = 3;
+		}
+	}
+
+	if (wavestimer >= 15.f) {
+		waves = 99;
+	}
+
+	if (waves == 1) {
+		//Initialise enemy in level
+		AEVec2 Enemypos[2] = { {14.f, -14.f} ,{20.f, -14.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+		waves = 15;
+	}
+
+	if (waves == 2) {
+		//Initialise enemy in level
+		AEVec2 Enemypos[4] = { {14.f, -14.f} ,{20.f, -14.f}, {14.f, -17.f} ,{20.f, -17.f} };
+		for (int i = 0; i < 4; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+
+		waves = 17;
+	}
+
+	if (waves == 3) {
+		//Initialise enemy in level
+		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
+		for (int i = 0; i < 2; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &Enemypos[i], 0, 0);
+			enemy->TextureMap = { 0,9 };
+			enemy->health = 3;
+		}
+
+		waves = 99;
+	}
+
+	//WAVESSSSSSSSS//////////////////////////////////
+	ParticleSystemUpdate();
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 
 }
@@ -823,7 +1103,8 @@ void GS_Colosseum_Draw(void) {
 		}
 
 		else if (pInst->pObject->type == TYPE_ENEMY) {
-			std::cout << " ghost is spawnned near cam" << std::endl;
+			
+			//std::cout << " ghost is spawnned near cam" << std::endl;
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
@@ -898,6 +1179,16 @@ void GS_Colosseum_Draw(void) {
 			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
+
+	GameObjInst* pchar;
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		pchar = sGameObjInstList + i;
+
+		if (pchar->pObject->type == TYPE_CHARACTER) {
+			break;
+		}
+	}
+	ParticleSystemDraw(&pchar->transform);
 }
 
 /******************************************************************************/
@@ -921,6 +1212,7 @@ void GS_Colosseum_Free(void) {
 			staticObjInstDestroy(pInst);
 		}
 	}
+	ParticleSystemFree();
 
 }
 

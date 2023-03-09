@@ -19,9 +19,7 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	const AABB& aabb2, const AEVec2& vel2)
 {
 
-	//Implement the collision intersection over here.
 
-	//The steps are:	
 	//Step 1: Check for static collision detection between rectangles (before moving). 
 	//			If the check returns no overlap you continue with the following next steps (dynamics).
 	//			Otherwise you return collision true
@@ -135,6 +133,10 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 
 int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[124][42])
 {
+
+
+
+
 	int Flag = 0;
 	int x1, y1, x2, y2;
 
@@ -212,6 +214,82 @@ void snaptocelladd(float* coordinate) {
 void snaptocellsub(float* coordinate) {
 	*coordinate = static_cast<float>(static_cast<int>(*coordinate)) - 0.5f;
 }
+
+
+
+int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[28][29])
+{
+	int Flag = 0;
+	int x1, y1, x2, y2;
+
+	//std::cout << "X: " << PosX << "\tY: " << PosY << std::endl;
+
+	// Check the right side of the object instance
+	//Hotspot 1f
+	x1 = int(PosX + scaleX / 2);
+	y1 = int(PosY + scaleY / 4);
+	//Hotspot 2
+	x2 = int(PosX + scaleX / 2);
+	y2 = int(PosY - scaleY / 4);
+
+	//std::cout << "X1: " << x1 << "\tY1: " << y1 << std::endl;
+	//std::cout << "X2: " << x2 << "\tY2: " << y2 << std::endl;
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_RIGHT;
+		std::cout << "r" << std::endl;
+
+	}
+
+
+	// Check the left side of the object instance
+	//Hotspot 1
+	x1 = int(PosX - scaleX / 2);
+	y1 = int(PosY - scaleY / 4);
+	//Hotspot 2
+	x2 = int(PosX - scaleX / 2);
+	y2 = int(PosY + scaleY / 4);
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_LEFT;
+		std::cout << "l" << std::endl;
+	}
+
+	// Check the top side of the object instance
+	//Hotspot 1
+	x1 = int(PosX - scaleX / 4);
+	y1 = int(PosY + scaleY / 2);
+	//Hotspot 2
+	x2 = int(PosX + scaleX / 4);
+	y2 = int(PosY + scaleY / 2);
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_BOTTOM;
+		std::cout << "b" << std::endl;
+	}
+
+
+	// Check the top side of the object instance
+	//Hotspot 1
+	x1 = int(PosX + scaleX / 4);
+	y1 = int(PosY - scaleY / 2);
+	//Hotspot 2
+	x2 = int(PosX - scaleX / 4);
+	y2 = int(PosY - scaleY / 2);
+
+
+	if (binaryMap[x1][abs(y1)] == 1 || binaryMap[x2][abs(y2)] == 1) {
+		Flag |= COLLISION_TOP;
+		std::cout << "t" << std::endl;
+	}
+
+	return Flag;
+}
+
+
 
 
 

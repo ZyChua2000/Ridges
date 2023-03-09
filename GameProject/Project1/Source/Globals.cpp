@@ -9,6 +9,11 @@ const int			COLLISION_RIGHT = 0x00000002;	// 0010
 const int			COLLISION_TOP = 0x00000004;		// 0100
 const int			COLLISION_BOTTOM = 0x00000008;	// 1000
 
+const float			TOWER_RIGHT = PI/2;
+const float			TOWER_LEFT = -PI/2;
+const float			TOWER_UP = 0;
+const float			TOWER_DOWN = PI;
+
 const int			CAM_CELL_WIDTH = 20;			// Number of cells in viewport for width
 const int			CAM_CELL_HEIGHT = 12;			// Number of cells in viewport for height
 

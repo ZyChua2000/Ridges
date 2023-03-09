@@ -7,24 +7,11 @@
 #include <iostream>
 #include <queue>
 #include <set>
-#include <stack>
-#include <tuple>
 #include <vector>
 
-//struct Enemy:GameObjInst {
-//
-//	Enemy()
-//	{
-//		
-//	}
-//
-//
-//};
-//
-//void enemy_Init();
-
-
-
+/******************************************************************
+node struct for path finding
+*******************************************************************/
 struct Node 
 {
 	bool b_Obstacle = false;
@@ -36,8 +23,28 @@ struct Node
 	Node* parent;
 };
 
+
+/******************************************************************
+function declaration for Initialising node variables
+*******************************************************************/
 void NodesInit(int *grid , int width, int height);
+
+/******************************************************************
+function declaration for A* pathfinding
+*******************************************************************/
 std::vector<Node*> pathfind(float x, float y, float x1, float y1);
+
+/******************************************************************
+function declaration for calculating distance
+*******************************************************************/
 float distance(Node* a, Node* b);
+
+/******************************************************************
+function declaration for calculating hcost of nodes
+*******************************************************************/
 float heuristic(Node* a, Node* b);
+
+/******************************************************************
+function declaration deleting nodes 
+*******************************************************************/
 void deletenodes();
