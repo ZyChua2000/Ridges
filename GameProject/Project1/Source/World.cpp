@@ -451,7 +451,8 @@ void GS_World_Init(void) {
 		jInst->TextureMap = { 5,3 };
 	}
 
-	int* yy = *binaryMap;
+
+	int* gridptr = *binaryMap;
 	//Init pathfinding nodes
 	NodesInit(gridptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
