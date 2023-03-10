@@ -12,11 +12,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 
-#pragma once
 
-#include "GameObjs.h"
-#include <iostream>
-#include "Globals.h"
+#include "main.h"
 
 
 extern float			    g_dt;
@@ -37,3 +34,4 @@ void snaptocelladd(float* coordinate);
 
 void snaptocellsub(float* coordinate);
 
+bool snapCollision(GameObjInst& Object, int& flag);
