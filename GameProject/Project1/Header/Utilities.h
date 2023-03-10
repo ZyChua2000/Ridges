@@ -171,12 +171,5 @@ namespace utilities {
 	*************************************************************************/
 	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
 
-	void decreaseTime(float& input);
-
-	void changeMapObj(float mouseX, float mouseY, int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, staticObjInst mapeditorObj);
-
-	void loadObjs(AEVec2*& Positions, int& num, std::string filename);
-
-	void unloadObjs(AEVec2* Position);
+	void decreaseTime(float input);
 }
-

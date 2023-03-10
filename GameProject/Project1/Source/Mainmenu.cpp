@@ -55,6 +55,7 @@ struct MenuObjInst
 
 static const unsigned int	MENU_OBJ_NUM_MAX = 8;
 static const unsigned int	MENU_OBJ_INST_NUM_MAX = 32;
+static const unsigned long	FLAG_ACTIVE = 0x00000001;
 
 
 static MenuObj				sMenuObjList[MENU_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)

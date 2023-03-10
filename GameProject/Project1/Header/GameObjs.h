@@ -44,17 +44,6 @@ struct staticObjInst
 	void spikeUpdate();
 
 	void Movement(GameObj *pEnmy);
-	void calculateBB();
-
-	void calculateTransMatrix();
-
-	void mapEditorObjectSpawn();
-
-	void chest2Potion();
-
-	void shootBullet();
-
-	void tilt45();
 };
 
 
@@ -125,21 +114,7 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
-	void walk(float walkCD);
-
-	void calculateBB();
-
-	void velToPos(float speed);
-
-	void calculateTransMatrix();
-
-	void Player_Slash(float angle);
-
-	void dustParticles();
-
-	void mobsKilled();
-
-	
+	void walk();
 };
 
 // This enum is a list of the different types of game objects
@@ -178,13 +153,5 @@ struct Inventory {
 		Key = 0;
 		lastItem = 0;
 	}
-
-	void itemPickUp(staticObjInst *item);
 };
 
-
-
-void gameObjInstDestroy(GameObjInst* pInst);
-staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
-void gameObjInstDestroy(GameObjInst* pInst);
-GameObjInst* gameObjInstCreate(unsigned long type,float scale,AEVec2* pPos,AEVec2* pVel,float dir);
