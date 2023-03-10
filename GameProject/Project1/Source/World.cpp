@@ -825,6 +825,8 @@ void GS_World_Update(void) {
 						//is_at_end = true;
 						target_pos.x = Player->posCurr.x;
 						target_pos.y = Player->posCurr.y;
+
+						pEnemy->path.clear();
 					}
 				}
 				else /*if(is_at_end)*/
@@ -832,35 +834,11 @@ void GS_World_Update(void) {
 					target_pos.x = pEnemy->path[pEnemy->target_node]->ae_NodePos.x;//
 					target_pos.y = pEnemy->path[pEnemy->target_node]->ae_NodePos.y;//
 				}
-				pEnemy->velCurr.x = target_pos.x - pEnemy->posCurr.x;
-				pEnemy->velCurr.y = target_pos.y - pEnemy->posCurr.y;
+				pEnemy->velCurr.x = target_pos.x - pEnemy->posCurr.x;//
+				pEnemy->velCurr.y = target_pos.y - pEnemy->posCurr.y;//
 				AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
 				pEnemy->velCurr.x *= (g_dt * NPC_SPEED); //
 				pEnemy->velCurr.y *= (g_dt * NPC_SPEED);
-
-				// check if player is moving or the enemy is already stopped
-				//if (/*abs(Player->velCurr.x )> 0 || abs(Player->velCurr.y) > 0 ||*/ pEnemy->stopped)
-				//{
-				//	if (pNextNode->parent)
-				//	{
-				//		//// continue moving
-				//		//pEnemy->velCurr.x -= (g_dt * NPC_SPEED * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-				//		//pEnemy->velCurr.y -= (g_dt * NPC_SPEED * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
-				//		//AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
-
-				//		//// set flag to indicate not stopped
-				//		//pEnemy->stopped = false;
-				//	}
-				//}
-				//else // player is not moving and enemy is not stopped
-				//{
-				//	// stop moving
-				//	pEnemy->velCurr.x = 0;
-				//	pEnemy->velCurr.y = 0;
-
-				//	// set flag to indicate stopped
-				//	pEnemy->stopped = true;
-				//}
 			}
 			else
 			{
@@ -870,6 +848,7 @@ void GS_World_Update(void) {
 
 				// set flag to indicate stopped
 				pEnemy->stopped = true;
+				pEnemy->path.clear();
 			}
 		}
 	}

@@ -43,7 +43,7 @@ struct staticObjInst
 
 	void spikeUpdate();
 
-	void Movement(*);
+	void Movement(GameObj *pEnmy);
 };
 
 
