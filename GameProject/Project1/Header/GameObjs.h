@@ -2,6 +2,11 @@
 #include "AEEngine.h"
 #include <vector>
 
+
+extern const float MAX_ENEMY_DISTANCE;							// define the maximum distance at which enemies should stop moving
+
+extern const float RANGE_FROM_PLAYER;							// define the range for enemy and player intereaction 
+
 struct Node;
 
 // This struct is for GameObj, called and initalised during load for each unique game object
@@ -138,6 +143,8 @@ struct GameObjInst
 	void dustParticles();
 
 	void mobsKilled();
+
+	void mobsPathFind(GameObjInst target);
 
 	
 };

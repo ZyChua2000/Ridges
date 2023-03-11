@@ -1,5 +1,9 @@
 #include "main.h"
 
+const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
+
+const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
+
 void staticObjInst::spikeUpdate() {
 	if (timetracker2 == 0) {
 		timetracker += g_dt;
@@ -246,6 +250,81 @@ void staticObjInst:: chest2Potion() {
 	TextureMap = TEXTURE_OPENEDCHEST;
 	staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &posCurr, 0);
 	Potion->TextureMap = TEXTURE_POTION;
+}
+
+void GameObjInst::mobsPathFind(GameObjInst target) {
+	pathtimer -= g_dt; // timer counting down 
+
+	//bool is_at_end = false;
+	if (pathtimer <= 0)
+	{
+		// perform pathfinding for this enemy
+		path.clear();
+		path = pathfind(posCurr.x, posCurr.y, target.posCurr.x, target.posCurr.y); //pathfind function
+		pathtimer = pathfindtime; // set timer back to default;
+		target_node = 0; // target node for enemy to find the next node
+		//is_at_end = false;
+	}
+
+	// update enemy velocity based on path
+	if (!path.empty())// as long as path not empty 
+	{
+		//Node* pNextNode = pEnemy->path[1];
+
+		// calculate the distance between the enemy and player
+		float distance = sqrtf(powf(target.posCurr.x - posCurr.x, 2) + powf(target.posCurr.y - posCurr.y, 2));
+
+		AEVec2 target_pos;
+		AEVec2Set(&target_pos, 0, 0);
+
+		// update enemy velocity only if it is farther than the maximum distance
+		if (distance > MAX_ENEMY_DISTANCE)
+		{
+			float dist = AEVec2Distance(&posCurr, &path[target_node]->ae_NodePos);
+
+			// to check the enemy is at the node 
+			if (dist <= RANGE_FROM_PLAYER)
+			{
+				//reached the node!!!!
+				//find the next node
+				if (target_node + 1 < path.size())
+				{
+					target_node++;
+					//is_at_end = false;
+				}
+
+				//its the last node!
+				else
+				{
+					//is_at_end = true;
+					target_pos.x = target.posCurr.x;
+					target_pos.y = target.posCurr.y;
+
+					path.clear();
+				}
+			}
+			else /*if(is_at_end)*/
+			{
+				target_pos.x = path[target_node]->ae_NodePos.x;//
+				target_pos.y = path[target_node]->ae_NodePos.y;//
+			}
+			velCurr.x = target_pos.x - posCurr.x;//
+			velCurr.y = target_pos.y - posCurr.y;//
+			AEVec2Normalize(&velCurr, &velCurr);//normalise to unit vec 1
+			velCurr.x *= (g_dt * NPC_SPEED); //
+			velCurr.y *= (g_dt * NPC_SPEED);
+		}
+		else
+		{
+			// stop moving if already close to the player
+			velCurr.x = 0;
+			velCurr.y = 0;
+
+			// set flag to indicate stopped
+			stopped = true;
+			path.clear();
+		}
+	}
 }
 
 /******************************************************************************/

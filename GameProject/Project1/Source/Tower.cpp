@@ -42,10 +42,6 @@ static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 
-static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
-static const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
-
-
 // -----------------------------------------------------------------------------
 
 

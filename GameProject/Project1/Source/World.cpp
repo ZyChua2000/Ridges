@@ -41,11 +41,6 @@ static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
-
-static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
-
-static const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
-
 bool loadState;
 
 // -----------------------------------------------------------------------------
@@ -663,7 +658,7 @@ void GS_World_Update(void) {
 	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 	{
 		GameObjInst* pEnemy = sGameObjInstList + j;
-		pEnemy->pathtimer -= g_dt; // timer counting down 
+
 
 		// skip non-active object
 		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
@@ -672,76 +667,7 @@ void GS_World_Update(void) {
 		if (Player->calculateDistance(*pEnemy) > 10)
 			continue;
 
-		//bool is_at_end = false;
-		if (pEnemy->pathtimer <= 0)
-		{
-			// perform pathfinding for this enemy
-			pEnemy->path.clear();
-			pEnemy->path = pathfind(pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y); //pathfind function
-			pEnemy->pathtimer = pEnemy->pathfindtime; // set timer back to default;
-			pEnemy->target_node=0; // target node for enemy to find the next node
-			//is_at_end = false;
-		}
-
-		// update enemy velocity based on path
-		if (!pEnemy->path.empty())// as long as path not empty 
-		{
-			//Node* pNextNode = pEnemy->path[1];
-
-			// calculate the distance between the enemy and player
-			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
-
-			AEVec2 target_pos;
-			AEVec2Set(&target_pos, 0, 0);
-
-			// update enemy velocity only if it is farther than the maximum distance
-			if (distance > MAX_ENEMY_DISTANCE)
-			{
-				float dist=AEVec2Distance(&pEnemy->posCurr, &pEnemy->path[pEnemy->target_node]->ae_NodePos);
-				
-				// to check the enemy is at the node 
-				if (dist <= RANGE_FROM_PLAYER)
-				{
-					//reached the node!!!!
-					//find the next node
-					if (pEnemy->target_node + 1 < pEnemy->path.size())
-					{
-						pEnemy->target_node++;
-						//is_at_end = false;
-					}
-
-					//its the last node!
-					else
-					{
-						//is_at_end = true;
-						target_pos.x = Player->posCurr.x;
-						target_pos.y = Player->posCurr.y;
-
-						pEnemy->path.clear();
-					}
-				}
-				else /*if(is_at_end)*/
-				{
-					target_pos.x = pEnemy->path[pEnemy->target_node]->ae_NodePos.x;//
-					target_pos.y = pEnemy->path[pEnemy->target_node]->ae_NodePos.y;//
-				}
-				pEnemy->velCurr.x = target_pos.x - pEnemy->posCurr.x;//
-				pEnemy->velCurr.y = target_pos.y - pEnemy->posCurr.y;//
-				AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
-				pEnemy->velCurr.x *= (g_dt * NPC_SPEED); //
-				pEnemy->velCurr.y *= (g_dt * NPC_SPEED);
-			}
-			else
-			{
-				// stop moving if already close to the player
-				pEnemy->velCurr.x = 0;
-				pEnemy->velCurr.y = 0;
-
-				// set flag to indicate stopped
-				pEnemy->stopped = true;
-				pEnemy->path.clear();
-			}
-		}
+		pEnemy->mobsPathFind(*Player);
 	}
 
 
@@ -922,7 +848,7 @@ void GS_World_Update(void) {
 		if (pInst->pObject->type == TYPE_TOWER) {
 			utilities::decreaseTime(pInst->timetracker);
 
-			if (pInst->timetracker > 0) {
+			if (pInst->timetracker == 0) {
 				pInst->timetracker = TOWER_REFRESH;
 				pInst->shootBullet();
 			}
