@@ -329,19 +329,16 @@ void GS_World_Init(void) {
 		//Initialise Player
 		AEVec2 PlayerPos = { 12,-8 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-		Player->TextureMap = { 1,8 };
 
 		Backpack.Potion = 0;
 		Backpack.Key = 0;
 
 		Player->health = 3;
 		Player->damage = 1;
-		Player->timetracker = 0;
 
 		//Initialise player health.
 		for (int i = 0; i < Player->health; i++) {
 			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-			Health[i]->TextureMap = TEXTURE_FULLHEART;
 		}
 
 		//Initialise Levers in level
@@ -349,7 +346,6 @@ void GS_World_Init(void) {
 
 		for (int i = 0; i < num; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-			Levers[i]->TextureMap = TEXTURE_LEVERS;
 		}
 
 		utilities::unloadObjs(pos);
@@ -358,7 +354,6 @@ void GS_World_Init(void) {
 		utilities::loadObjs(pos, num, "worldEnemy.txt");
 		for (int i = 0; i < num; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->TextureMap = TEXTURE_ENEMY;
 			enemy->health = 3;
 			enemy->pathfindtime = 0.25f;
 			enemy->pathtimer = enemy->pathfindtime;
@@ -371,7 +366,6 @@ void GS_World_Init(void) {
 		for (int i = 0; i < num; i++)
 		{
 			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos[i], 0);
-			Chest[i]->TextureMap = TEXTURE_UNOPENEDCHEST;
 		}
 
 		utilities::unloadObjs(pos);
@@ -425,7 +419,6 @@ void GS_World_Init(void) {
 
 	for (int i = 0; i < sizeof(towerRot) / sizeof(towerRot[0]); i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], 0);
-		jInst->TextureMap = TEXTURE_TOWER;
 		binaryMap[(int)towerPos[i].x][(int)-towerPos[i].y] = 1;
 	}
 
@@ -433,7 +426,6 @@ void GS_World_Init(void) {
 	utilities::loadObjs(pos, num, "worldSpikes.txt");
 	for (int i = 0; i < num; i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
-		jInst->TextureMap = TEXTURE_SPIKE;
 	}
 	utilities::unloadObjs(pos);
 
@@ -452,15 +444,11 @@ void GS_World_Init(void) {
 
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
-	MenuObj[0]->TextureMap = TEXTURE_POTION;
-	MenuObj[1]->TextureMap = TEXTURE_KEYS;
 
 
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
-	NumObj[0]->TextureMap = TEXTURE_NUMBERS[0];
-	NumObj[1]->TextureMap = TEXTURE_NUMBERS[0];
-
+	
 
 
 	ParticleSystemInit();

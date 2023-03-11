@@ -365,7 +365,21 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 			pInst->posCurr = pPos ? *pPos : zero;
 			pInst->velCurr = pVel ? *pVel : zero;
 			pInst->dirCurr = dir;
-
+			pInst->timetracker = 0;
+	
+			switch (type) {
+			case TYPE_CHARACTER:
+				pInst->TextureMap = TEXTURE_PLAYER;
+				break;
+			case TYPE_ENEMY:
+				pInst->TextureMap = TEXTURE_ENEMY;
+				break;
+			case TYPE_BULLET:
+				pInst->TextureMap = TEXTURE_BULLET;
+			default:
+				pInst->TextureMap = { 0,0 };
+				break;
+			}
 			// return the newly created instance
 			sGameObjInstNum++; //Increment the number of game object instance
 			return pInst;
@@ -409,6 +423,7 @@ void gameObjInstDestroy(GameObjInst* pInst)
 staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
+
 	AEVec2Zero(&zero);
 
 	// loop through the object instance list to find a non-used object instance
@@ -425,6 +440,35 @@ staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos
 			pInst->scale = scale;
 			pInst->dirCurr = dir;
 			pInst->posCurr = pPos ? *pPos : zero;
+			pInst->timetracker = 0;
+			pInst->timetracker2 = 0;
+
+			switch (type) {
+			case TYPE_ITEMS:
+				pInst->TextureMap = TEXTURE_POTION;
+				break;
+			case TYPE_HEALTH:
+				pInst->TextureMap = TEXTURE_FULLHEART;
+				break;
+			case TYPE_LEVERS:
+				pInst->TextureMap = TEXTURE_LEVERS;
+				break;
+			case TYPE_CHEST:
+				pInst->TextureMap = TEXTURE_UNOPENEDCHEST;
+				break;
+			case TYPE_KEY:
+				pInst->TextureMap = TEXTURE_KEYS;
+				break;
+			case TYPE_SPIKE:
+				pInst->TextureMap = TEXTURE_SPIKE;
+				break;
+			case TYPE_TOWER:
+				pInst->TextureMap = TEXTURE_TOWER;
+				break;
+			default:
+				pInst->TextureMap = { 0,0 };
+				break;
+			}
 
 			// return the newly created instance
 			sStaticObjInstNum++; //Increment the number of game object instance
