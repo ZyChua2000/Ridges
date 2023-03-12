@@ -41,6 +41,8 @@ extern double	g_appTime;
 #include "Enemy.h"
 #include "Globals.h"
 #include "ParticleSystem.h"
+#include "mapFunctions.h"
+#include "staticObjs.h"
 
 
 #endif

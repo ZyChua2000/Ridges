@@ -55,57 +55,6 @@ void GameObjInst::recoverhealth(int recover)
 	}
 }
 
-//player walk
-void GameObjInst::walk(float walkCD)
-{
-	if (walkCD == 0) {
-		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
-		{
-			velCurr.y = 1;// this is direction , positive y direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
-			velCurr.y *= (g_dt * PLAYER_SPEED);
-		}
-		if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
-		{
-			velCurr.y = -1;// this is direction , negative y direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
-			velCurr.y *= (g_dt * PLAYER_SPEED);
-		}
-		if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
-		{
-			velCurr.x = -1;// this is direction , negative x direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
-			velCurr.x *= (g_dt * PLAYER_SPEED);
-			scale = -1;
-		}
-		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
-		{
-			velCurr.x = 1;// this is direction , positive x direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
-			velCurr.x *= (g_dt * PLAYER_SPEED);
-			scale = 1;
-		}
-
-		if ((int)(timetracker * 4) % 2 == 1) {
-			TextureMap.x = 3;
-			TextureMap.y = 12;
-		}
-		else {
-			TextureMap.x = 4;
-			TextureMap.y = 12;
-		}
-	}
-}
-
-void GameObjInst::Player_Slash(float angle) {
-	AEVec2 Pos = posCurr + velCurr;
-	Pos.x += -cos(angle) / 1.3f;
-	Pos.y += -sin(angle) / 1.3f;
-	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
-	slashObj->timetracker = 0;
-}
-
-
 float GameObjInst::calculateDistance(GameObjInst dynamicObj) {
 	return sqrt((posCurr.x - dynamicObj.posCurr.x) * (posCurr.x - dynamicObj.posCurr.x) +
 		(posCurr.y - dynamicObj.posCurr.y) * (posCurr.y - dynamicObj.posCurr.y));
@@ -163,37 +112,6 @@ void staticObjInst::shootBullet() {
 	jInst->TextureMap = TEXTURE_BULLET;
 }
 
-void GameObjInst::dustParticles() {
-	AEVec2 reverse;
-	AEVec2Neg(&reverse, &velCurr);
-	internalTimer += g_dt;
-	if (internalTimer > 0.25f)
-	{
-		AEVec2 particlecoords = posCurr;
-		particlecoords.y = posCurr.y - 0.48;
-		internalTimer -= 0.25f;
-		ParticleSystemRequest(0, 10.6f, &particlecoords,
-			&reverse, 1.0f, 0.15f, 10);
-	}
-	else
-	{
-		internalTimer += g_dt;
-	}
-}
-
-void GameObjInst::mobsKilled() {
-
-	srand(time(NULL));
-	if (rand() % 2 == 0)
-	{
-		AEVec2 Pos = { posCurr.x, posCurr.y };
-		staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-		Potion->TextureMap = TEXTURE_POTION;
-	}
-
-	gameObjInstDestroy(this);
-}
-
 void GameObjInst::calculateTransMatrix() {
 	AEMtx33		 transMat = { 0 }, rotMat = { 0 }, scaleMat = { 0 };
 
@@ -229,102 +147,10 @@ void staticObjInst::calculateTransMatrix() {
 	AEMtx33Concat(&transform, &transMat, &transform);
 }
 
-void staticObjInst::mapEditorObjectSpawn() {
-	scale = 0.7f;
-	posCurr = { mouseX + camX + 0.3f, mouseY + camY + 0.3f };
-	if (AEInputCheckTriggered(AEVK_K) && TextureMap.y < TEXTURE_MAXHEIGHT / TEXTURE_CELLSIZE) {
-		TextureMap.y += 1;
-	}
-	if (AEInputCheckTriggered(AEVK_I) && TextureMap.y > 0) {
-		TextureMap.y -= 1;
-	}
-	if (AEInputCheckTriggered(AEVK_J) && TextureMap.x > 0) {
-		TextureMap.x -= 1;
-	}
-	if (AEInputCheckTriggered(AEVK_L) && TextureMap.x < TEXTURE_MAXWIDTH / TEXTURE_CELLSIZE) {
-		TextureMap.x += 1;
-	}
-}
-
 void staticObjInst:: chest2Potion() {
 	TextureMap = TEXTURE_OPENEDCHEST;
 	staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &posCurr, 0);
 	Potion->TextureMap = TEXTURE_POTION;
-}
-
-void GameObjInst::mobsPathFind(GameObjInst target) {
-	pathtimer -= g_dt; // timer counting down 
-
-	//bool is_at_end = false;
-	if (pathtimer <= 0)
-	{
-		// perform pathfinding for this enemy
-		path.clear();
-		path = pathfind(posCurr.x, posCurr.y, target.posCurr.x, target.posCurr.y); //pathfind function
-		pathtimer = pathfindtime; // set timer back to default;
-		target_node = 0; // target node for enemy to find the next node
-		//is_at_end = false;
-	}
-
-	// update enemy velocity based on path
-	if (!path.empty())// as long as path not empty 
-	{
-		//Node* pNextNode = pEnemy->path[1];
-
-		// calculate the distance between the enemy and player
-		float distance = sqrtf(powf(target.posCurr.x - posCurr.x, 2) + powf(target.posCurr.y - posCurr.y, 2));
-
-		AEVec2 target_pos;
-		AEVec2Set(&target_pos, 0, 0);
-
-		// update enemy velocity only if it is farther than the maximum distance
-		if (distance > MAX_ENEMY_DISTANCE)
-		{
-			float dist = AEVec2Distance(&posCurr, &path[target_node]->ae_NodePos);
-
-			// to check the enemy is at the node 
-			if (dist <= RANGE_FROM_PLAYER)
-			{
-				//reached the node!!!!
-				//find the next node
-				if (target_node + 1 < path.size())
-				{
-					target_node++;
-					//is_at_end = false;
-				}
-
-				//its the last node!
-				else
-				{
-					//is_at_end = true;
-					target_pos.x = target.posCurr.x;
-					target_pos.y = target.posCurr.y;
-
-					path.clear();
-				}
-			}
-			else /*if(is_at_end)*/
-			{
-				target_pos.x = path[target_node]->ae_NodePos.x;//
-				target_pos.y = path[target_node]->ae_NodePos.y;//
-			}
-			velCurr.x = target_pos.x - posCurr.x;//
-			velCurr.y = target_pos.y - posCurr.y;//
-			AEVec2Normalize(&velCurr, &velCurr);//normalise to unit vec 1
-			velCurr.x *= (g_dt * NPC_SPEED); //
-			velCurr.y *= (g_dt * NPC_SPEED);
-		}
-		else
-		{
-			// stop moving if already close to the player
-			velCurr.x = 0;
-			velCurr.y = 0;
-
-			// set flag to indicate stopped
-			stopped = true;
-			path.clear();
-		}
-	}
 }
 
 /******************************************************************************/

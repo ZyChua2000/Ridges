@@ -311,3 +311,21 @@ void ParticleObjInstDestroy(ParticleObjInst* pInst)
 	// zero out the flag
 	pInst->flag = 0;
 }
+
+void GameObjInst::dustParticles() {
+	AEVec2 reverse;
+	AEVec2Neg(&reverse, &velCurr);
+	internalTimer += g_dt;
+	if (internalTimer > 0.25f)
+	{
+		AEVec2 particlecoords = posCurr;
+		particlecoords.y = posCurr.y - 0.48;
+		internalTimer -= 0.25f;
+		ParticleSystemRequest(0, 10.6f, &particlecoords,
+			&reverse, 1.0f, 0.15f, 10);
+	}
+	else
+	{
+		internalTimer += g_dt;
+	}
+}

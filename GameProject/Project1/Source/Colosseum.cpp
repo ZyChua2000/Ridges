@@ -333,7 +333,7 @@ void GS_Colosseum_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
-	Player->walk(walkCD);
+	Player->playerWalk(walkCD);
 
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
