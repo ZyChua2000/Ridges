@@ -30,16 +30,6 @@ namespace utilities {
 		} return 0;
 	}
 
-	void aeDrawQuadMesh(f32 vertice1, f32 vertice2, f32 vertice3, f32 vertice4, u32 color) {
-
-		AEGfxTriAdd(vertice1, vertice1, color, vertice3, vertice3,
-			vertice2, vertice1, color, vertice4, vertice3,
-			vertice1, vertice2, color, vertice3, vertice4);
-
-		AEGfxTriAdd(vertice2, vertice1, color, vertice4, vertice3,
-			vertice2, vertice2, color, vertice4, vertice4,
-			vertice1, vertice2, color, vertice3, vertice4);
-	}
 
 	float getAngle(float x1, float y1, float x2, float y2) {
 		return AEACos((x1 - x2) / (float)sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2))));
@@ -68,56 +58,6 @@ namespace utilities {
 		}
 	}
 
-	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename) {
-		filename = "Assets/" + filename;
-		std::ofstream mapOutput{ filename };
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				mapOutput << (MapObjInstList + i * MAP_CELL_HEIGHT + j)->x << " ";
-				mapOutput << (MapObjInstList + i * MAP_CELL_HEIGHT + j)->y << " ";
-
-				if (i == MAP_CELL_WIDTH - 1) {
-					mapOutput << "\n";
-				}
-			}
-		}
-		mapOutput.close();
-	}
-
-	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename) {
-		filename = "Assets/" + filename;
-		std::ofstream mapOutput{ filename };
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				int x = (MapObjInstList + i * MAP_CELL_HEIGHT + j)->x;
-				int y = (MapObjInstList + i * MAP_CELL_HEIGHT + j)->y;
-
-				if ((x < 6 && y == 4) || (x < 4 && y == 3) || (x==6 && y ==2) || (x==6 && y == 3) || (x == 5 && y == 3))
-					mapOutput << "0" << " ";
-				else
-					mapOutput << "1" << " ";
-
-
-
-				if (i == MAP_CELL_WIDTH - 1) {
-					mapOutput << "\n";
-				}
-			}
-		}
-		mapOutput.close();
-	}
-
-	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
-		filename = "Assets/" + filename;
-		std::ifstream mapInput{ filename };
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				mapInput >> *(MapObjInstList + j * MAP_CELL_WIDTH + i);
-			}
-		}
-		mapInput.close();
-	}*/
-
 	void decreaseTime(float& input) {
 		input -= g_dt;
 		if (input < 0) {
@@ -125,35 +65,37 @@ namespace utilities {
 		}
 	}
 
-	void changeMapObj(float mouseX, float mouseY, int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, staticObjInst mapeditorObj) {
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				if (mouseX>= i &&
-					mouseX <= i + 1 &&
-					-mouseY >= j &&
-					-mouseY  <= j + 1
-					&& AEInputCheckCurr(AEVK_LBUTTON)) {
-					*(MapObjInstList + i * MAP_CELL_HEIGHT + j) = mapeditorObj.TextureMap;
-				}
+	void snapCamPos(AEVec2 playerPos, float& camX, float& camY, int MAP_CELL_WIDTH, int MAP_CELL_HEIGHT) {
+		if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > playerPos.x &&
+			CAM_CELL_WIDTH / 2 + 0.5 < playerPos.x) {
+			camX = playerPos.x;
+		}
+		if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -playerPos.y &&
+			CAM_CELL_HEIGHT / 2 + 0.5 < -playerPos.y) {
+			camY = playerPos.y;
+		}
+	}
+
+	void unlockGate(int gateNum, AEVec2* MapObjInstList, int* binaryMap, AEVec2 Gates[], int MAP_CELL_HEIGHT) {
+		for (int i = Gates[gateNum * 2].x; i < Gates[gateNum * 2 + 1].x + 1; i++) {
+			for (int j = Gates[gateNum * 2].y; j < Gates[gateNum * 2 + 1].y + 1; j++) {
+				*(MapObjInstList + i * MAP_CELL_HEIGHT + j) = TEXTURE_FLOOR;
+				*(binaryMap + i * MAP_CELL_HEIGHT + j) = 0;
 			}
 		}
 	}
 
-	void loadObjs(AEVec2*& Positions, int& num, std::string filename) {
-		filename = "Assets/" + filename;
-		std::ifstream fileInput{ filename };
-		fileInput >> num;
-		Positions = new AEVec2[num];
-
-		for (int i = 0; i < num; i++) {
-			fileInput >> Positions[i].x;
-			fileInput >> Positions[i].y;
+	void updatePlayerUI(staticObjInst* Health[3], staticObjInst* Key, staticObjInst* Potion, Inventory Backpack, int playerHealth) {
+		switch (playerHealth)
+		{
+		case 0:
+			Health[2]->TextureMap = TEXTURE_DEADHEART;
+			break;
+		case 1:
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
+			break;
+		case 2:
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
-
-		fileInput.close();
-	}
-
-	void unloadObjs(AEVec2* Position) {
-		delete[] Position;
 	}
 }

@@ -1,6 +1,11 @@
 #pragma once
-#include "AEEngine.h"
+#include "main.h"
 #include <vector>
+
+
+extern const float MAX_ENEMY_DISTANCE;							// define the maximum distance at which enemies should stop moving
+
+extern const float RANGE_FROM_PLAYER;							// define the range for enemy and player intereaction 
 
 struct Node;
 
@@ -47,15 +52,30 @@ struct staticObjInst
 
 	void calculateTransMatrix();
 
-	void mapEditorObjectSpawn();
+	void mapEditorObjectSpawn(float mouseX, float mouseY, float camX, float camY);
 
 	void chest2Potion();
 
 	void shootBullet();
 
 	void tilt45();
+
+	void playerSlashUpdate();
 };
 
+struct Inventory {
+	int Potion;
+	int Key;
+	int lastItem;
+
+	Inventory() {
+		Potion = 0;
+		Key = 0;
+		lastItem = 0;
+	}
+
+	void itemPickUp(staticObjInst* item);
+};
 
 // This struct is for dynamic objects, meaning game entities that will be moving
 struct GameObjInst
@@ -124,7 +144,7 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
-	void walk(float walkCD);
+	void playerWalk(float walkCD);
 
 	void calculateBB();
 
@@ -132,12 +152,21 @@ struct GameObjInst
 
 	void calculateTransMatrix();
 
-	void Player_Slash(float angle);
+	void playerSlashCreate(float angle);
 
 	void dustParticles();
 
 	void mobsKilled();
 
+	void mobsPathFind(GameObjInst target);
+
+	void playerStand();
+
+	void drinkPotion(staticObjInst*menuObj[3], Inventory& backPack);
+
+	void playerKnockback(GameObjInst mob);
+
+	void mobKnockback(staticObjInst slash);
 	
 };
 
@@ -167,19 +196,6 @@ enum TYPE
 	TYPE_NUM
 };
 
-struct Inventory {
-	int Potion;
-	int Key;
-	int lastItem;
-
-	Inventory(){
-		Potion = 0;
-		Key = 0;
-		lastItem = 0;
-	}
-
-	void itemPickUp(staticObjInst *item);
-};
 
 
 

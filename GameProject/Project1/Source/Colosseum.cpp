@@ -40,7 +40,6 @@ static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
-static const float MAX_ENEMY_DISTANCE = 1.0f;
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
@@ -334,7 +333,7 @@ void GS_Colosseum_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
-	Player->walk(walkCD);
+	Player->playerWalk(walkCD);
 
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;

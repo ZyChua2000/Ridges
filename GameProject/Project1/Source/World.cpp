@@ -27,7 +27,7 @@ static Node* nodes{};
 
 
 static const unsigned int	MAX_MOBS =11;						// The total number of mobs
-static unsigned int			CURRENT_MOBS = MAX_MOBS;
+static int					CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_KEYS;							// The total number of keys
@@ -40,11 +40,6 @@ static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
-
-
-static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
-
-static const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
 
 bool loadState;
 
@@ -90,6 +85,8 @@ static staticObjInst* Spike;
 
 static AEVec2* Gates;
 static int gatesNum;
+static int levNum;
+static int chestNum;
 
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
@@ -101,10 +98,6 @@ static staticObjInst* RefBox;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
-
-
-int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-	float scaleX, float scaleY);
 
 
 /******************************************************************************/
@@ -302,30 +295,15 @@ void GS_World_Init(void) {
 	//	Initialize map textures
 	// =====================================
 
-	std::ifstream mapInput{ "Assets/textureWorld.txt" };
-	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			mapInput >> MapObjInstList[i][j].x;
-			mapInput >> MapObjInstList[i][j].y;
-		}
-	}
-	mapInput.close();
+	utilities::importMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
 
 	// =====================================
 	//	Initialize map binary
 	// =====================================
 
-	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-	std::ifstream binInput{ "Assets/binaryWorld.txt" };
-	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
-		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-			binInput >> binaryMap[j][i];
-		}
-	}
-	binInput.close();
+	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
 
-	AEVec2 Pos = { 9.f , 3.f };
-	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
+	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, nullptr, 0);
 
 	// =====================================
 	//	Initialize objects for new game
@@ -334,36 +312,31 @@ void GS_World_Init(void) {
 		//Initialise Player
 		AEVec2 PlayerPos = { 12,-8 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-		Player->TextureMap = { 1,8 };
 
 		Backpack.Potion = 0;
 		Backpack.Key = 0;
 
 		Player->health = 3;
 		Player->damage = 1;
-		Player->timetracker = 0;
 
 		//Initialise player health.
 		for (int i = 0; i < Player->health; i++) {
 			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-			Health[i]->TextureMap = TEXTURE_FULLHEART;
 		}
 
 		//Initialise Levers in level
-		utilities::loadObjs(pos, num, "worldLevers.txt");
+		utilities::loadObjs(pos, levNum, "worldLevers.txt");
 
-		for (int i = 0; i < num; i++) {
+		for (int i = 0; i < levNum; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-			Levers[i]->TextureMap = TEXTURE_LEVERS;
 		}
 
 		utilities::unloadObjs(pos);
 
 		//Initialise enemy in level
-		utilities::loadObjs(pos, num, "worldEnemy.txt");
-		for (int i = 0; i < num; i++) {
+		utilities::loadObjs(pos, CURRENT_MOBS, "worldEnemy.txt");
+		for (int i = 0; i < CURRENT_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->TextureMap = TEXTURE_ENEMY;
 			enemy->health = 3;
 			enemy->pathfindtime = 0.25f;
 			enemy->pathtimer = enemy->pathfindtime;
@@ -371,12 +344,10 @@ void GS_World_Init(void) {
 		utilities::unloadObjs(pos);
 
 		//Initialise chest in level
-		utilities::loadObjs(pos, num, "worldChest.txt");
-		AEVec2 chestpos[6] = { {13,-8} , {53,-5} , {70,-11}, {80,-14}, {84,-33}, {107,-24} };
-		for (int i = 0; i < num; i++)
+		utilities::loadObjs(pos, chestNum, "worldChest.txt");
+		for (int i = 0; i < chestNum; i++)
 		{
 			Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos[i], 0);
-			Chest[i]->TextureMap = TEXTURE_UNOPENEDCHEST;
 		}
 
 		utilities::unloadObjs(pos);
@@ -418,34 +389,27 @@ void GS_World_Init(void) {
 	}
 
 	// Initialise Towers
-	AEVec2 towerPos[] = {
-		{18.5f,-12.5f},
-		{50.5f,-4.5f}
-	};
+	utilities::loadObjs(pos, num, "worldTowers.txt");
 
 	float towerRot[] = {
 		TOWER_DOWN,
 		TOWER_DOWN
 	};
 
-	for (int i = 0; i < sizeof(towerRot) / sizeof(towerRot[0]); i++) {
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerPos[i], 0);
-		jInst->TextureMap = TEXTURE_TOWER;
-		binaryMap[(int)towerPos[i].x][(int)-towerPos[i].y] = 1;
+	for (int i = 0; i < num; i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &pos[i], towerRot[i]);
+		binaryMap[(int)pos[i].x][(int)-pos[i].y] = 1;
 	}
 
 	// Initialise Spikes
 	utilities::loadObjs(pos, num, "worldSpikes.txt");
 	for (int i = 0; i < num; i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
-		jInst->TextureMap = TEXTURE_SPIKE;
 	}
 	utilities::unloadObjs(pos);
 
-
-	int* gridptr = *binaryMap;
 	//Init pathfinding nodes
-	NodesInit(gridptr, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
@@ -457,22 +421,15 @@ void GS_World_Init(void) {
 
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
-	MenuObj[0]->TextureMap = TEXTURE_POTION;
-	MenuObj[1]->TextureMap = TEXTURE_KEYS;
 
 
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
-	NumObj[0]->TextureMap = TEXTURE_NUMBERS[0];
-	NumObj[1]->TextureMap = TEXTURE_NUMBERS[0];
-
-
+	
 
 	ParticleSystemInit();
 
 }
-
-int spiketimer = 0;
 /******************************************************************************/
 /*!
 	"Update" function of this state
@@ -483,6 +440,24 @@ int spiketimer = 0;
 
 void GS_World_Update(void) {
 
+	// Normalising mouse to 0,0 at the center
+	s32 mouseIntX, mouseIntY;
+	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
+	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
+	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
+
+	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+	if (mouseY + camY > Player->posCurr.y) {
+		angleMousetoPlayer = -angleMousetoPlayer;
+	}
+
+	static float playerHitTime = 0;
+	//Time-related variables
+	utilities::decreaseTime(slashCD);
+	utilities::decreaseTime(walkCD);
+	utilities::decreaseTime(playerHitTime);
+
+
 	// =====================================
 	// User Input
 	// =====================================
@@ -490,7 +465,7 @@ void GS_World_Update(void) {
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		state ^= 1;
 	}
-
+	//Map editor mode
 	if (AEInputCheckTriggered(AEVK_9)) {
 		mapeditor ^= 1;
 	}
@@ -499,16 +474,12 @@ void GS_World_Update(void) {
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}
 
-	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
+	Player->playerStand();
 
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
-		Player->walk(walkCD);
+		Player->playerWalk(walkCD);
 	}
-	else {
-		Player->TextureMap = TEXTURE_PLAYER;
-	}
-	
 
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))
@@ -530,22 +501,17 @@ void GS_World_Update(void) {
 	if (AEInputCheckTriggered(AEVK_E)) {
 
 		//Interaction with levers
-		for (int lev = 0; lev < 3; lev++) {
+		for (int lev = 0; lev < levNum; lev++) {
 			if (Player->calculateDistance(*Levers[lev]) < 1 && Levers[lev]->dirCurr == 0) {
 				//Switch lever to face down
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
-					for (int i = Gates[lev*2].x; i < Gates[lev*2+1].x+1; i++) {
-						for (int j = Gates[lev*2].y; j < Gates[lev * 2 +1].y + 1; j++) {
-							MapObjInstList[i][j] = TEXTURE_FLOOR;
-							binaryMap[i][j] = 0;
-						}
-					}
+				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
 			}
 		}
 
 
-		for (int i = 0; i < 6; i++)
+		for (int i = 0; i < chestNum; i++)
 		{
 			//Interaction with Chest
 			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
@@ -556,32 +522,26 @@ void GS_World_Update(void) {
 		}
 	}
 
-	// Normalising mouse to 0,0 at the center
-	s32 mouseIntX, mouseIntY;
-	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
-	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
-	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
-
-	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
-
-	if (mouseY + camY > Player->posCurr.y) {
-		angleMousetoPlayer = -angleMousetoPlayer;
+	//if pickup potion then add player health
+	if (AEInputCheckTriggered(AEVK_R))
+	{
+		Player->drinkPotion(Health, Backpack);
 	}
-
-
-	utilities::decreaseTime(slashCD);
-	utilities::decreaseTime(walkCD);
-
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
 		slashCD = SLASH_COOLDOWN_t;
 		walkCD = WALK_COOLDOWN_t;
-		Player->velCurr = { 0,0 };
+		Player->playerStand();
+	}
+
+	if (SLASH_ACTIVATE == true) {
+		Player->playerSlashCreate(angleMousetoPlayer);
+		SLASH_ACTIVATE = false;
 	}
 
 	if (mapeditor == 1) {
-		mapEditorObj->mapEditorObjectSpawn();
+		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
 
 		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
 
@@ -597,44 +557,8 @@ void GS_World_Update(void) {
 		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
 	}
 
-	if (AEInputCheckTriggered(AEVK_7)) {
-		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-		std::ifstream binInput{ "Assets/binaryWorld.txt" };
-		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
-			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-				binInput >> binaryMap[j][i];
-			}
-		}
-		binInput.close();
-	}
-
 	if (AEInputCheckTriggered(AEVK_M)) {
 		gGameStateNext = GS_MAINMENU;
-	}
-
-
-	//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		if (Player->health > 0 && Player->health < 3 && Backpack.Potion > 0)
-		{
-			Player->recoverhealth();
-			switch (Player->health)
-			{
-			case 2:
-				Health[1]->TextureMap = TEXTURE_FULLHEART;
-				break;
-			case 3:
-				Health[0]->TextureMap = TEXTURE_FULLHEART;
-				break;
-			}
-			Backpack.Potion--;
-		}
-	}
-
-	if (SLASH_ACTIVATE == true) {
-		Player->Player_Slash(angleMousetoPlayer);
-		SLASH_ACTIVATE = false;
 	}
 
 
@@ -663,7 +587,7 @@ void GS_World_Update(void) {
 	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 	{
 		GameObjInst* pEnemy = sGameObjInstList + j;
-		pEnemy->pathtimer -= g_dt; // timer counting down 
+
 
 		// skip non-active object
 		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
@@ -672,96 +596,7 @@ void GS_World_Update(void) {
 		if (Player->calculateDistance(*pEnemy) > 10)
 			continue;
 
-		//bool is_at_end = false;
-		if (pEnemy->pathtimer <= 0)
-		{
-			// perform pathfinding for this enemy
-			pEnemy->path.clear();
-			pEnemy->path = pathfind(pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y); //pathfind function
-			pEnemy->pathtimer = pEnemy->pathfindtime; // set timer back to default;
-			pEnemy->target_node=0; // target node for enemy to find the next node
-			//is_at_end = false;
-		}
-		// update enemy velocity based on path
-		if (!pEnemy->path.empty())// as long as path not empty 
-		{
-			//Node* pNextNode = pEnemy->path[1];
-
-			// calculate the distance between the enemy and player
-			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
-
-			AEVec2 target_pos;
-			AEVec2Set(&target_pos, 0, 0);
-
-			// update enemy velocity only if it is farther than the maximum distance
-			if (distance > MAX_ENEMY_DISTANCE)
-			{
-				float dist=AEVec2Distance(&pEnemy->posCurr, &pEnemy->path[pEnemy->target_node]->ae_NodePos);
-				
-				// to check the enemy is at the node 
-				if (dist <= RANGE_FROM_PLAYER)
-				{
-					//reached the node!!!!
-					//find the next node
-					if (pEnemy->target_node + 1 < pEnemy->path.size())
-					{
-						pEnemy->target_node++;
-						//is_at_end = false;
-					}
-
-					//its the last node!
-					else
-					{
-						//is_at_end = true;
-						target_pos.x = Player->posCurr.x;
-						target_pos.y = Player->posCurr.y;
-					}
-				}
-				else /*if(is_at_end)*/
-				{
-					target_pos.x = pEnemy->path[pEnemy->target_node]->ae_NodePos.x;//
-					target_pos.y = pEnemy->path[pEnemy->target_node]->ae_NodePos.y;//
-				}
-				pEnemy->velCurr.x = target_pos.x - pEnemy->posCurr.x;
-				pEnemy->velCurr.y = target_pos.y - pEnemy->posCurr.y;
-				AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
-				pEnemy->velCurr.x *= (g_dt * NPC_SPEED); //
-				pEnemy->velCurr.y *= (g_dt * NPC_SPEED);
-
-				// check if player is moving or the enemy is already stopped
-				//if (/*abs(Player->velCurr.x )> 0 || abs(Player->velCurr.y) > 0 ||*/ pEnemy->stopped)
-				//{
-				//	if (pNextNode->parent)
-				//	{
-				//		//// continue moving
-				//		//pEnemy->velCurr.x -= (g_dt * NPC_SPEED * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-				//		//pEnemy->velCurr.y -= (g_dt * NPC_SPEED * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
-				//		//AEVec2Normalize(&pEnemy->velCurr, &pEnemy->velCurr);//normalise to unit vec 1
-
-				//		//// set flag to indicate not stopped
-				//		//pEnemy->stopped = false;
-				//	}
-				//}
-				//else // player is not moving and enemy is not stopped
-				//{
-				//	// stop moving
-				//	pEnemy->velCurr.x = 0;
-				//	pEnemy->velCurr.y = 0;
-
-				//	// set flag to indicate stopped
-				//	pEnemy->stopped = true;
-				//}
-			}
-			else
-			{
-				// stop moving if already close to the player
-				pEnemy->velCurr.x = 0;
-				pEnemy->velCurr.y = 0;
-
-				// set flag to indicate stopped
-				pEnemy->stopped = true;
-			}
-		}
+		pEnemy->mobsPathFind(*Player);
 	}
 
 
@@ -821,8 +656,6 @@ void GS_World_Update(void) {
 	// ====================
 	// check for collision
 	// ====================
-	static float playerHitTime = 0;
-	utilities::decreaseTime(playerHitTime);
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -844,10 +677,7 @@ void GS_World_Update(void) {
 					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
-					AEVec2 nil{ 0,0 };
-					if (Player->velCurr == nil)
-					Player->posCurr += pInst->velCurr/4;
-					else Player->posCurr -= Player->velCurr / 4;
+					Player->playerKnockback(*pInst);
 					
 				}
 			}
@@ -862,8 +692,7 @@ void GS_World_Update(void) {
 					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
-					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
-					pInst->posCurr -= slash2Mob;
+					pInst->mobKnockback(*jInst);
 				}
 			}
 		}
@@ -930,19 +759,13 @@ void GS_World_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_SLASH) {
-			pInst->timetracker += g_dt;
-			if (pInst->timetracker >= 0.2f) {
-				pInst->Alpha = (pInst->timetracker - 0.2f) / 0.4f;
-			}
-			if (pInst->timetracker >= 0.6f) {
-				staticObjInstDestroy(pInst);
-			}
+			pInst->playerSlashUpdate();
 		}
 
 		if (pInst->pObject->type == TYPE_TOWER) {
 			utilities::decreaseTime(pInst->timetracker);
 
-			if (pInst->timetracker > 0) {
+			if (pInst->timetracker == 0) {
 				pInst->timetracker = TOWER_REFRESH;
 				pInst->shootBullet();
 			}
@@ -971,11 +794,8 @@ void GS_World_Update(void) {
 		}
 	}
 
-	if (CURRENT_MOBS == 9) {
-		for (int i = 17; i < 21; i++) {
-			MapObjInstList[35][i] = { 0,4 };
-			binaryMap[35][i] = 0;
-		}
+	if (MAX_MOBS-CURRENT_MOBS == 2) { //If first 2 tutorial monsters are killed,unlock gate 1
+		utilities::unlockGate(gatesNum/2-1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 	}
 
 	// =====================================
@@ -1011,24 +831,14 @@ void GS_World_Update(void) {
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 	
-
-	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
-		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
-		camX = Player->posCurr.x;
-	}
-	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
-		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
-		camY = Player->posCurr.y;
-	}
+	
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 
 	Player->dustParticles();
 
 	ParticleSystemUpdate();
 	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
-
-
-
 
 }
 
@@ -1077,7 +887,6 @@ void GS_World_Draw(void) {
 			AEGfxSetTransform(Transform.m);
 
 			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-
 
 		}
 	}
@@ -1216,17 +1025,7 @@ void GS_World_Draw(void) {
 		}
 	}
 
-	GameObjInst* pchar;
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		pchar = sGameObjInstList + i;
-
-		if (pchar->pObject->type == TYPE_CHARACTER) {
-			break;
-		}
-	}
-
-	
-	ParticleSystemDraw(&pchar->transform);   //localtransform
+	ParticleSystemDraw(&Player->transform);   //localtransform
 	
 }
 
