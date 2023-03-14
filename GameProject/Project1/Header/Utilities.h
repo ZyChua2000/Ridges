@@ -129,54 +129,14 @@ namespace utilities {
 	*************************************************************************/
 	bool checkWithinCam(AEVec2 Pos, f32 camX, f32 camY);
 
-	/*!***********************************************************************
-	\brief
-		This function exports the map texture onto a text file
-	\param[in] MAP_CELL_HEIGHT
-		Number of cells for the height
-	\param[in] MAP_CELL_WIDTH
-		Number of cells for the width
-	\param[in] MapObjInstList
-		2D array of the map object instances
-	\param[in] filename
-		Filename to export texture to. Default parameter is mapText.txt
-	*************************************************************************/
-	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename = "mapText.txt");
 
-	/*!***********************************************************************
-	\brief
-		This function exports the map binary collision onto a text file
-	\param[in] MAP_CELL_HEIGHT
-		Number of cells for the height
-	\param[in] MAP_CELL_WIDTH
-		Number of cells for the width
-	\param[in] MapObjInstList
-		2D array of the map binary
-	\param[in] filename
-		Filename to export texture to. Default parameter is mapBin.txt
-	*************************************************************************/
-	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename = "mapBin.txt");
-
-	/*!***********************************************************************
-	\brief
-		This function imports the map binary collision from a text file
-	\param[in] MAP_CELL_HEIGHT
-		Number of cells for the height
-	\param[in] MAP_CELL_WIDTH
-		Number of cells for the width
-	\param[in] MapObjInstList
-		2D array of the map binary.
-	\param[in] filename
-		Filename to import texture from.
-	*************************************************************************/
-	/*void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename);*/
 
 	void decreaseTime(float& input);
 
-	void changeMapObj(float mouseX, float mouseY, int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, staticObjInst mapeditorObj);
+	void snapCamPos(AEVec2 playerPos, float& camX, float& camY, int MAP_CELL_WIDTH, int MAP_CELL_HEIGHT);
 
-	void loadObjs(AEVec2*& Positions, int& num, std::string filename);
+	void unlockGate(int gateNum, AEVec2* MapObjInstList, int* binaryMap, AEVec2 Gates[], int MAP_CELL_HEIGHT);
 
-	void unloadObjs(AEVec2* Position);
+	void updatePlayerUI(staticObjInst Health[], staticObjInst Key[], staticObjInst Potion[], Inventory Backpack, int playerHealth);
 }
 

@@ -368,7 +368,7 @@ void GS_Maze_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
-	Player->walk(walkCD);
+	Player->playerWalk(walkCD);
 
 	if (AEInputCheckTriggered(AEVK_E)) {
 

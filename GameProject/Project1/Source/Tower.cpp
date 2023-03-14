@@ -42,10 +42,6 @@ static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 
-static const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
-static const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
-
-
 // -----------------------------------------------------------------------------
 
 
@@ -485,7 +481,7 @@ void GS_Tower_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
-	Player->walk(walkCD);
+	Player->playerWalk(walkCD);
 
 	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
 	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
