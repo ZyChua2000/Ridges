@@ -100,12 +100,14 @@ static int minimap = 0;
 static int posx = 0;
 static int posy = 0;
 static int flag;
-static float prevX = 0.0f;
-static float prevY = 0.0f;
-float currX = 0.0f;
-float currY = 0.0f;
-float angle = 0.0f;
 
+static int countx = 0;
+static int county = 0;
+static float mappingarrx[3000];
+static float mappingarry[3000];
+static int count = 0;
+static int movement=0;
+static int arrin = 0;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -254,7 +256,7 @@ void GS_Maze_Load(void) {
 	///////MAPMESH////////////
 	AEGfxMeshStart();
 
-	AEGfxTriAdd(-60.f, 35.f, 0xd0d4c700, 0.0f, 0.0f,
+	AEGfxTriAdd(-60.f, 35.f, 0xd0d4c700, 0.0f, 0.0f,  //120 by 70 scale 10
 		-60.f, -35.f, 0xd0d4c700, 0.0f, 1.0f,
 		60.f, 35.f, 0xd0d4c700, 1.0f, 0.0f);
 
@@ -317,6 +319,9 @@ void GS_Maze_Init(void) {
 		}
 	}
 	binInput.close();
+
+
+
 
 	RefBox = staticObjInstCreate(TYPE_REF, 1, nullptr, 0);
 
@@ -399,22 +404,37 @@ void GS_Maze_Update(void) {
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 	{
 		Player->velCurr.y = 1;// this is direction , positive y direction
+		
 	}
 	if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 	{
 		Player->velCurr.y = -1;// this is direction , negative y direction
+		
 	}
 	if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 	{
 		Player->velCurr.x = -1;// this is direction , negative x direction
+		
 		Player->scale = -1;
+		
 	}
 	if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 	{
 		Player->velCurr.x = 1;// this is direction , positive x direction
+		
 		Player->scale = 1;
+		
 	}
-
+	if(Player->velCurr.x != 0 || Player->velCurr.y !=0 )
+	{
+		movement = 1;
+		
+	}
+	else 
+	{
+		movement = 0;
+	}
+	//printf("%d\n", movement);
 	if (AEInputCheckTriggered(AEVK_E)) {
 
 		//Interaction with levers
@@ -666,16 +686,15 @@ void GS_Maze_Update(void) {
 
 	if (flag & COLLISION_TOP) {
 		//Top collision
-		std::cout << "collide top" << std::endl;
+		
 		snaptocellsub(&Player->posCurr.y);
 
-		std::cout << Player->posCurr.y << std::endl;
 		//Player->posCurr.y + 0.5;
 	}
 
 	if (flag & COLLISION_BOTTOM) {
 		//bottom collision
-		std::cout << "collide botton" << std::endl;
+		
 		snaptocellsub(&Player->posCurr.y);
 
 		//Player->posCurr.y - 0.5;
@@ -683,7 +702,7 @@ void GS_Maze_Update(void) {
 
 	if (flag & COLLISION_LEFT) {
 		//Left collision
-		std::cout << "collide left" << std::endl;
+		
 		snaptocelladd(&Player->posCurr.x);
 
 		//Player->posCurr.x + 0.5;
@@ -691,7 +710,7 @@ void GS_Maze_Update(void) {
 	}
 	if (flag & COLLISION_RIGHT) {
 		//Right collision
-		std::cout << "collide right" << std::endl;
+		
 		snaptocelladd(&Player->posCurr.x);
 
 		//Player->posCurr.x - 0.5;
@@ -862,10 +881,23 @@ void GS_Maze_Update(void) {
 		
 	}
 	
-	
+	if (movement == 1)
+	{
+		
+		
+			mappingarrx[arrin] = (camX * SPRITE_SCALE)+posx/100;
+		
 
+		
+			mappingarry[arrin] = (camY * SPRITE_SCALE)+posy/100;
+			arrin++;
+			
+	}
+	if (count >= 3000)
+		count = 0;
+	//printf("%d\n", arrin);
+	//printf("%f\n", mappingarrx[3]);
 	
-
 }
 
 /******************************************************************************/
@@ -977,7 +1009,8 @@ void GS_Maze_Draw(void) {
 		}
 
 		else if (pInst->pObject->type == TYPE_ENEMY) {
-			std::cout << " ghost is spawnned near cam" << std::endl;
+			
+
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
@@ -993,7 +1026,7 @@ void GS_Maze_Draw(void) {
 	}
 
 	
-	if (dark == 1) {
+	if (dark == 0) {
 		AEGfxSetTransparency(1.0f);
 		// Tell the engine to get ready to draw something with texture. 
 		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -1022,6 +1055,7 @@ void GS_Maze_Draw(void) {
 		// Actually drawing the mesh
 		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
 	}
+
 	if (minimap == 1)
 	{
 		AEMtx33 lscale = { 0 };
@@ -1037,69 +1071,94 @@ void GS_Maze_Draw(void) {
 		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		
-		if (MapMesh) {
-			// Create a scale matrix that scales by 100 x and y
-			
-			AEMtx33Scale(&lscale, 10, 10);
-			// Create a rotation matrix that rotates by 45 degrees
-			
+		//if (MapMesh) {
+		//	// Create a scale matrix that scales by 100 x and y
+		//	
+		//	AEMtx33Scale(&lscale, 10, 10);
+		//	// Create a rotation matrix that rotates by 45 degrees
+		//	
 
-			AEMtx33Rot(&lrotate, 0);
+		//	AEMtx33Rot(&lrotate, 0);
 
-			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-			
-			AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-			// Concat the matrices (TRS) 
-			AEMtx33Concat(&ltransform, &lrotate, &lscale);
-			AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-			AEGfxSetTransform(ltransform.m);
-			// Actually drawing the mesh
-			AEGfxMeshDraw(MapMesh, AE_GFX_MDM_TRIANGLES);
-		}
+		//	// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+		//	
+		//	AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+		//	// Concat the matrices (TRS) 
+		//	AEMtx33Concat(&ltransform, &lrotate, &lscale);
+		//	AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+		//	AEGfxSetTransform(ltransform.m);
+		//	// Actually drawing the mesh
+		//	AEGfxMeshDraw(MapMesh, AE_GFX_MDM_TRIANGLES);
+		//}
 		if (MapChar)
 		{
 			
 
-			//if (posx != prevX || posy != prevY)
-			//{
-			currX = (camX * SPRITE_SCALE) + posx / 10;
-				AEMtx33Scale(&lscale, 3, 3);
+				//if (posx != prevX || posy != prevY)
+				//{
+				//currX = (camX * SPRITE_SCALE) + posx / 10;
+				
 
 
 				// Create a rotation matrix that rotates by 45 degrees
+				for (unsigned long i = 0; i < 3000; i++)
+				{
+					AEMtx33Scale(&lscale, 3, 3);
+					AEMtx33Rot(&lrotate, 0);
 
+					AEMtx33Concat(&ltransform, &lrotate, &lscale);
+					// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
 
-				AEMtx33Rot(&lrotate, 0);
-
-				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-
-				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
-				AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
-				// Concat the matrices (TRS) 
-				AEMtx33Concat(&ltransform, &lrotate, &lscale);
-				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-				AEGfxSetTransform(ltransform.m);
-				// Actually drawing the mesh
-				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
-				
+					//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
 					
-				
+						AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
+					// Concat the matrices (TRS) 
 
-			//}
+					// Actually drawing the mesh
+					AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+					AEGfxSetTransform(ltransform.m);
 				
-			
-					
-				
-		}
-		
-			
-		prevX = posx;
-		prevY = posy;
+						AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
 
-		
+					//count++;
+				}	
+		}	
 	}
-	
-	
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+
+		// skip non-active object and reference boxes
+		if (pInst->flag != FLAG_ACTIVE)
+			continue;
+		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP || pInst->pObject->type == TYPE_LEVERS) {
+			continue;
+		}
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			continue;
+		}
+		// for any transparent textures
+		// For any types using spritesheet
+		if (pInst->pObject->type == TYPE_HEALTH)
+		{
+			AEGfxTextureSet(pInst->pObject->pTexture,
+				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+		}
+		else {
+			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+		}
+		// Set the current object instance's transform matrix using "AEGfxSetTransform"
+		AEGfxSetTransform(pInst->transform.m);
+		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+	}
+	if (minimap == 0)
+	{
+		char tracker[50] = "Press M to Track Past Pathing";
+		AEGfxPrint(1, tracker, 0.60f, 0.75f, 1.5f, 1.0f, 1.0f, 1.0f);
+	}
 	
 	if (state == 1)
 	{
