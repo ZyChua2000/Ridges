@@ -137,6 +137,8 @@ namespace utilities {
 
 	void unlockGate(int gateNum, AEVec2* MapObjInstList, int* binaryMap, AEVec2 Gates[], int MAP_CELL_HEIGHT);
 
-	void updatePlayerUI(staticObjInst Health[], staticObjInst Key[], staticObjInst Potion[], Inventory Backpack, int playerHealth);
+	void updatePlayerUI(staticObjInst Health[], staticObjInst Key[], staticObjInst Potion[], Inventory Backpack, int playerHealth); 
+
+	void completeLevel(int);
 }
 

@@ -304,15 +304,14 @@ void GS_Tower_Init(void) {
 	// =====================================
 	//	Initialize objects for new game
 	// =====================================
-	if (loadState == false) {
 		//Initialise Player
 		AEVec2 PlayerPos = { 58.5,-6 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
+		
+		Backpack.Potion = 0; //set to player number of current potion
+		Backpack.Key = 0; //set to player number of current key
 
-		Backpack.Potion = 0;
-		Backpack.Key = 0;
-
-		Player->health = 3;
+		Player->health = 3; //Set to player's number of current health
 		Player->damage = 1;
 
 		//Initialise player health.
@@ -340,7 +339,6 @@ void GS_Tower_Init(void) {
 		utilities::unloadObjs(pos);
 
 
-	}
 	
 
 
@@ -722,6 +720,10 @@ void GS_Tower_Update(void) {
 	}
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+
+	//if () {
+	//utilities::completeLevel(tower);
+	//}
 
 	snapCollision(*Player, flag);
 

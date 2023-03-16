@@ -98,4 +98,11 @@ namespace utilities {
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
+
+	void completeLevel(int levelCompleted) {
+		levelCleared[levelCompleted] = true;
+		gGameStateNext = GS_WORLD;
+		loadState = true;
+		// save data
+	}
 }
