@@ -249,6 +249,14 @@ void GS_World_Load(void) {
 	Spike->refMesh = true;
 	Spike->refTexture = true;
 
+	GameObj* Spike_nonfade;
+	Spike_nonfade = sGameObjList + sGameObjNum++;
+	Spike_nonfade->pMesh = Character->pMesh;
+	Spike_nonfade->pTexture = Character->pTexture;
+	Spike_nonfade->type = TYPE_SPIKE_NONFADE;
+	Spike_nonfade->refMesh = true;
+	Spike_nonfade->refTexture = true;
+
 	GameObj* Mask;
 	Mask = sGameObjList + sGameObjNum++;
 	Mask->pMesh = Character->pMesh;
@@ -319,10 +327,6 @@ void GS_World_Init(void) {
 		Player->health = 3;
 		Player->damage = 1;
 
-		//Initialise player health.
-		for (int i = 0; i < Player->health; i++) {
-			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		}
 
 		//Initialise Levers in level
 		utilities::loadObjs(pos, levNum, "worldLevers.txt");
@@ -401,10 +405,17 @@ void GS_World_Init(void) {
 		binaryMap[(int)pos[i].x][(int)-pos[i].y] = 1;
 	}
 
-	// Initialise Spikes
+	// Initialise fading Spikes
 	utilities::loadObjs(pos, num, "worldSpikes.txt");
 	for (int i = 0; i < num; i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
+	}
+	utilities::unloadObjs(pos);
+
+	// Initialise non Spikes
+	utilities::loadObjs(pos, num, "worldSpikes_Nonfade.txt");
+	for (int i = 0; i < num; i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE_NONFADE, 1, &pos[i], 0);
 	}
 	utilities::unloadObjs(pos);
 
@@ -426,6 +437,10 @@ void GS_World_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
+	//Initialise player health.
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	}
 
 	ParticleSystemInit();
 
@@ -613,7 +628,7 @@ void GS_World_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
+		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_SPIKE_NONFADE) {
 			continue;
 		}
 		pInst->calculateBB();
@@ -731,11 +746,14 @@ void GS_World_Update(void) {
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
+		if (pInst->flag != 1 || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_SPIKE_NONFADE)) {
 			continue;
 		}
-
-		pInst->spikeUpdate(); // Updates alpha of spikes
+		
+		if (pInst->pObject->type == TYPE_SPIKE)
+		{
+			pInst->spikeUpdate(); // Updates alpha of spikes
+		}
 
 		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
