@@ -361,30 +361,11 @@ void GS_World_Init(void) {
 		Player->damage = 1;
 		// Changing fence textures & binary collision depending on
 		// lever texture
-		for (int i = 0; i < 3; i++) {
-			if (Levers[i]->dirCurr != 0) {
+		for (int lev = 0; lev < levNum; lev++) {
+				//Switch lever to face down
+				if (Levers[lev]->dirCurr != 0)
 				//Remove gates: Change texture & Binary map
-				switch (i) {
-				case 0:
-					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15] = { 0,4 };
-						binaryMap[i][15] = 0;
-					}
-					break;
-				case 1:
-					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i] = { 0,4 };
-						binaryMap[81][i] = 0;
-					}
-					MapObjInstList[81][32] = { 2,4 };
-					break;
-					//WIP for 3rd gate
-				case 2:
-					break;
-				default:
-					break;
-				}
-			}
+				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
 		}
 	}
 
@@ -1155,10 +1136,11 @@ void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjL
 	std::ofstream saveText{ "Assets/save.txt" };
 
 	saveText << data.playerHealth << std::endl;
-	saveText << data.playerPosition.x << std::endl;
-	saveText << data.playerPosition.y << std::endl;
 	saveText << Backpack.Key << std::endl;
 	saveText << Backpack.Potion << std::endl;
+	saveText << data.playerPosition.x << std::endl;
+	saveText << data.playerPosition.y << std::endl;
+
 
 	saveText << data.mobsNum << std::endl;
 	if (data.mobsNum != 0) {
@@ -1204,10 +1186,10 @@ void loadData(saveData data) {
 	std::ifstream saveText{ "Assets/save.txt" };
 
 	saveText >> data.playerHealth;
-	saveText >> data.playerPosition.x;
-	saveText >> data.playerPosition.y;
 	saveText >> Backpack.Key;
 	saveText >> Backpack.Potion;
+	saveText >> data.playerPosition.x;
+	saveText >> data.playerPosition.y;
 
 	AEVec2 PlayerPos = { data.playerPosition.x,data.playerPosition.y};
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
@@ -1254,12 +1236,6 @@ void loadData(saveData data) {
 		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos, 0);
 		Levers[i]->TextureMap = tex;
 	}
-
-	//for (int i = 0; i < 4; i++) {
-		//saveText >> data.puzzleCompleted[i];
-	//}
-
-	//saveText >> data.elapsedTime;
 }
 
 

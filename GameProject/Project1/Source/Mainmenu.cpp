@@ -166,6 +166,13 @@ void GS_MainMenu_Update(void) {
 		return;
 	}
 
+
+	if (AEInputCheckTriggered(AEVK_6)) {
+		gGameStateNext = GS_BOSSLEVEL;
+		return;
+	}
+
+
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float (mX);
