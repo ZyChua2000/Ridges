@@ -50,6 +50,12 @@ static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
+
+
+static float slashCD = 0;
+static float walkCD = 0;
+
+
 // -----------------------------------------------------------------------------
 //static Node* nodes{};
 
@@ -98,7 +104,9 @@ float Timer = 0.f;
 
 int waves = 0;
 float wavestimer = 0.f;
-static float walkCD = 0;
+
+int deadenemies = 0;
+bool spawned = false;
 
 // ---------------------------------------------------------------------------
 
@@ -289,6 +297,7 @@ void GS_Colosseum_Init(void) {
 
 	//Initialise player health. Printing of hearts.
 	Player->health = 3;
+	Player->damage = 1;
 	for (int i = 0; i < Player->health; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 		Health[i]->TextureMap = { 0,11 };
@@ -372,6 +381,9 @@ void GS_Colosseum_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON)) {
 		SLASH_ACTIVATE = true;
+		slashCD = SLASH_COOLDOWN_t;
+		walkCD = WALK_COOLDOWN_t;
+		Player->velCurr = { 0,0 };
 	}
 
 	if (mapeditor == 1) {
@@ -480,6 +492,23 @@ void GS_Colosseum_Update(void) {
 			}
 		}
 	}
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+		pInst->calculateBB();
+	}
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
+			continue;
+		}
+		pInst->calculateBB();
+	}
 
 	// ======================================================
 	// update physics of all active game object instances
@@ -560,10 +589,10 @@ void GS_Colosseum_Update(void) {
 	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr;
-		Pos.x += Player->velCurr.x * 0.25f - cos(angleMousetoPlayer) / 1.3f;
-		Pos.y += Player->velCurr.y * 0.25f - sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
+		AEVec2 Pos = Player->posCurr + Player->velCurr;
+		Pos.x +=- cos(angleMousetoPlayer) / 1.3f;
+		Pos.y +=- sin(angleMousetoPlayer) / 1.3f;
+		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, 0);
 		slashObj->dirCurr = angleMousetoPlayer + PI;
 		slashObj->timetracker = 0;
 		SLASH_ACTIVATE = false;
@@ -573,6 +602,52 @@ void GS_Colosseum_Update(void) {
 	// ====================
 	// check for collision
 	// ====================
+	static float playerHitTime = 0;
+	utilities::decreaseTime(playerHitTime);
+
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+
+		if (pInst->pObject->type == TYPE_ENEMY) {
+
+			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+				&& playerHitTime == 0)
+			{
+				if (Player->health > 0)
+				{
+					Player->deducthealth();
+
+					//Hit cooldown
+					playerHitTime = DAMAGE_COODLDOWN_t;
+
+					//knockback
+					AEVec2 nil{ 0,0 };
+					if (Player->velCurr == nil)
+						Player->posCurr += pInst->velCurr / 4;
+					else Player->posCurr -= Player->velCurr / 4;
+
+				}
+			}
+
+			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+				staticObjInst* jInst = sStaticObjInstList + j;
+				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+					continue;
+				}
+				AEVec2 velNull = { 0,0 };
+				if (pInst->calculateDistance(*jInst) < 0.9f
+					&& jInst->Alpha == 1) {
+					pInst->deducthealth(Player->damage);
+					// Knockback
+					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
+					pInst->posCurr -= slash2Mob;
+				}
+			}
+		}
+	}
 
 	//if pickup potion then add player health
 	if (AEInputCheckTriggered(AEVK_R))
@@ -605,7 +680,7 @@ void GS_Colosseum_Update(void) {
 			Health[0]->TextureMap = { 1, 11 };
 		}
 	}
-	static float playerHitTime = 0;
+	//static float playerHitTime = 0;
 	playerHitTime -= g_dt;
 	if (playerHitTime < 0) {
 		playerHitTime = 0;
@@ -652,8 +727,9 @@ void GS_Colosseum_Update(void) {
 					continue;
 				}
 				AEVec2 velNull = { 0,0 };
+				auto test = pInst->calculateDistance(*jInst);
 				if (pInst->calculateDistance(*jInst) < 0.6f
-					&& jInst->Alpha == 1) {
+					) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
 					printf("dmg mobs");
@@ -740,6 +816,7 @@ void GS_Colosseum_Update(void) {
 		{
 			if (pInst->health == 0)
 			{
+				++deadenemies;
 				gameObjInstDestroy(pInst);
 				CURRENT_MOBS -= 1;
 				//			//randomising potion drop rate when mobs are killed 
@@ -903,28 +980,25 @@ void GS_Colosseum_Update(void) {
 		//Player->posCurr.x - 0.5;
 	}
 
-
+	if (waves == 0)
+	{
+		deadenemies = 0;
+	}
 	//WAVES///////////////////
-	if (waves >= 1) {
-		wavestimer += g_dt;
-	}
-	if (wavestimer >= 5.f) {
-		if (waves == 15) {
-			waves = 2;
-		}
+	
+	if (deadenemies == 2 && waves==1) {
+		spawned = false;
+		waves = 2;
 	}
 
-	if (wavestimer >= 10.f) {
-		if (waves == 17) {
-			waves = 3;
-		}
+	if (deadenemies == 6 && waves == 2) {
+		spawned = false;
+		waves = 3;
 	}
 
-	if (wavestimer >= 15.f) {
-		waves = 99;
-	}
+	
 
-	if (waves == 1) {
+	if (waves == 1 && !spawned) {
 		//Initialise enemy in level
 		AEVec2 Enemypos[2] = { {14.f, -14.f} ,{20.f, -14.f} };
 		for (int i = 0; i < 2; i++) {
@@ -932,10 +1006,11 @@ void GS_Colosseum_Update(void) {
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
 		}
-		waves = 15;
+		spawned = true;
+	//	waves = 15;
 	}
 
-	if (waves == 2) {
+	if (waves == 2 && !spawned) {
 		//Initialise enemy in level
 		AEVec2 Enemypos[4] = { {14.f, -14.f} ,{20.f, -14.f}, {14.f, -17.f} ,{20.f, -17.f} };
 		for (int i = 0; i < 4; i++) {
@@ -943,11 +1018,11 @@ void GS_Colosseum_Update(void) {
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
 		}
-
-		waves = 17;
+		spawned = true;
+	//	waves = 17;
 	}
 
-	if (waves == 3) {
+	if (waves == 3 && !spawned) {
 		//Initialise enemy in level
 		AEVec2 Enemypos[2] = { {14.f, -16.f} ,{20.f, -16.f} };
 		for (int i = 0; i < 2; i++) {
@@ -955,8 +1030,8 @@ void GS_Colosseum_Update(void) {
 			enemy->TextureMap = { 0,9 };
 			enemy->health = 3;
 		}
-
-		waves = 99;
+		spawned = true;
+	//	waves = 99;
 	}
 
 	//WAVESSSSSSSSS//////////////////////////////////
@@ -1046,8 +1121,7 @@ void GS_Colosseum_Draw(void) {
 			AEGfxSetTransparency(1.0f);
 		}
 		// For any types using spritesheet
-		if (pInst->pObject->type == TYPE_HEALTH ||
-			pInst->pObject->type == TYPE_LEVERS)
+		if (pInst->pObject->type != TYPE_SLASH)
 		{
 			AEGfxTextureSet(pInst->pObject->pTexture,
 				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
@@ -1346,56 +1420,4 @@ static void staticObjInstDestroy(staticObjInst* pInst)
 	sStaticObjInstNum--; //Decrement the number of game object instance
 	pInst->flag = 0;
 }
-
-//int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY)
-//{
-//	int Flag = 0;
-//	int x1, y1, x2, y2;
-//
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 2;	//To reach the right side
-//	y1 = PosY + scaleY / 4;	//To go up 1 / 4 of the height
-//
-//	//- hotspot 2
-//	x2 = PosX + scaleX / 2;	//To reach the right side
-//	y2 = PosY - scaleY / 4;	//To go down 1 / 4 of the height
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_RIGHT;
-//	}
-//
-//	//-hotspot 1
-//	x1 = PosX - scaleX / 2;
-//	y1 = PosY - scaleY / 4;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 2;
-//	y2 = PosY + scaleY / 4;
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_LEFT;
-//	}
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 4;
-//	y1 = PosY + scaleY / 2;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 4;
-//	y2 = PosY + scaleY / 2;
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_TOP;
-//	}
-//	//-hotspot 1
-//	x1 = PosX + scaleX / 4;
-//	y1 = PosY - scaleY / 2;
-//
-//	//- hotspot 2
-//	x2 = PosX - scaleX / 4;
-//	y2 = PosY - scaleY / 2;
-//
-//	if (binaryMap[abs(y1)][abs(x1)] == 1 || binaryMap[abs(y2)][abs(x2)] == 1) {
-//		Flag |= COLLISION_BOTTOM;
-//	}
-//	return Flag;
-//}
 

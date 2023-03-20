@@ -829,6 +829,7 @@ void GS_World_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
+
 		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
