@@ -26,11 +26,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 /******************************************************************************/
 static saveData				data;
 static Node* nodes{};
-static const unsigned int	GAME_OBJ_NUM_MAX = 32;				// The total number of unique objects (Shapes)
-static const unsigned int	TEXTURE_NUM_MAX = 32;				// The total number of Textures
-static const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;		// The total number of dynamic game object instances
-static const unsigned int	FONT_NUM_MAX = 10;					// The total number of fonts
-static const unsigned int	STATIC_OBJ_INST_NUM_MAX = 1024;	// The total number of static game object instances
 
 
 //static const unsigned int	MAX_CHESTS;							// The total number of chests
@@ -45,7 +40,6 @@ static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
-static const float MAX_ENEMY_DISTANCE = 1.0f;
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
@@ -62,8 +56,6 @@ static float walkCD = 0;
 // -----------------------------------------------------------------------------
 // object flag definition
 
-static const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object instance is active
-
 /******************************************************************************/
 /*!
 	Struct/Class Definitions
@@ -72,23 +64,10 @@ static const unsigned long FLAG_ACTIVE = 0x00000001;			// For whether object ins
 
 // ---------------------------------------------------------------------------
 
-// list of original object
-static GameObj				sGameObjList[GAME_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sGameObjNum;								// The number of defined game objects
-
-// list of object instances
-static GameObjInst			sGameObjInstList[GAME_OBJ_INST_NUM_MAX];	// Each element in this array represents a dynamic unique game object instance (sprite)
-static unsigned long		sGameObjInstNum;							// The number of used dynamic game object instances
-
-// list of static instances
-static staticObjInst		sStaticObjInstList[STATIC_OBJ_INST_NUM_MAX];// Each element in this array represents a unique static game object instance (sprite)
-static unsigned long		sStaticObjInstNum;							// The number of used static game object instances
 
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
-static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
-static unsigned long		FontListNum;								// The number of used fonts
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
@@ -363,7 +342,7 @@ void GS_Colosseum_Update(void) {
 		Player->TextureMap = { 1,8 };
 	}
 
-	Player->walk(walkCD);
+	Player->playerWalk(walkCD);
 
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
@@ -1235,7 +1214,7 @@ void GS_Colosseum_Draw(void) {
 		}
 	}
 
-	GameObjInst* pchar;
+	/*GameObjInst* pchar;
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		pchar = sGameObjInstList + i;
 
@@ -1243,7 +1222,7 @@ void GS_Colosseum_Draw(void) {
 			break;
 		}
 	}
-	ParticleSystemDraw(&pchar->transform);
+	ParticleSystemDraw(&pchar->transform);*/
 }
 
 /******************************************************************************/
