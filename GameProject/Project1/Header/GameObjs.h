@@ -103,6 +103,7 @@ struct GameObjInst
 	enum				STATE state; //state for boss obj instance
 	enum				INNER_STATE innerState; // inner state for boss obj instance
 	float				state_timer; // timer for state machine 
+	float				timeCD;
 
 
 	// Member functions
@@ -195,6 +196,7 @@ enum TYPE
 	TYPE_BULLET,
 	TYPE_MINIMAP,
 	TYPE_MAPCHARACTER,
+	TYPE_BOSS,
 
 
 	TYPE_NUM

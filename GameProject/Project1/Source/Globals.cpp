@@ -47,6 +47,9 @@ const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
 
+const float			aoeREFRESH = 5.0f;
+const float			challengeATKREFRESH = 10.f;
+
 const AEVec2		TEXTURE_POTION = { 6,9 };
 const AEVec2		TEXTURE_TOWER = { 2,6 };
 const AEVec2		TEXTURE_BULLET = { 5,12 };

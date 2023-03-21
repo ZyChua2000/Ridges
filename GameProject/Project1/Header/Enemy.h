@@ -23,42 +23,6 @@ struct Node
 	Node* parent;
 };
 
-class state
-{
-	// virtual keyword is to override the function
-public:
-	virtual void on_enter(GameObjInst* pInst);
-	virtual void on_update(GameObjInst* pInst);
-	virtual void on_exit(GameObjInst* pInst);
-
-protected:
-
-};
-
-class Basic_Atk :state
-{
-
-};
-
-class AOE :state
-{
-
-};
-
-class spawn_enemy :state
-{
-
-};
-
-class spawn_bullet :state
-{
-
-};
-
-class spawn_blind :state
-{
-
-};
 
 enum STATE // MOVESETS FOR BOSS
 {
@@ -68,7 +32,6 @@ enum STATE // MOVESETS FOR BOSS
 	STATE_SPAWN_ENEMIES, // STATE TO SPAWN ENEMIES
 	STATE_SPAWN_BULLETS, // STATE TO SPAWN BULLETS
 	STATE_MAZE_DARKEN,	// STATE TO DARKEN THE WHOLE LEVEL 
-	STATE_SPAWN_BLACKHOLE //STATE TO SPAWN BLACKHOLE //not a must have due to time constrain
 
 };
 
