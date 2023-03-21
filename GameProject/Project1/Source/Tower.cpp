@@ -403,7 +403,7 @@ void GS_Tower_Init(void) {
 		staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
 	}
 	utilities::unloadObjs(pos);
-	for (int i = 0; i < sStaticObjInstNum; i++)
+	for (unsigned int i = 0; i < sStaticObjInstNum; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
 		if (pInst->pObject->type == TYPE_SPIKE)
@@ -694,7 +694,7 @@ void GS_Tower_Update(void) {
 				}
 
 				if (pInst->calculateDistance(*jInst) < 0.9f
-					&& jInst->Alpha < 0.2f) {
+					&& jInst->Alpha < 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
 					pInst->mobKnockback(*jInst);
@@ -852,7 +852,7 @@ void GS_Tower_Update(void) {
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 
 }
 

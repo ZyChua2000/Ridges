@@ -227,7 +227,7 @@ void deletenodes()// free New for nodes
 
 void GameObjInst::mobsKilled() {
 
-	srand(time(NULL));
+	srand(static_cast<unsigned int>(time(NULL)));
 	if (rand() % 2 == 0)
 	{
 		AEVec2 Pos = { posCurr.x, posCurr.y };

@@ -79,7 +79,7 @@ static staticObjInst* RefBox;
 	"Load" function of this state
 	This function loads all necessary assets for the Boss Level.
 	It should be called once before the start of the level.
-	It loads assets like textures, meshes and music files etc�c
+	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
 void GS_BossLevel_Load(void) {
@@ -260,7 +260,6 @@ void GS_BossLevel_Load(void) {
 /******************************************************************************/
 void GS_BossLevel_Init(void) {
 	AEVec2* pos = nullptr;
-	int num;
 
 	// =====================================
 	//	Initialize map textures
@@ -680,7 +679,7 @@ void GS_BossLevel_Update(void) {
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 }
 
 /******************************************************************************/

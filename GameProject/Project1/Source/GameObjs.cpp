@@ -202,6 +202,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
+				break;
 			default:
 				pInst->TextureMap = { 0,0 };
 				break;

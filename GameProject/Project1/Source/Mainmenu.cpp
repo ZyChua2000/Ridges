@@ -83,7 +83,7 @@ AEAudioGroup Group1;
 	"Load" function of this state
 	This function loads all necessary assets for the Main Menu level.
 	It should be called once before the start of the level.
-	It loads assets like textures, meshes and music files etcÅc
+	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
 void GS_MainMenu_Load(void) {

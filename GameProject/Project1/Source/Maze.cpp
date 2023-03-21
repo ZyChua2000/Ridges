@@ -468,8 +468,8 @@ void GS_Maze_Update(void) {
 		mapEditorObj->scale = 0;
 	}
 	/////////////////////////////////////////// MINIMAP///////////////////////////
-	int playerx = Player->posCurr.x;
-	int playery = Player->posCurr.y;
+	int playerx = static_cast<int>(Player->posCurr.x);
+	int playery = static_cast<int>(Player->posCurr.y);
 			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
 		
 	
@@ -812,9 +812,9 @@ void GS_Maze_Update(void) {
 		posy = posy;
 	}
 	else {
-		posx += Player->velCurr.x;
+		posx += static_cast<int>(Player->velCurr.x);
 
-		posy += Player->velCurr.y;
+		posy += static_cast<int>(Player->velCurr.y);
 
 		
 	}
@@ -1050,8 +1050,8 @@ void GS_Maze_Draw(void) {
 		}
 		
 			
-		prevX = posx;
-		prevY = posy;
+		prevX = static_cast<float>(posx);
+		prevY = static_cast<float>(posy);
 
 		
 	}

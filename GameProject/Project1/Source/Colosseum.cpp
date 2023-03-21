@@ -871,19 +871,6 @@ void GS_Colosseum_Update(void) {
 	AEGfxSetCamPosition(camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 
 	//CheckInstanceBinaryMapCollision(binaryPlayerPos.x, binaryPlayerPos.y, 1.0f, 1.0f);
-
-	if (AEInputCheckTriggered(AEVK_F)) {
-		static int test = 2;
-		std::ofstream testfile{ "test.txt" };
-		binaryMap[(int)binaryPlayerPos.x][(int)binaryPlayerPos.y] = test++;
-		for (int i = 0; i < 42; i++) {
-			for (int j = 0; j < 124; j++) {
-				testfile << binaryMap[j][i];
-			}
-			testfile << std::endl;
-		}
-		testfile.close();
-	}
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
 		AEVec2 reverse;
@@ -893,7 +880,7 @@ void GS_Colosseum_Update(void) {
 			if (Timer > 0.25f)
 			{
 				AEVec2 particlecoords = pInst->posCurr;
-				particlecoords.y = pInst->posCurr.y - 0.48;
+				particlecoords.y = pInst->posCurr.y - 0.48f;
 				Timer -= 0.25f;
 				ParticleSystemRequest(0, 10.6f, &particlecoords,
 					&reverse, 1.0f, 0.15f, 10);
@@ -1046,7 +1033,7 @@ void GS_Colosseum_Draw(void) {
 
 			AEMtx33 Translate, Scale, Transform;
 			AEMtx33Trans(&Translate, Pos.x, Pos.y);
-			AEMtx33Scale(&Scale, SPRITE_SCALE, SPRITE_SCALE);
+			AEMtx33Scale(&Scale, static_cast<const f32>(SPRITE_SCALE), static_cast<const f32>(SPRITE_SCALE));
 			AEMtx33Concat(&Transform, &Scale, &Translate);
 
 			AEGfxTextureSet(Player->pObject->pTexture,

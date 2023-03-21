@@ -46,8 +46,8 @@ namespace utilities {
 		std::ofstream mapOutput{ filename };
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				int x = (MapObjInstList + i * MAP_CELL_HEIGHT + j)->x;
-				int y = (MapObjInstList + i * MAP_CELL_HEIGHT + j)->y;
+				int x = static_cast<int>((MapObjInstList + i * MAP_CELL_HEIGHT + j)->x);
+				int y = static_cast<int>((MapObjInstList + i * MAP_CELL_HEIGHT + j)->y);
 
 				if ((x < 6 && y == 4) || (x < 4 && y == 3) || (x == 6 && y == 2) || (x == 6 && y == 3) || (x == 5 && y == 3) || (x > 9 && y == 1))
 					mapOutput << "0" << " ";

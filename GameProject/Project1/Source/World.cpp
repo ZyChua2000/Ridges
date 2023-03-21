@@ -837,7 +837,7 @@ void GS_World_Update(void) {
 	Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
 
 }
 
