@@ -290,7 +290,43 @@ int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, float scaleX, f
 }
 
 
+bool snapCollision(GameObjInst& Object, int& flag) {
+	bool trueflag = false;
+	if (flag & COLLISION_TOP) {
+		//Top collision
+		std::cout << "collide top" << std::endl;
+		snaptocellsub(&Object.posCurr.y);
+		//Player->posCurr.y + 0.5;
+		trueflag = true;
+	}
 
+	if (flag & COLLISION_BOTTOM) {
+		//bottom collision
+		std::cout << "collide botton" << std::endl;
+		snaptocellsub(&Object.posCurr.y);
+
+		//Player->posCurr.y - 0.5;
+		trueflag = true;
+	}
+
+	if (flag & COLLISION_LEFT) {
+		//Left collision
+		std::cout << "collide left" << std::endl;
+		snaptocelladd(&Object.posCurr.x);
+
+		//Player->posCurr.x + 0.5;
+		trueflag = true;
+	}
+	if (flag & COLLISION_RIGHT) {
+		//Right collision
+		std::cout << "collide right" << std::endl;
+		snaptocelladd(&Object.posCurr.x);
+
+		//Player->posCurr.x - 0.5;
+		trueflag = true;
+	}
+	return trueflag;
+}
 
 
 //bool ShittyCollisionMap(float posx, float posy) {

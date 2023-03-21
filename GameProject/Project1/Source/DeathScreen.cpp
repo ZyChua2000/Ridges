@@ -55,7 +55,6 @@ struct DEATHObjInst
 
 static const unsigned int	DEATH_OBJ_NUM_MAX = 8;
 static const unsigned int	DEATH_OBJ_INST_NUM_MAX = 32;
-static const unsigned long	FLAG_ACTIVE = 0x00000001;
 
 
 static DEATHObj				sDEATHObjList[DEATH_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
@@ -84,7 +83,7 @@ void DEATHObjInstDestroy(DEATHObjInst* pInst);
 	"Load" function of this state
 	This function loads all necessary assets for the Main Menu level.
 	It should be called once before the start of the level.
-	It loads assets like textures, meshes and music files etcÅc
+	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
 void GS_DeathScreen_Load(void) {

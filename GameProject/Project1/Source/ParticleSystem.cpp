@@ -11,8 +11,6 @@ Reproduction or disclosure of this file or its contents without the
 prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
-
-#include "main.h"
 #include "ParticleSystem.h"
 
 /******************************************************************************/
@@ -27,10 +25,12 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 const unsigned int	PARTICLE_OBJ_NUM_MAX = 16;			//The total number of different objects (Shapes)
 const unsigned int	PARTICLE_OBJ_INST_NUM_MAX = 516;	//The total number of different game object instances
 
-const unsigned int	FLAG_ACTIVE = 0x00000001;			//Active Flag
+
 const unsigned int	FLAG_INACTIVE = 0x00000000;			//Inactive flag
 
 const float PARTICLE_GRAVITY = 0.01f;
+
+float internalTimer = 0;
 
 enum TYPE_PARTICLE
 {
@@ -193,7 +193,6 @@ void ParticleSystemDraw(AEMtx33* localTransform)
 	for (size_t i = 0; i < PARTICLE_OBJ_INST_NUM_MAX; ++i)
 	{
 		ParticleObjInst* pInst = sParticleObjInstList + i;
-		AEMtx33 temp;
 
 		// skip non-active object
 		if (0 == (pInst->flag & FLAG_ACTIVE)) continue;
@@ -310,4 +309,22 @@ void ParticleObjInstDestroy(ParticleObjInst* pInst)
 
 	// zero out the flag
 	pInst->flag = 0;
+}
+
+void GameObjInst::dustParticles() {
+	AEVec2 reverse;
+	AEVec2Neg(&reverse, &velCurr);
+	internalTimer += g_dt;
+	if (internalTimer > 0.25f)
+	{
+		AEVec2 particlecoords = posCurr;
+		particlecoords.y = posCurr.y - 0.48f;
+		internalTimer -= 0.25f;
+		ParticleSystemRequest(0, 10.6f, &particlecoords,
+			&reverse, 1.0f, 0.15f, 10);
+	}
+	else
+	{
+		internalTimer += g_dt;
+	}
 }

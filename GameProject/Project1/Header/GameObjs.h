@@ -1,6 +1,11 @@
 #pragma once
-#include "AEEngine.h"
+#include "main.h"
 #include <vector>
+
+
+extern const float MAX_ENEMY_DISTANCE;							// define the maximum distance at which enemies should stop moving
+
+extern const float RANGE_FROM_PLAYER;							// define the range for enemy and player intereaction 
 
 struct Node;
 
@@ -42,8 +47,35 @@ struct staticObjInst
 
 
 	void spikeUpdate();
+
+	void calculateBB();
+
+	void calculateTransMatrix();
+
+	void mapEditorObjectSpawn(float mouseX, float mouseY, float camX, float camY);
+
+	void chest2Potion();
+
+	void shootBullet();
+
+	void tilt45();
+
+	void playerSlashUpdate();
 };
 
+struct Inventory {
+	int Potion;
+	int Key;
+	int lastItem;
+
+	Inventory() {
+		Potion = 0;
+		Key = 0;
+		lastItem = 0;
+	}
+
+	void itemPickUp(staticObjInst* item);
+};
 
 // This struct is for dynamic objects, meaning game entities that will be moving
 struct GameObjInst
@@ -112,7 +144,30 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
-	void walk();
+	void playerWalk(float walkCD);
+
+	void calculateBB();
+
+	void velToPos(float speed);
+
+	void calculateTransMatrix();
+
+	void playerSlashCreate(float angle);
+
+	void dustParticles();
+
+	void mobsKilled();
+
+	void mobsPathFind(GameObjInst target);
+
+	void playerStand();
+
+	void drinkPotion(staticObjInst*menuObj[3], Inventory& backPack);
+
+	void playerKnockback(GameObjInst mob);
+
+	void mobKnockback(staticObjInst slash);
+	
 };
 
 // This enum is a list of the different types of game objects
@@ -131,6 +186,7 @@ enum TYPE
 	TYPE_CHEST,
 	TYPE_KEY,
 	TYPE_SPIKE,
+	TYPE_SPIKE_NONFADE,
 	TYPE_MASK,
 	TYPE_TOWER,
 	TYPE_BULLET,
@@ -141,15 +197,10 @@ enum TYPE
 	TYPE_NUM
 };
 
-struct Inventory {
-	int Potion;
-	int Key;
-	int lastItem;
 
-	Inventory(){
-		Potion = 0;
-		Key = 0;
-		lastItem = 0;
-	}
-};
 
+
+void gameObjInstDestroy(GameObjInst* pInst);
+staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+void gameObjInstDestroy(GameObjInst* pInst);
+GameObjInst* gameObjInstCreate(unsigned long type,float scale,AEVec2* pPos,AEVec2* pVel,float dir);
