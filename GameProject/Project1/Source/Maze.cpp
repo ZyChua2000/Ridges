@@ -108,6 +108,10 @@ static float mappingarry[3000];
 static int count = 0;
 static int movement=0;
 static int arrin = 0;
+
+int pathingcd = 0;
+float pathingcdtime = 0;
+float minimaptime = 0;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -394,9 +398,32 @@ void GS_Maze_Update(void) {
 	}
 
 	//Minimap toggle
-	if (AEInputCheckTriggered(AEVK_M))
+	if (pathingcd == 0) {
+		if (AEInputCheckTriggered(AEVK_M))
+		{
+			pathingcd = 1;
+			minimap ^= 1;
+		}
+	}
+	if (pathingcd == 1)
 	{
-		minimap ^= 1;
+		pathingcdtime += g_dt;
+		if ((int)pathingcdtime >= 10)
+		{
+			pathingcd = 0;
+			pathingcdtime = 0;
+		}
+	}
+	if (minimap == 1)
+	{
+		minimaptime += g_dt;
+		if ((int)minimaptime >= 3)
+		{
+			minimap = 0;
+			minimaptime = 0;
+		}
+
+
 	}
 
 	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
