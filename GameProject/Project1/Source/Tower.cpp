@@ -694,7 +694,7 @@ void GS_Tower_Update(void) {
 				}
 
 				if (pInst->calculateDistance(*jInst) < 0.9f
-					&& jInst->Alpha < 0) {
+					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
 					pInst->mobKnockback(*jInst);
