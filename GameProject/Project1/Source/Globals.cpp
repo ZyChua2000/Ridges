@@ -36,7 +36,7 @@ const int			CAM_CELL_WIDTH = 20;			// Number of cells in viewport for width
 const int			CAM_CELL_HEIGHT = 12;			// Number of cells in viewport for height
 
 const float			BOUNDING_RECT_SIZE = 1.0f;		// this is the normalized bounding rectangle (width and height) sizes - AABB collision data
-const float			PLAYER_SPEED = 10.f;				// Player movement sped
+const float			PLAYER_SPEED = 5.f;				// Player movement sped
 const float			NPC_SPEED = 2.5f;				// Mob movement speed
 const float			BULLET_SPEED = 4.5f;			// Speed of the bullet
 

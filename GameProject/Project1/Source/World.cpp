@@ -750,7 +750,7 @@ void GS_World_Update(void) {
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-	//snapCollision(*Player, flag);
+	snapCollision(*Player, flag);
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
