@@ -58,6 +58,7 @@ void GameObjInst::playerSlashCreate(float angle) {
 	Pos.y += -sin(angle) / 1.3f;
 	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
 	slashObj->timetracker = 0;
+	slashObj->Alpha = 0;
 }
 
 void GameObjInst::playerStand() {

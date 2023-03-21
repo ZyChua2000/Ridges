@@ -25,9 +25,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static saveData				data;
 static Node* nodes{};
 
-
-static const unsigned int	MAX_MOBS =11;						// The total number of mobs
-static int					CURRENT_MOBS = MAX_MOBS;
+static int					MAX_MOBS;
+static int					CURRENT_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_KEYS;							// The total number of keys
@@ -42,6 +41,11 @@ static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 bool loadState;
+
+static AEVec2 WarpPts[8]{ {102, -34.5f}, {104, -33.5f},
+						  {109, -34.5f}, {111, -33.5f},
+						  {121, -28.5f}, {122, -25.5f},
+						  {0,0} ,{0,0} };
 
 // -----------------------------------------------------------------------------
 
@@ -249,6 +253,14 @@ void GS_World_Load(void) {
 	Spike->refMesh = true;
 	Spike->refTexture = true;
 
+	GameObj* Spike_nonfade;
+	Spike_nonfade = sGameObjList + sGameObjNum++;
+	Spike_nonfade->pMesh = Character->pMesh;
+	Spike_nonfade->pTexture = Character->pTexture;
+	Spike_nonfade->type = TYPE_SPIKE_NONFADE;
+	Spike_nonfade->refMesh = true;
+	Spike_nonfade->refTexture = true;
+
 	GameObj* Mask;
 	Mask = sGameObjList + sGameObjNum++;
 	Mask->pMesh = Character->pMesh;
@@ -305,6 +317,8 @@ void GS_World_Init(void) {
 
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, nullptr, 0);
 
+	MAX_MOBS = 14;
+
 	// =====================================
 	//	Initialize objects for new game
 	// =====================================
@@ -319,10 +333,6 @@ void GS_World_Init(void) {
 		Player->health = 3;
 		Player->damage = 1;
 
-		//Initialise player health.
-		for (int i = 0; i < Player->health; i++) {
-			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		}
 
 		//Initialise Levers in level
 		utilities::loadObjs(pos, levNum, "worldLevers.txt");
@@ -335,6 +345,7 @@ void GS_World_Init(void) {
 
 		//Initialise enemy in level
 		utilities::loadObjs(pos, CURRENT_MOBS, "worldEnemy.txt");
+		MAX_MOBS = CURRENT_MOBS;
 		for (int i = 0; i < CURRENT_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
 			enemy->health = 3;
@@ -361,30 +372,11 @@ void GS_World_Init(void) {
 		Player->damage = 1;
 		// Changing fence textures & binary collision depending on
 		// lever texture
-		for (int i = 0; i < 3; i++) {
-			if (Levers[i]->dirCurr != 0) {
+		for (int lev = 0; lev < levNum; lev++) {
+				//Switch lever to face down
+				if (Levers[lev]->dirCurr != 0)
 				//Remove gates: Change texture & Binary map
-				switch (i) {
-				case 0:
-					for (int i = 17; i < 22; i++) {
-						MapObjInstList[i][15] = { 0,4 };
-						binaryMap[i][15] = 0;
-					}
-					break;
-				case 1:
-					for (int i = 32; i < 35; i++) {
-						MapObjInstList[81][i] = { 0,4 };
-						binaryMap[81][i] = 0;
-					}
-					MapObjInstList[81][32] = { 2,4 };
-					break;
-					//WIP for 3rd gate
-				case 2:
-					break;
-				default:
-					break;
-				}
-			}
+				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
 		}
 	}
 
@@ -400,11 +392,19 @@ void GS_World_Init(void) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &pos[i], towerRot[i]);
 		binaryMap[(int)pos[i].x][(int)-pos[i].y] = 1;
 	}
+	utilities::unloadObjs(pos);
 
-	// Initialise Spikes
+	// Initialise fading Spikes
 	utilities::loadObjs(pos, num, "worldSpikes.txt");
 	for (int i = 0; i < num; i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
+	}
+	utilities::unloadObjs(pos);
+
+	// Initialise non Spikes
+	utilities::loadObjs(pos, num, "worldSpikes_Nonfade.txt");
+	for (int i = 0; i < num; i++) {
+		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE_NONFADE, 1, &pos[i], 0);
 	}
 	utilities::unloadObjs(pos);
 
@@ -419,6 +419,7 @@ void GS_World_Init(void) {
 	// =====================================
 
 
+
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
@@ -426,7 +427,29 @@ void GS_World_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
+	//Initialise player health.
+	for (int i = 0; i < Player->health; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	}
 
+	if (levelCleared[colosseum] == true) {
+		MapObjInstList[102][28] = TEXTURE_FENCE;
+		binaryMap[102][28] = 1;
+		MapObjInstList[103][28] = TEXTURE_FENCE;
+		binaryMap[103][28] = 1;
+	}
+	if (levelCleared[maze] == true) {
+		MapObjInstList[114][26] = TEXTURE_FENCE;
+		binaryMap[114][26] = 1;
+		MapObjInstList[114][27] = TEXTURE_FENCE;
+		binaryMap[114][27] = 1;
+	}
+	if (levelCleared[tower] == true) {
+		MapObjInstList[109][28] = TEXTURE_FENCE;
+		binaryMap[109][28] = 1;
+		MapObjInstList[110][28] = TEXTURE_FENCE;
+		binaryMap[110][28] = 1;
+	}
 	ParticleSystemInit();
 
 }
@@ -617,7 +640,7 @@ void GS_World_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
+		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_SPIKE_NONFADE) {
 			continue;
 		}
 		pInst->calculateBB();
@@ -735,11 +758,14 @@ void GS_World_Update(void) {
 	
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
+		if (pInst->flag != 1 || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_SPIKE_NONFADE)) {
 			continue;
 		}
-
-		pInst->spikeUpdate(); // Updates alpha of spikes
+		
+		if (pInst->pObject->type == TYPE_SPIKE)
+		{
+			pInst->spikeUpdate(); // Updates alpha of spikes
+		}
 
 		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
@@ -802,6 +828,7 @@ void GS_World_Update(void) {
 		utilities::unlockGate(gatesNum/2-1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 	}
 
+
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -842,7 +869,7 @@ void GS_World_Update(void) {
 	Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<int>(camX * (float)SPRITE_SCALE), static_cast<int> (camY * (float)SPRITE_SCALE));
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
 
 }
 
@@ -1030,6 +1057,25 @@ void GS_World_Draw(void) {
 	}
 
 	ParticleSystemDraw(&Player->transform);   //localtransform
+
+
+	// Enter room conditions
+	if (utilities::inRange(Player, WarpPts[0], WarpPts[1])) {
+		gGameStateNext = GS_COLOSSEUM;
+		Player->posCurr = { 102, -32 };
+		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+		
+	}
+	if (utilities::inRange(Player, WarpPts[2], WarpPts[3])) {
+		gGameStateNext = GS_TOWER;
+		Player->posCurr = { 102, -32 };
+		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+	}
+	if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
+		gGameStateNext = GS_MAZE;
+		Player->posCurr = { 102, -32 };
+		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+	}
 	
 }
 
@@ -1159,10 +1205,11 @@ void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjL
 	std::ofstream saveText{ "Assets/save.txt" };
 
 	saveText << data.playerHealth << std::endl;
-	saveText << data.playerPosition.x << std::endl;
-	saveText << data.playerPosition.y << std::endl;
 	saveText << Backpack.Key << std::endl;
 	saveText << Backpack.Potion << std::endl;
+	saveText << data.playerPosition.x << std::endl;
+	saveText << data.playerPosition.y << std::endl;
+
 
 	saveText << data.mobsNum << std::endl;
 	if (data.mobsNum != 0) {
@@ -1208,17 +1255,14 @@ void loadData(saveData data) {
 	std::ifstream saveText{ "Assets/save.txt" };
 
 	saveText >> data.playerHealth;
-	saveText >> data.playerPosition.x;
-	saveText >> data.playerPosition.y;
 	saveText >> Backpack.Key;
 	saveText >> Backpack.Potion;
+	saveText >> data.playerPosition.x;
+	saveText >> data.playerPosition.y;
 
 	AEVec2 PlayerPos = { data.playerPosition.x,data.playerPosition.y};
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = TEXTURE_PLAYER;
-
-
-	Player->health = data.playerHealth;
 
 	for (int i = 0; i < Player->health; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
@@ -1258,12 +1302,6 @@ void loadData(saveData data) {
 		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos, 0);
 		Levers[i]->TextureMap = tex;
 	}
-
-	//for (int i = 0; i < 4; i++) {
-		//saveText >> data.puzzleCompleted[i];
-	//}
-
-	//saveText >> data.elapsedTime;
 }
 
 

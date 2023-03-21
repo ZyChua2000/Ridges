@@ -202,6 +202,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
+				break;
 			default:
 				pInst->TextureMap = { 0,0 };
 				break;
@@ -290,6 +291,9 @@ staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos
 			case TYPE_TOWER:
 				pInst->TextureMap = TEXTURE_TOWER;
 				break;
+			case TYPE_SPIKE_NONFADE:
+				pInst->TextureMap = TEXTURE_SPIKE;
+				break;	
 			default:
 				pInst->TextureMap = { 0,0 };
 				break;

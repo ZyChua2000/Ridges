@@ -21,7 +21,7 @@ extern bool loadState;
 	"Load" function of this state
 	This function loads all necessary assets for the World level.
 	It should be called once before the start of the level.
-	It loads assets like textures, meshes and music files etc�c
+	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
 void GS_World_Load(void);

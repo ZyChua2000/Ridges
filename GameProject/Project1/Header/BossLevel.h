@@ -21,7 +21,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	"Load" function of this state
 	This function loads all necessary assets for the Boss Level.
 	It should be called once before the start of the level.
-	It loads assets like textures, meshes and music files etc�c
+	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
 void GS_BossLevel_Load(void);

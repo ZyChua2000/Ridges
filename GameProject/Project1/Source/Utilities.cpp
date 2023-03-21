@@ -77,8 +77,8 @@ namespace utilities {
 	}
 
 	void unlockGate(int gateNum, AEVec2* MapObjInstList, int* binaryMap, AEVec2 Gates[], int MAP_CELL_HEIGHT) {
-		for (int i = Gates[gateNum * 2].x; i < Gates[gateNum * 2 + 1].x + 1; i++) {
-			for (int j = Gates[gateNum * 2].y; j < Gates[gateNum * 2 + 1].y + 1; j++) {
+		for (int i = static_cast<int>(Gates[gateNum * 2].x); i < static_cast<int>(Gates[gateNum * 2 + 1].x) + 1; i++) {
+			for (int j = static_cast<int>(Gates[gateNum * 2].y); j < static_cast<int>(Gates[gateNum * 2 + 1].y) + 1; j++) {
 				*(MapObjInstList + i * MAP_CELL_HEIGHT + j) = TEXTURE_FLOOR;
 				*(binaryMap + i * MAP_CELL_HEIGHT + j) = 0;
 			}
@@ -97,5 +97,50 @@ namespace utilities {
 		case 2:
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
+	}
+
+	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory Backpack) {
+		levelCleared[levelCompleted] = true;
+		gGameStateNext = GS_WORLD;
+		loadState = true;
+		// save data
+
+		std::ifstream prevFile{ "Assets/save.txt" };
+		std::ofstream currFile{ "Assets/saveBuffer.txt" };
+
+		int buffer;
+		for (int i = 0; i < 3; i++) {
+			prevFile >> buffer;
+		}
+
+		currFile << Player->health << std::endl;
+		currFile << Backpack.Key << std::endl;
+		currFile << Backpack.Potion;
+	
+		std::string stringBuffer;
+
+		while (std::getline(prevFile, stringBuffer)) {
+			
+			currFile << stringBuffer << std::endl;
+		}
+
+		currFile.close();
+		prevFile.close();
+
+		prevFile.open("Assets/saveBuffer.txt");
+		currFile.open("Assets/save.txt");
+
+		while (std::getline(prevFile, stringBuffer)) {
+			currFile << stringBuffer << std::endl;
+		}
+	}
+
+	bool inRange(GameObjInst* Player, const AEVec2 min, const AEVec2 max) {
+		if (Player->posCurr.x > min.x && Player->posCurr.x < max.x) {
+			if (Player->posCurr.y > min.y && Player->posCurr.y < max.y) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
