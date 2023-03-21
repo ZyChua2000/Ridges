@@ -109,9 +109,9 @@ static int count = 0;
 static int movement=0;
 static int arrin = 0;
 
-int pathingcd = 0;
-float pathingcdtime = 0;
-float minimaptime = 0;
+static int pathingcd = 0;
+static float pathingcdtime = 0;
+static float minimaptime = 0;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -1186,6 +1186,9 @@ void GS_Maze_Draw(void) {
 		char tracker[50] = "Press M to Track Past Pathing";
 		AEGfxPrint(1, tracker, 0.60f, 0.75f, 1.5f, 1.0f, 1.0f, 1.0f);
 	}
+	char pathtimerdisplay[50];
+	sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.f", 10-pathingcdtime);
+	AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
 	
 	if (state == 1)
 	{
