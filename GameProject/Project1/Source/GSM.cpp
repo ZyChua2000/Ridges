@@ -111,14 +111,6 @@ void GameStateMgrUpdate()
 		GameStateFree = GS_DeathScreen_Free;
 		GameStateUnload = GS_DeathScreen_Unload;
 		break;
-	case GS_BOSSLEVEL:
-		GameStateLoad = GS_BossLevel_Load;
-		GameStateInit = GS_BossLevel_Init;
-		GameStateUpdate = GS_BossLevel_Update;
-		GameStateDraw = GS_BossLevel_Draw;
-		GameStateFree = GS_BossLevel_Free;
-		GameStateUnload = GS_BossLevel_Unload;
-		break;
 	default:
 		AE_FATAL_ERROR("invalid state!!");
 	}

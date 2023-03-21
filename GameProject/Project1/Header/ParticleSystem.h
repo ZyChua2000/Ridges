@@ -13,8 +13,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  /******************************************************************************/
 
 #pragma once
-#include "main.h"
-extern float internalTimer;
+#include "AEEngine.h"
+
 
 void ParticleSystemLoad();
 void ParticleSystemInit();
