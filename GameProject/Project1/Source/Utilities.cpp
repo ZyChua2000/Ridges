@@ -99,10 +99,48 @@ namespace utilities {
 		}
 	}
 
-	void completeLevel(int levelCompleted) {
+	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory Backpack) {
 		levelCleared[levelCompleted] = true;
 		gGameStateNext = GS_WORLD;
 		loadState = true;
 		// save data
+
+		std::ifstream prevFile{ "Assets/save.txt" };
+		std::ofstream currFile{ "Assets/saveBuffer.txt" };
+
+		int buffer;
+		for (int i = 0; i < 3; i++) {
+			prevFile >> buffer;
+		}
+
+		currFile << Player->health << std::endl;
+		currFile << Backpack.Key << std::endl;
+		currFile << Backpack.Potion;
+	
+		std::string stringBuffer;
+
+		while (std::getline(prevFile, stringBuffer)) {
+			
+			currFile << stringBuffer << std::endl;
+		}
+
+		currFile.close();
+		prevFile.close();
+
+		prevFile.open("Assets/saveBuffer.txt");
+		currFile.open("Assets/save.txt");
+
+		while (std::getline(prevFile, stringBuffer)) {
+			currFile << stringBuffer << std::endl;
+		}
+	}
+
+	bool inRange(GameObjInst* Player, const AEVec2& min, const AEVec2& max) {
+		if (Player->posCurr.x > min.x && Player->posCurr.x < max.x) {
+			if (Player->posCurr.y > min.y && Player->posCurr.y < max.y) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

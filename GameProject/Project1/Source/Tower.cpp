@@ -37,6 +37,8 @@ static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
+static const AEVec2			levelClearMin = { 38,-14 };
+static const AEVec2			levelClearMax = { 40,-13 };
 
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
@@ -246,6 +248,15 @@ void GS_Tower_Load(void) {
 	Spike->type = TYPE_SPIKE;
 	Spike->refMesh = true;
 	Spike->refTexture = true;
+
+
+	GameObj* Spike_nonfade;
+	Spike_nonfade = sGameObjList + sGameObjNum++;
+	Spike_nonfade->pMesh = Character->pMesh;
+	Spike_nonfade->pTexture = Character->pTexture;
+	Spike_nonfade->type = TYPE_SPIKE_NONFADE;
+	Spike_nonfade->refMesh = true;
+	Spike_nonfade->refTexture = true;
 
 	GameObj* Mask;
 	Mask = sGameObjList + sGameObjNum++;
@@ -683,7 +694,7 @@ void GS_Tower_Update(void) {
 				}
 
 				if (pInst->calculateDistance(*jInst) < 0.9f
-					&& jInst->Alpha == 0) {
+					&& jInst->Alpha < 0.2f) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
 					pInst->mobKnockback(*jInst);
@@ -721,10 +732,6 @@ void GS_Tower_Update(void) {
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-	//if () {
-	//utilities::completeLevel(tower);
-	//}
-
 	snapCollision(*Player, flag);
 
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
@@ -735,7 +742,7 @@ void GS_Tower_Update(void) {
 
 		pInst->spikeUpdate(); // Updates alpha of spikes
 
-		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
+		if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 			Player->deducthealth();
 			playerHitTime = DAMAGE_COODLDOWN_t;
@@ -795,6 +802,15 @@ void GS_Tower_Update(void) {
 	if (MAX_MOBS - CURRENT_MOBS == 2) { //If first 2 tutorial monsters are killed,unlock gate 1
 		utilities::unlockGate(gatesNum / 2 - 1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 	}
+
+
+	// Clear condition
+
+
+	if (utilities::inRange(Player,levelClearMin,levelClearMax)) {
+		utilities::completeLevel(tower, Player, Backpack);
+	}
+
 
 	// =====================================
 	// calculate the matrix for all objects

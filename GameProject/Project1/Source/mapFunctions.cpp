@@ -49,7 +49,7 @@ namespace utilities {
 				int x = (MapObjInstList + i * MAP_CELL_HEIGHT + j)->x;
 				int y = (MapObjInstList + i * MAP_CELL_HEIGHT + j)->y;
 
-				if ((x < 6 && y == 4) || (x < 4 && y == 3) || (x == 6 && y == 2) || (x == 6 && y == 3) || (x == 5 && y == 3))
+				if ((x < 6 && y == 4) || (x < 4 && y == 3) || (x == 6 && y == 2) || (x == 6 && y == 3) || (x == 5 && y == 3) || (x > 9 && y == 1))
 					mapOutput << "0" << " ";
 				else
 					mapOutput << "1" << " ";

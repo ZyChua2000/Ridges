@@ -1213,9 +1213,6 @@ void loadData(saveData data) {
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 	Player->TextureMap = TEXTURE_PLAYER;
 
-
-	Player->health = data.playerHealth;
-
 	for (int i = 0; i < Player->health; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 		Health[i]->TextureMap = TEXTURE_FULLHEART;

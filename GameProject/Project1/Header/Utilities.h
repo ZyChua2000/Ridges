@@ -139,6 +139,8 @@ namespace utilities {
 
 	void updatePlayerUI(staticObjInst Health[], staticObjInst Key[], staticObjInst Potion[], Inventory Backpack, int playerHealth); 
 
-	void completeLevel(int);
+	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory Backpack);
+
+	bool inRange(GameObjInst* Player, const AEVec2& const min, const AEVec2& max);
 }
 
