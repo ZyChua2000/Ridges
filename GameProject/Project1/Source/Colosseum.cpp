@@ -272,14 +272,16 @@ void GS_Colosseum_Init(void) {
 	AEVec2 PlayerPos = { 14.f,-16.f };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
-	Backpack.Potion = 0; //set to player number of current potion
-	Backpack.Key = 0; //set to player number of current key
+	std::ifstream ifs{ "Assets/save.txt" };
+	ifs >> Player->health;
+	ifs >> Backpack.Key; //set to player number of current potion
+	ifs >> Backpack.Potion; //set to player number of current key
+	ifs.close();
 
-	Player->health = 3; //Set to player's number of current health
 	Player->damage = 1;
 
 	//Initialise player health.
-	for (int i = 0; i < Player->health; i++) {
+	for (int i = 0; i < 3; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
@@ -399,6 +401,7 @@ void GS_Colosseum_Update(void) {
 		case 3:
 			//move to next level
 			utilities::completeLevel(colosseum, Player, Backpack);
+			waves = 4;
 			break;
 		default:
 			break;
@@ -617,10 +620,6 @@ void GS_Colosseum_Update(void) {
 				staticObjInst* jInst = sStaticObjInstList + j;
 				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 					continue;
-				}
-
-				if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-					std::cout << "here";
 				}
 				if (pInst->calculateDistance(*jInst) < 0.9f
 					&& jInst->Alpha == 0) {

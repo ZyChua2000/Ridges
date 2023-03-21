@@ -319,14 +319,14 @@ void GS_Tower_Init(void) {
 		AEVec2 PlayerPos = { 58.5,-6 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 		
-		Backpack.Potion = 0; //set to player number of current potion
-		Backpack.Key = 0; //set to player number of current key
-
-		Player->health = 3; //Set to player's number of current health
-		Player->damage = 1;
+		std::ifstream ifs{ "Assets/save.txt" };
+		ifs >> Player->health;
+		ifs >> Backpack.Key; //set to player number of current potion
+		ifs >> Backpack.Potion; //set to player number of current key
+		ifs.close();
 
 		//Initialise player health.
-		for (int i = 0; i < Player->health; i++) {
+		for (int i = 0; i < 3; i++) {
 			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 		}
 
