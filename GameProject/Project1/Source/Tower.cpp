@@ -27,7 +27,7 @@ static Node* nodes{};
 
 
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
-static unsigned int			CURRENT_MOBS = MAX_MOBS;
+static int			CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_KEYS;							// The total number of keys
@@ -37,6 +37,8 @@ static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
+static const AEVec2			levelClearMin = { 38,-14 };
+static const AEVec2			levelClearMax = { 40,-13 };
 
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
@@ -77,6 +79,11 @@ static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
 static staticObjInst* RefBox;
+
+static AEVec2* Gates;
+static int gatesNum;
+static int levNum;
+static int chestNum;
 
 static const float timingFIRST = 0.0f;
 static const float timingSECOND = 0.6f;
@@ -242,6 +249,15 @@ void GS_Tower_Load(void) {
 	Spike->refMesh = true;
 	Spike->refTexture = true;
 
+
+	GameObj* Spike_nonfade;
+	Spike_nonfade = sGameObjList + sGameObjNum++;
+	Spike_nonfade->pMesh = Character->pMesh;
+	Spike_nonfade->pTexture = Character->pTexture;
+	Spike_nonfade->type = TYPE_SPIKE_NONFADE;
+	Spike_nonfade->refMesh = true;
+	Spike_nonfade->refTexture = true;
+
 	GameObj* Mask;
 	Mask = sGameObjList + sGameObjNum++;
 	Mask->pMesh = Character->pMesh;
@@ -278,98 +294,70 @@ void GS_Tower_Load(void) {
 void GS_Tower_Init(void) {
 	AEVec2* pos = nullptr;
 	int num;
+
+	utilities::loadObjs(Gates, gatesNum, "towerGates.txt");
+
 	// =====================================
 	//	Initialize map textures
 	// =====================================
 
-	std::ifstream mapInput{ "Assets/textureTower.txt" };
-	//std::ifstream mapInput{ "../Assets/map1.txt" };
-	for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-		for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-			mapInput >> MapObjInstList[i][j].x;
-			mapInput >> MapObjInstList[i][j].y;
-		}
-	}
-	mapInput.close();
+	utilities::importMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
 
 	// =====================================
 	//	Initialize map binary
 	// =====================================
 
-	//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-	std::ifstream binInput{ "Assets/binaryTower.txt" };
-	for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
-		for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-			binInput >> binaryMap[j][i];
-		}
-	}
-	binInput.close();
+	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryTower.txt");
 
-	RefBox = staticObjInstCreate(TYPE_REF, 1, nullptr, 0);
+	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, nullptr, 0);
 
-	AEVec2 Pos = { 9.f , 3.f };
-	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, &Pos, 0);
-	
+
 	// =====================================
 	//	Initialize objects for new game
 	// =====================================
-	if (loadState == false) {
 		//Initialise Player
 		AEVec2 PlayerPos = { 58.5,-6 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-		Player->TextureMap = { 1,8 };
+		
+		std::ifstream ifs{ "Assets/save.txt" };
+		ifs >> Player->health;
+		ifs >> Backpack.Key; //set to player number of current potion
+		ifs >> Backpack.Potion; //set to player number of current key
+		ifs.close();
 
-		Backpack.Potion = 0;
-		Backpack.Key = 0;
-
-		Player->health = 3;
-		Player->damage = 1;
-		Player->timetracker = 0;
-
-
+		//Initialise player health.
+		for (int i = 0; i < 3; i++) {
+			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		}
 
 		//Initialise Levers in level
-		AEVec2 pos[2] = { { 42.5f - (1.0f / 16), -4.5} ,{ 67.5f - (1.0f / 16), -8.5 }  };
-		for (int i = 0; i < 2; i++) {
+		utilities::loadObjs(pos, levNum, "towerLevers.txt");
+
+		for (int i = 0; i < levNum; i++) {
 			Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos[i], 0);
-			Levers[i]->TextureMap = { 2,11 };
 		}
+
+		utilities::unloadObjs(pos);
 
 		//Initialise enemy in level
-		AEVec2 EnemyPos[MAX_MOBS] = { {45,-5},{50,-6},{46,-8} };
-		for (int i = 0; i < MAX_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &EnemyPos[i], 0, 0);
-			enemy->TextureMap = { 0,9 };
+		utilities::loadObjs(pos, CURRENT_MOBS, "towerEnemy.txt");
+		for (int i = 0; i < CURRENT_MOBS; i++) {
+			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
 			enemy->health = 3;
+			enemy->pathfindtime = 0.25f;
+			enemy->pathtimer = enemy->pathfindtime;
 		}
+		utilities::unloadObjs(pos);
 
-	}
+
+	
+
 
 	// =====================================
-	//	Initialize objects for loaded game game
+	//	Initialize objects for loaded game
 	// =====================================
+	utilities::loadObjs(pos, num, "towerTowersD.txt");
 
-	AEVec2 towerdownpos[14] = 
-	{
-	{65.5,-14},
-	{66.5,-14},
-
-	{71.5,-3},
-	{72.5,-3},
-
-	{62.5,-3},
-	{63.5,-3},
-
-	{55.5,-18},
-	{56.5,-18},
-
-	{42.5,-14},
-	{43.5,-14},
-	{44.5,-14},
-	{45.5,-14},
-	{46.5,-14},
-	{47.5,-14}
-	};
 	float towerdowntiming[14] = {
 	timingFIRST,
 	timingSECOND,
@@ -385,23 +373,43 @@ void GS_Tower_Init(void) {
 	timingFOURTH,
 	timingSECOND,
 	timingTHIRD };
-	for (int i = 0; i < sizeof(towerdowntiming)/sizeof(towerdowntiming[0]); i++)
+	for (int i = 0; i < num; i++)
 	{
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerdownpos[i], 0);
-		jInst->TextureMap = { 2,6 };
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &pos[i], 0);
 		jInst->timetracker = towerdowntiming[i];
 	}
+	utilities::unloadObjs(pos);
+
 	float towerrighttiming[2] =
 	{
 		timingFIRST,
 		timingSECOND
 	};
-	AEVec2 towerrightpos[2] = { {50, -13.5}, {50,-14.5} };
-	for (int i = 0; i < sizeof(towerrightpos)/sizeof(towerrightpos[0]); i++)
+
+	utilities::loadObjs(pos, num, "towerTowersR.txt");
+	for (int i = 0; i < num; i++)
 	{
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &towerrightpos[i], TOWER_RIGHT);
-		jInst->TextureMap = { 2,6 };
+		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &pos[i], TOWER_RIGHT);
 		jInst->timetracker = towerrighttiming[i];
+	}
+	utilities::unloadObjs(pos);
+
+	// =====================================
+	//	Initialize UI objects
+	// =====================================
+	utilities::loadObjs(pos, num, "towerSpikes.txt");
+	for (int i = 0; i < num; i++)
+	{
+		staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
+	}
+	utilities::unloadObjs(pos);
+	for (unsigned int i = 0; i < sStaticObjInstNum; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->pObject->type == TYPE_SPIKE)
+		{
+			pInst->TextureMap = { 5,3 };
+		}
 	}
 
 	//Init pathfinding nodes
@@ -413,41 +421,17 @@ void GS_Tower_Init(void) {
 	// =====================================
 	//	Initialize UI objects
 	// =====================================
-	utilities::loadObjs(pos, num, "towerSpikes.txt");
-	for (int i = 0; i < num; i++)
-	{
-		staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
-	}
-	utilities::unloadObjs(pos);
-	for (int i = 0; i < sStaticObjInstNum; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->pObject->type == TYPE_SPIKE)
-		{
-			pInst->TextureMap = { 5,3 };
-		}
-	}
-	//Initialise player health.
-	for (int i = 0; i < Player->health; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		Health[i]->TextureMap = { 0,11 };
-	}
 
-	AEVec2 MenuPos[3] = { {2,-2},{5,-2},{8,-2} };
-	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[0], 0); // Potions
-	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, &MenuPos[1], 0); // Keys
-	//MenuObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &MenuPos[2], 0); // 
-	MenuObj[0]->TextureMap = { 6,9 };
-	MenuObj[1]->TextureMap = { 4,11 };
-	//MenuObj[2]->TextureMap = { , };
 
-	AEVec2 NumPos[3] = { {3,-2},{6,-2},{9,-2} };
-	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[0], 0); // Potions
-	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, &NumPos[1], 0); // Keys
-	//NumObj[2] = staticObjInstCreate(TYPE_ITEMS, 1, &NumPos[2], 0); // Keys
-	NumObj[0]->TextureMap = { 2,12 };
-	NumObj[1]->TextureMap = { 2,12 };
-	//NumObj[2]->TextureMap = { , };
+	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
+	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
+
+
+	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
+	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
+
+
+	ParticleSystemInit();
 
 }
 
@@ -462,82 +446,6 @@ void GS_Tower_Init(void) {
 
 void GS_Tower_Update(void) {
 
-	// =====================================
-	// User Input
-	// =====================================
-	//Debugging mode
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		state ^= 1;
-	}
-
-	if (AEInputCheckTriggered(AEVK_9)) {
-		mapeditor ^= 1;
-	}
-
-	Player->velCurr = { 0,0 };// set velocity to 0 initially, if key is released, velocity is set back to 0
-
-	if (AEInputCheckReleased(AEVK_W) || AEInputCheckReleased(AEVK_UP) || AEInputCheckReleased(AEVK_S) || AEInputCheckReleased(AEVK_DOWN)
-		|| AEInputCheckReleased(AEVK_A) || AEInputCheckReleased(AEVK_LEFT) || AEInputCheckReleased(AEVK_D) || AEInputCheckReleased(AEVK_RIGHT)) {
-		Player->TextureMap = { 1,8 };
-	}
-
-	Player->playerWalk(walkCD);
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-	//reducing heath for debugging
-	if (AEInputCheckTriggered(AEVK_MINUS))
-	{
-		Player->deducthealth();
-		switch (Player->health)
-		{
-		case 0:
-			Health[2]->TextureMap = { 1, 11 };
-			break;
-		case 1:
-			Health[1]->TextureMap = { 1, 11 };
-			break;
-		case 2:
-			Health[0]->TextureMap = { 1, 11 };
-		}
-	}
-
-	if (AEInputCheckTriggered(AEVK_E)) {
-		//Interaction with levers
-		for (int i = 0; i < 2; i++) {
-			if (Player->calculateDistance(*Levers[i]) < 1 && Levers[i]->dirCurr == 0) {
-				//Switch lever to face down
-				Levers[i]->dirCurr = -PI / 4;
-				Levers[i]->posCurr.x -= 0.2f;
-				//Remove gates: Change texture & Binary map
-				switch (i) {
-				case 0:
-					for (int i = 14; i <16; i++) {
-						MapObjInstList[60][i] = { 0,4 };
-						binaryMap[60][i] = 0;
-					}
-					break;
-				case 1:
-					for (int i = 18; i < 20; i++) {
-						MapObjInstList[49][i] = { 0,4 };
-						binaryMap[49][i] = 0;
-					}
-					break;
-				default:
-					break;
-				}
-			}
-		}
-	}
-
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -545,48 +453,101 @@ void GS_Tower_Update(void) {
 	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
 	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
-
 	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-
+	static float playerHitTime = 0;
+	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
+	utilities::decreaseTime(playerHitTime);
+
+
+	// =====================================
+	// User Input
+	// =====================================
+	//Debugging mode
+	if (AEInputCheckTriggered(AEVK_F3)) {
+		state ^= 1;
+	}
+	//Map editor mode
+	if (AEInputCheckTriggered(AEVK_9)) {
+		mapeditor ^= 1;
+	}
+
+
+	Player->playerStand();
+
+	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
+		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
+		Player->playerWalk(walkCD);
+	}
+
+	//reducing heath for debugging
+	if (AEInputCheckTriggered(AEVK_MINUS))
+	{
+		Player->deducthealth();
+		switch (Player->health)
+		{
+		case 0:
+			Health[2]->TextureMap = TEXTURE_DEADHEART;
+			break;
+		case 1:
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
+			break;
+		case 2:
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
+		}
+	}
+
+	if (AEInputCheckTriggered(AEVK_E)) {
+
+		//Interaction with levers
+		for (int lev = 0; lev < levNum; lev++) {
+			if (Player->calculateDistance(*Levers[lev]) < 1 && Levers[lev]->dirCurr == 0) {
+				//Switch lever to face down
+				Levers[lev]->tilt45();
+				//Remove gates: Change texture & Binary map
+				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
+			}
+		}
+
+
+		for (int i = 0; i < chestNum; i++)
+		{
+			//Interaction with Chest
+			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+			{
+				//change texture of chest
+				Chest[i]->chest2Potion();
+			}
+		}
+	}
+
+	//if pickup potion then add player health
+	if (AEInputCheckTriggered(AEVK_R))
+	{
+		Player->drinkPotion(Health, Backpack);
+	}
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
 		slashCD = SLASH_COOLDOWN_t;
 		walkCD = WALK_COOLDOWN_t;
-		Player->velCurr = { 0,0 };
+		Player->playerStand();
+	}
+
+	if (SLASH_ACTIVATE == true) {
+		Player->playerSlashCreate(angleMousetoPlayer);
+		SLASH_ACTIVATE = false;
 	}
 
 	if (mapeditor == 1) {
-		mapEditorObj->scale = 0.7f;
-		mapEditorObj->posCurr = { mouseX + camX + 0.3f, mouseY + camY + 0.3f };
-		if (AEInputCheckTriggered(AEVK_K) && mapEditorObj->TextureMap.y < TEXTURE_MAXHEIGHT / TEXTURE_CELLSIZE) {
-			mapEditorObj->TextureMap.y += 1;
-		}
-		if (AEInputCheckTriggered(AEVK_I) && mapEditorObj->TextureMap.y > 0) {
-			mapEditorObj->TextureMap.y -= 1;
-		}
-		if (AEInputCheckTriggered(AEVK_J) && mapEditorObj->TextureMap.x > 0) {
-			mapEditorObj->TextureMap.x -= 1;
-		}
-		if (AEInputCheckTriggered(AEVK_L) && mapEditorObj->TextureMap.x < TEXTURE_MAXWIDTH / TEXTURE_CELLSIZE) {
-			mapEditorObj->TextureMap.x += 1;
-		}
-		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
-			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
-				if (mouseX + camX >= i &&
-					mouseX + camX <= i + 1 &&
-					-mouseY - camY >= j &&
-					-mouseY - camY <= j + 1
-					&& AEInputCheckCurr(AEVK_LBUTTON)) {
-					MapObjInstList[i][j] = mapEditorObj->TextureMap;
-				}
-			}
-		}
+		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
 	}
 	else {
 		mapEditorObj->scale = 0;
@@ -599,84 +560,25 @@ void GS_Tower_Update(void) {
 		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
 	}
 
-	if (AEInputCheckTriggered(AEVK_7)) {
-		//utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryWorld.txt");
-		std::ifstream binInput{ "Assets/binaryWorld.txt" };
-		for (int i = 0; i < MAP_CELL_HEIGHT; i++) {
-			for (int j = 0; j < MAP_CELL_WIDTH; j++) {
-				binInput >> binaryMap[j][i];
-			}
-		}
-		binInput.close();
-	}
-
 	if (AEInputCheckTriggered(AEVK_M)) {
 		gGameStateNext = GS_MAINMENU;
 	}
 
 
-	//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		if (Player->health > 0 && Player->health < 3 && Backpack.Potion > 0)
-		{
-			Player->recoverhealth();
-			switch (Player->health)
-			{
-			case 2:
-				Health[1]->TextureMap = { 0, 11 };
-				break;
-			case 3:
-				Health[0]->TextureMap = { 0, 11 };
-				break;
-			}
-			Backpack.Potion--;
-		}
-	}
-
-	if (SLASH_ACTIVATE == true) {
-		AEVec2 Pos = Player->posCurr + Player->velCurr;
-		Pos.x += -cos(angleMousetoPlayer) / 1.3f;
-		Pos.y += -sin(angleMousetoPlayer) / 1.3f;
-		staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1, &Pos, 0);
-		slashObj->dirCurr = angleMousetoPlayer + PI;
-		slashObj->timetracker = 0;
-		SLASH_ACTIVATE = false;
-	}
-
-	//creating key
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_KEY)
+		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
 		{
 			continue;
 		}
-		//Interaction with key
-		if (Player->calculateDistance(*pInst) < 1)
-		{
-			//remove texture of key
-			staticObjInstDestroy(pInst);
-			Backpack.Key++;
-		}
-	}
-
-	//creating potions
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || pInst->pObject->type != TYPE_ITEMS)
-		{
-			continue;
-		}
-		//Interaction with potion
+		//Interaction with items
 		if (Player->calculateDistance(*pInst) < 0.5f)
 		{
-			//remove texture of potion
-			staticObjInstDestroy(pInst);
-			Backpack.Potion++;
+			Backpack.itemPickUp(pInst);
 		}
 	}
+
 
 	// ======================================================
 	// update physics of all active game object instances
@@ -685,10 +587,11 @@ void GS_Tower_Update(void) {
 	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 
 
-	// Pathfinding for Enemy AI
+		// Pathfinding for Enemy AI
 	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 	{
 		GameObjInst* pEnemy = sGameObjInstList + j;
+
 
 		// skip non-active object
 		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
@@ -697,50 +600,7 @@ void GS_Tower_Update(void) {
 		if (Player->calculateDistance(*pEnemy) > 10)
 			continue;
 
-		// perform pathfinding for this enemy
-		pEnemy->path = pathfind( pEnemy->posCurr.x, pEnemy->posCurr.y, Player->posCurr.x, Player->posCurr.y);
-
-		// update enemy velocity based on path
-		if (pEnemy->path.size() > 1)
-		{
-			Node* pNextNode = pEnemy->path[1];
-
-			// calculate the distance between the enemy and player
-			float distance = sqrtf(powf(Player->posCurr.x - pEnemy->posCurr.x, 2) + powf(Player->posCurr.y - pEnemy->posCurr.y, 2));
-
-			// update enemy velocity only if it is farther than the maximum distance
-			if (distance > MAX_ENEMY_DISTANCE)
-			{
-				// check if player is moving or the enemy is already stopped
-				if (Player->velCurr.x != 0 || Player->velCurr.y != 0 || pEnemy->stopped)
-				{
-					// continue moving
-					pEnemy->velCurr.x -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.x - pNextNode->ae_NodePos.x));
-					pEnemy->velCurr.y -= (g_dt * 5.0f * (pNextNode->parent->ae_NodePos.y - pNextNode->ae_NodePos.y));
-
-					// set flag to indicate not stopped
-					pEnemy->stopped = false;
-				}
-				else // player is not moving and enemy is not stopped
-				{
-					// stop moving
-					pEnemy->velCurr.x = 0;
-					pEnemy->velCurr.y = 0;
-
-					// set flag to indicate stopped
-					pEnemy->stopped = true;
-				}
-			}
-			else
-			{
-				// stop moving if already close to the player
-				pEnemy->velCurr.x = 0;
-				pEnemy->velCurr.y = 0;
-
-				// set flag to indicate stopped
-				pEnemy->stopped = true;
-			}
-		}
+		pEnemy->mobsPathFind(*Player);
 	}
 
 
@@ -749,10 +609,7 @@ void GS_Tower_Update(void) {
 		if (pInst->flag != FLAG_ACTIVE) {
 			continue;
 		}
-		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
-		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.x;
-		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(pInst->scale) + pInst->posCurr.y;
+		pInst->calculateBB();
 	}
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
@@ -763,53 +620,47 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
-		pInst->boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
-		pInst->boundingBox.max.x = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * pInst->scale + pInst->posCurr.y;
+		pInst->calculateBB();
 	}
+
 
 	// ======================================================
 	//	-- Positions of the instances are updated here with the already computed velocity (above)col
 	// ======================================================
-
+	
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 		GameObjInst* pInst = sGameObjInstList + i;
 		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 		{
-			AEVec2 temp_velo{ pInst->velCurr.x, pInst->velCurr.y };
-			AEVec2Normalize(&pInst->velCurr, &temp_velo); // normalize
-
 			if (pInst->pObject->type == TYPE_CHARACTER) {
-				pInst->velCurr.x *= PLAYER_SPEED; // magnitude/speed of velo.x
-				pInst->velCurr.y *= PLAYER_SPEED; // magnitude/speed of velo.y
+				pInst->velToPos(PLAYER_SPEED);
 			}
 			//invert movement for binary map
 
 			if (pInst->pObject->type == TYPE_ENEMY) {
-				pInst->velCurr.x *= NPC_SPEED; // magnitude/speed of velo.x
-				pInst->velCurr.y *= NPC_SPEED; // magnitude/speed of velo.y
+				pInst->velToPos(NPC_SPEED);
 			}
 
 			if (pInst->pObject->type == TYPE_BULLET) {
-				pInst->velCurr.x *= BULLET_SPEED;
-				pInst->velCurr.y *= BULLET_SPEED;
+				pInst->velToPos(BULLET_SPEED);
 			}
 		}
-
-		pInst->posCurr.x += pInst->velCurr.x * g_dt;
-		pInst->posCurr.y += pInst->velCurr.y * g_dt;
 	}
 
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
 	// ====================
-	static float playerHitTime = 0;
-	playerHitTime -= g_dt;
-	if (playerHitTime < 0) {
-		playerHitTime = 0;
-	}
 
 	//if player receive damage from collision or from mob, player decrease health
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -827,14 +678,11 @@ void GS_Tower_Update(void) {
 				{
 					Player->deducthealth();
 
-					// Hit cooldown
+					//Hit cooldown
 					playerHitTime = DAMAGE_COODLDOWN_t;
 
 					//knockback
-					AEVec2 nil{ 0,0 };
-					if (Player->velCurr == nil)
-						Player->posCurr += pInst->velCurr / 8;
-					else Player->posCurr -= Player->velCurr / 8;
+					Player->playerKnockback(*pInst);
 
 				}
 			}
@@ -844,13 +692,12 @@ void GS_Tower_Update(void) {
 				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 					continue;
 				}
-				AEVec2 velNull = { 0,0 };
-				if (pInst->calculateDistance(*jInst) < 0.6f
-					&& jInst->Alpha == 1) {
+
+				if (pInst->calculateDistance(*jInst) < 0.9f
+					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
-					AEVec2 slash2Mob = jInst->posCurr - pInst->posCurr;
-					pInst->posCurr -= slash2Mob;
+					pInst->mobKnockback(*jInst);
 				}
 			}
 		}
@@ -861,67 +708,31 @@ void GS_Tower_Update(void) {
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
 			}
-			if (flag & COLLISION_TOP) {
+			if (snapCollision(*pInst, flag)) {
 				gameObjInstDestroy(pInst);
 			}
-			if (flag & COLLISION_BOTTOM) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_RIGHT) {
-				gameObjInstDestroy(pInst);
-			}
-			if (flag & COLLISION_LEFT) {
-				gameObjInstDestroy(pInst);
-			}
+		}
+
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
 		}
 
 		switch (Player->health)
 		{
 		case 0:
-			Health[2]->TextureMap = { 1, 11 };
+			Health[2]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 1:
-			Health[1]->TextureMap = { 1, 11 };
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 2:
-			Health[0]->TextureMap = { 1, 11 };
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-	if (flag & COLLISION_TOP) {
-		//Top collision
-		std::cout << "collide top" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-
-		std::cout << Player->posCurr.y << std::endl;
-		//Player->posCurr.y + 0.5;
-	}
-
-	if (flag & COLLISION_BOTTOM) {
-		//bottom collision
-		std::cout << "collide botton" << std::endl;
-		snaptocellsub(&Player->posCurr.y);
-
-		//Player->posCurr.y - 0.5;
-	}
-
-	if (flag & COLLISION_LEFT) {
-		//Left collision
-		std::cout << "collide left" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-
-		//Player->posCurr.x + 0.5;
-
-	}
-	if (flag & COLLISION_RIGHT) {
-		//Right collision
-		std::cout << "collide right" << std::endl;
-		snaptocelladd(&Player->posCurr.x);
-
-		//Player->posCurr.x - 0.5;
-	}
+	snapCollision(*Player, flag);
 
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -931,12 +742,11 @@ void GS_Tower_Update(void) {
 
 		pInst->spikeUpdate(); // Updates alpha of spikes
 
-		if (Player->calculateDistance(*pInst) <= 0.7 && (pInst->Alpha == 0) && playerHitTime == 0) {
+		if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 			Player->deducthealth();
 			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
-
 
 	}
 
@@ -954,49 +764,19 @@ void GS_Tower_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_SLASH) {
-			pInst->timetracker += g_dt;
-			if (pInst->timetracker >= 0.2f) {
-				pInst->Alpha = (pInst->timetracker - 0.2f) / 0.4f;
-			}
-			if (pInst->timetracker >= 0.6f) {
-				staticObjInstDestroy(pInst);
-			}
+			pInst->playerSlashUpdate();
 		}
 
 		if (pInst->pObject->type == TYPE_TOWER) {
-			pInst->timetracker += g_dt;
-
-			if (pInst->timetracker > TOWER_REFRESH) {
-				pInst->timetracker = 0;
-			}
+			utilities::decreaseTime(pInst->timetracker);
 
 			if (pInst->timetracker == 0) {
-				AEVec2 vel;
-				AEVec2 pos = pInst->posCurr;
-				switch ((int)(pInst->dirCurr * 57)) {
-				case 0: // facing down
-					vel = { 0, -1 };
-					pos.y -= 0.25f;
-					break;
-				case 89: // facing right
-					vel = { 1, 0 };
-					pos.x += 0.25f;
-					break;
-				case 179: // facing up
-					vel = { 0, 1 };
-					pos.y += 0.25f;
-					break;
-				case -89: // facing left
-					vel = { -1, 0 };
-					pos.x -= 0.25f;
-					break;
-				default:
-					break;
-				}
-				GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &pos, &vel, 0);
-				jInst->TextureMap = { 5,12 };
+				pInst->timetracker = TOWER_REFRESH;
+				pInst->shootBullet();
 			}
+
 		}
+
 	}
 
 	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -1009,33 +789,28 @@ void GS_Tower_Update(void) {
 		{
 			if (pInst->health == 0)
 			{
-				gameObjInstDestroy(pInst);
+				pInst->mobsKilled();
 				CURRENT_MOBS -= 1;
-				//randomising potion drop rate when mobs are killed 
-				srand(time(NULL));
-				if (rand() % 2 == 0)
-				{
-					AEVec2 Pos = { pInst->posCurr.x, pInst->posCurr.y };
-					staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &Pos, 0);
-					Potion->TextureMap = { 6,9 };
-				}
 			}
 		}
 
 		if (pInst->pObject->type == TYPE_CHARACTER) {
 			pInst->timetracker += g_dt;
-			if (pInst->health == 0) {
-				gGameStateNext = GS_DEATHSCREEN;
-			}
 		}
 	}
 
-	if (CURRENT_MOBS == 9) {
-		for (int i = 17; i < 21; i++) {
-			MapObjInstList[35][i] = { 0,4 };
-			binaryMap[35][i] = 0;
-		}
+	if (MAX_MOBS - CURRENT_MOBS == 2) { //If first 2 tutorial monsters are killed,unlock gate 1
+		utilities::unlockGate(gatesNum / 2 - 1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 	}
+
+
+	// Clear condition
+
+
+	if (utilities::inRange(Player,levelClearMin,levelClearMax)) {
+		utilities::completeLevel(tower, Player, Backpack);
+	}
+
 
 	// =====================================
 	// calculate the matrix for all objects
@@ -1044,119 +819,40 @@ void GS_Tower_Update(void) {
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
 	{
 		GameObjInst* pInst = sGameObjInstList + i;
-		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
-
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-		float scaleY;
-		// Compute the scaling matrix
-		if (pInst->scale < 0) {
-			scaleY = -pInst->scale;
-		}
-		else {
-			scaleY = pInst->scale;
-		}
-		AEMtx33Scale(&scale, pInst->scale * SPRITE_SCALE, scaleY * SPRITE_SCALE);
-		// Compute the rotation matrix 
-		AEMtx33Rot(&rot, pInst->dirCurr);
-		// Compute the translation matrix
-		AEMtx33Trans(&trans, pInst->posCurr.x * SPRITE_SCALE, pInst->posCurr.y * SPRITE_SCALE);
-		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
-		AEMtx33Concat(&pInst->transform, &rot, &scale);
-		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
-
+		pInst->calculateTransMatrix();
 	}
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
-		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
+
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-		AEMtx33Scale(&scale, pInst->scale * SPRITE_SCALE, pInst->scale * SPRITE_SCALE);
-		// Compute the rotation matrix 
-		AEMtx33Rot(&rot, pInst->dirCurr);
-		// Compute the translation matrix
-		AEMtx33Trans(&trans, pInst->posCurr.x * SPRITE_SCALE, pInst->posCurr.y * SPRITE_SCALE);
-		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
-		AEMtx33Concat(&pInst->transform, &rot, &scale);
-		AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+		pInst->calculateTransMatrix();
 	}
 
 	// Camera position and UI items
 
-	switch (Backpack.Potion)
-	{
-	case 0:
-		NumObj[0]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[0]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[0]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	case 4:
-		NumObj[0]->TextureMap = { 8,11 };
-		break;
-	case 5:
-		NumObj[0]->TextureMap = { 9,11 };
-		break;
-	case 6:
-		NumObj[0]->TextureMap = { 10,11 };
-		break;
-	case 7:
-		NumObj[0]->TextureMap = { 11,11 };
-		break;
-	case 8:
-		NumObj[0]->TextureMap = { 0,12 };
-		break;
-	case 9:
-		NumObj[0]->TextureMap = { 1,12 };
-		break;
-	}
 
-	switch (Backpack.Key)
-	{
-	case 0:
-		NumObj[1]->TextureMap = { 2,12 };
-		break;
-	case 1:
-		NumObj[1]->TextureMap = { 5,11 };
-		break;
-	case 2:
-		NumObj[1]->TextureMap = { 6,11 };
-		break;
-	case 3:
-		NumObj[0]->TextureMap = { 7,11 };
-		break;
-	}
+	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
+	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
 
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
-	if (MAP_CELL_WIDTH - CAM_CELL_WIDTH / 2 - 0.5 > Player->posCurr.x &&
-		CAM_CELL_WIDTH / 2 + 0.5 < Player->posCurr.x) {
-		camX = Player->posCurr.x;
-	}
-	if (MAP_CELL_HEIGHT - CAM_CELL_HEIGHT / 2 - 0.5 > -Player->posCurr.y &&
-		CAM_CELL_HEIGHT / 2 + 0.5 < -Player->posCurr.y) {
-		camY = Player->posCurr.y;
-	}
+	//BUG NOT WORKING
+	//Player->dustParticles();
 
-
-	AEGfxSetCamPosition(static_cast<int>(camX * SPRITE_SCALE), static_cast<int> (camY * SPRITE_SCALE));
-
-
-
+	ParticleSystemUpdate();
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 
 }
 
@@ -1168,6 +864,7 @@ void GS_Tower_Update(void) {
 */
 /******************************************************************************/
 void GS_Tower_Draw(void) {
+
 
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -1204,10 +901,8 @@ void GS_Tower_Draw(void) {
 
 			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
-
 		}
 	}
-
 
 	// Spawn Static entities
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
@@ -1246,7 +941,11 @@ void GS_Tower_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
+
+
 	AEGfxSetTransparency(1.0f);
+
+
 
 	// Spawn dynamic entities
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -1276,6 +975,7 @@ void GS_Tower_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
+
 
 	if (state == 1)
 	{
@@ -1337,6 +1037,9 @@ void GS_Tower_Draw(void) {
 			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 		}
 	}
+
+	ParticleSystemDraw(&Player->transform);   //localtransform
+
 }
 
 /******************************************************************************/
@@ -1361,6 +1064,8 @@ void GS_Tower_Free(void) {
 		}
 	}
 	deletenodes();
+
+	utilities::unloadObjs(Gates);
 }
 
 /******************************************************************************/

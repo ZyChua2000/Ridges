@@ -202,6 +202,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
+				break;
 			default:
 				pInst->TextureMap = { 0,0 };
 				break;
@@ -249,7 +250,6 @@ void gameObjInstDestroy(GameObjInst* pInst)
 staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
-
 	AEVec2Zero(&zero);
 
 	// loop through the object instance list to find a non-used object instance

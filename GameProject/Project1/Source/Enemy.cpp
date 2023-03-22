@@ -15,13 +15,11 @@ Node n_enemy{};
 Node n_player{};
 
 
-// func to initialise nodes 
+/******************************************************************
+function definition for Initialising node variables
+*******************************************************************/
 void NodesInit(int *grid, int width, int height)
 {
-
-	//init size 
-	/*path_width = sizeof(grid) / sizeof(grid[0]);
-	path_height = sizeof(grid) / sizeof(path_width);*/
 
 	path_width = width;
 	path_height = height;
@@ -95,11 +93,17 @@ void NodesInit(int *grid, int width, int height)
 	std::cout << "Nodes Initialised" << std::endl;
 }
 
+/******************************************************************
+function definition for calculating distance
+*******************************************************************/
 float distance(Node* a, Node* b) // to calculate dist
 {
 	return sqrtf((a->ae_NodePos.x - b->ae_NodePos.x) * (a->ae_NodePos.x - b->ae_NodePos.x) + (a->ae_NodePos.y - b->ae_NodePos.y) * (a->ae_NodePos.y - b->ae_NodePos.y));
 }
 
+/******************************************************************
+function definition for calculating hcost of nodes
+*******************************************************************/
 float heuristic(Node* a, Node* b) // to calculate heuristic
 {
 	return distance(a, b);
@@ -107,7 +111,9 @@ float heuristic(Node* a, Node* b) // to calculate heuristic
 
 //float i_hcost = heuristic(nodesrc, nodedesc);
 
-
+/******************************************************************
+function definition for A* pathfinding
+*******************************************************************/
 std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 {
 
@@ -219,15 +225,21 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 
 }
 
+/******************************************************************
+function definition deleting nodes
+*******************************************************************/
 void deletenodes()// free New for nodes
 {
 	
 	delete[] nodes;
 }
 
+/******************************************************************
+function definition for mobsKilled
+*******************************************************************/
 void GameObjInst::mobsKilled() {
 
-	srand(time(NULL));
+	srand(static_cast<unsigned int>(time(NULL)));
 	if (rand() % 2 == 0)
 	{
 		AEVec2 Pos = { posCurr.x, posCurr.y };
@@ -238,6 +250,9 @@ void GameObjInst::mobsKilled() {
 	gameObjInstDestroy(this);
 }
 
+/******************************************************************
+function definition for mobsPathfind with movement implemented
+*******************************************************************/
 void GameObjInst::mobsPathFind(GameObjInst target) {
 	pathtimer -= g_dt; // timer counting down 
 
@@ -313,7 +328,140 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 	}
 }
 
+/******************************************************************
+function definition of mobKnockback
+*******************************************************************/
 void GameObjInst::mobKnockback(staticObjInst slash) {
 	AEVec2 slash2Mob = slash.posCurr - posCurr; //Based on distance between mob and slash
 	posCurr -= slash2Mob;
+}
+
+/******************************************************************
+function definition for boss state machine
+*******************************************************************/
+
+void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
+{
+	AEVec2 velDown = { 0,1 };
+	AEVec2 velRight = { 0,1 };
+	//states declared at GameObjs.h
+	switch (pInst->state)
+	{
+	case STATE_PATROL:
+		switch (pInst->innerState) {
+		case INNER_STATE_ON_ENTER:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_UPDATE;
+			break;
+		case INNER_STATE_ON_UPDATE:
+			pInst->timetracker += g_dt;
+			pInst->mobsPathFind(*Player);
+			if (pInst->calculateDistance(*Player) > 1.0f) { // If found player, attack player
+				pInst->innerState = INNER_STATE_ON_EXIT;
+				pInst->state = STATE_BASIC;
+				break;
+			}
+
+			if (static_cast<int>(pInst->timetracker) % static_cast<int>(aoeREFRESH) == 0) {
+				//AOE ATTACK
+				pInst->state = STATE_AOE;
+				pInst->innerState = INNER_STATE_ON_EXIT;
+				break;
+			}
+
+			if (static_cast<int>(pInst->timetracker) % static_cast<int>(challengeATKREFRESH) == 0) {
+				//CHALLENGE ATTACK
+				// random between 0, 1 and 2
+				pInst->innerState = INNER_STATE_ON_EXIT;
+				int random = rand() % 4;
+				if (random == 0) {
+					pInst->state = STATE_MAZE_DARKEN;
+				}
+				else if (random == 1) {
+					pInst->state = STATE_SPAWN_BULLETS;
+				}
+				else if (random == 2){
+					pInst->state = STATE_SPAWN_ENEMIES;
+				}
+				break;
+			}
+			break;
+
+		case INNER_STATE_ON_EXIT:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_ENTER;
+			break;
+		} break;
+
+
+	case STATE_BASIC:
+		switch (pInst->innerState) {
+		case INNER_STATE_ON_ENTER:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_UPDATE;
+			break;
+		case INNER_STATE_ON_UPDATE:
+			pInst->timetracker += g_dt;
+			//Slash towards player, draw object
+			pInst->state = STATE_PATROL;
+			pInst->innerState = INNER_STATE_ON_EXIT;
+		case INNER_STATE_ON_EXIT:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_ENTER;
+			break;
+		}
+			
+
+	case STATE_AOE:
+		switch (pInst->innerState) {
+		case INNER_STATE_ON_ENTER:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_UPDATE;
+			break;
+		case INNER_STATE_ON_UPDATE:
+			pInst->timetracker += g_dt;
+			//AOE around
+			pInst->state = STATE_PATROL;
+			pInst->innerState = INNER_STATE_ON_EXIT;
+		case INNER_STATE_ON_EXIT:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_ENTER;
+			break;
+		}
+
+
+	case STATE_SPAWN_BULLETS:
+		switch (pInst->innerState) {
+		case INNER_STATE_ON_ENTER:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_UPDATE;
+			break;
+		case INNER_STATE_ON_UPDATE:
+			//Spawn bullets
+			if (pInst->timeCD == 0) {
+				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velDown, 0);
+				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velRight, 0);
+			}
+			
+			// Stay still for awhile
+			pInst->timeCD += g_dt;
+			if (pInst->timeCD == 2.0f) {
+				pInst->timeCD = 0;
+				pInst->innerState = INNER_STATE_ON_EXIT;
+				pInst->state = STATE_PATROL;
+			}
+			break;
+		case INNER_STATE_ON_EXIT:
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_ENTER;
+			break;
+		}
+	 /*this will be the last 4 states
+	  pinst->state = (srand(3,6));*/
+
+			
+
+
+
+	}
 }

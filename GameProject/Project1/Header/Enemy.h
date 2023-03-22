@@ -24,6 +24,24 @@ struct Node
 };
 
 
+enum STATE // MOVESETS FOR BOSS
+{
+	STATE_PATROL = 0,//IDLE STATE OR NO STATE
+	STATE_BASIC, //STATE FOR BASIC ATTACK
+	STATE_AOE,  //STATE FOR AOE ATTACK
+	STATE_SPAWN_ENEMIES, // STATE TO SPAWN ENEMIES
+	STATE_SPAWN_BULLETS, // STATE TO SPAWN BULLETS
+	STATE_MAZE_DARKEN,	// STATE TO DARKEN THE WHOLE LEVEL 
+
+};
+
+enum INNER_STATE // INNER STATE FOR BOSS
+{
+	INNER_STATE_ON_ENTER,
+	INNER_STATE_ON_UPDATE,
+	INNER_STATE_ON_EXIT
+};
+
 /******************************************************************
 function declaration for Initialising node variables
 *******************************************************************/
@@ -48,3 +66,8 @@ float heuristic(Node* a, Node* b);
 function declaration deleting nodes 
 *******************************************************************/
 void deletenodes();
+
+/******************************************************************
+function declaration for boss state machine
+*******************************************************************/
+void BossStateMachine(GameObjInst* pInst);

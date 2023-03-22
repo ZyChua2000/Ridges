@@ -47,6 +47,9 @@ const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
 
+const float			aoeREFRESH = 5.0f;
+const float			challengeATKREFRESH = 10.f;
+
 const AEVec2		TEXTURE_POTION = { 6,9 };
 const AEVec2		TEXTURE_TOWER = { 2,6 };
 const AEVec2		TEXTURE_BULLET = { 5,12 };
@@ -63,6 +66,9 @@ const AEVec2		TEXTURE_NUMBERS[10] = { {2,12},{5,11},{6,11},
 											{10,11},{11,11},{0,12},
 											{1,12} };
 const AEVec2		TEXTURE_FLOOR = { 0,4 };
+const AEVec2		TEXTURE_FENCE = { 5,6 };
 
 const AEVec2		TEXTURE_PLAYER = { 1,8 };
 const float			TOWER_REFRESH = 2.f;			// Rate at which tower shoot bullets
+
+boolean				levelCleared[4] = { false };

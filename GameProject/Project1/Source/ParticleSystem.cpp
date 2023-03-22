@@ -193,7 +193,6 @@ void ParticleSystemDraw(AEMtx33* localTransform)
 	for (size_t i = 0; i < PARTICLE_OBJ_INST_NUM_MAX; ++i)
 	{
 		ParticleObjInst* pInst = sParticleObjInstList + i;
-		AEMtx33 temp;
 
 		// skip non-active object
 		if (0 == (pInst->flag & FLAG_ACTIVE)) continue;
@@ -319,7 +318,7 @@ void GameObjInst::dustParticles() {
 	if (internalTimer > 0.25f)
 	{
 		AEVec2 particlecoords = posCurr;
-		particlecoords.y = posCurr.y - 0.48;
+		particlecoords.y = posCurr.y - 0.48f;
 		internalTimer -= 0.25f;
 		ParticleSystemRequest(0, 10.6f, &particlecoords,
 			&reverse, 1.0f, 0.15f, 10);

@@ -23,6 +23,8 @@ extern unsigned long		sStaticObjInstNum;							// The number of used static game
 extern s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 extern unsigned long		FontListNum;								// The number of used fonts
 
+extern boolean				levelCleared[4];
+
 extern const unsigned long FLAG_ACTIVE;			// For whether object instance is active
 
 
@@ -58,6 +60,9 @@ extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
 
 extern const float			TOWER_REFRESH;			// Rate at which tower shoot bullets
 
+extern const float			aoeREFRESH;
+extern const float			challengeATKREFRESH;
+
 extern const AEVec2			TEXTURE_POTION;
 extern const AEVec2			TEXTURE_TOWER;
 extern const AEVec2			TEXTURE_BULLET;
@@ -72,6 +77,7 @@ extern const AEVec2			TEXTURE_KEYS;
 extern const AEVec2			TEXTURE_NUMBERS[10];
 extern const AEVec2			TEXTURE_PLAYER;
 extern const AEVec2			TEXTURE_FLOOR;
+extern const AEVec2			TEXTURE_FENCE;
 
 
 static float				mouseX;					// Position of mouse X
@@ -80,5 +86,11 @@ static float				mouseY;					// Position of mouse Y
 static f32					camX;					// Position of camera X
 static f32					camY;					// Position of camera Y
 
+enum levelCleared  {
+	tower = 0,
+	maze,
+	colosseum,
+	blackhole
+};
 
 #endif

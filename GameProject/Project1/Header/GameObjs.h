@@ -100,6 +100,10 @@ struct GameObjInst
 	float				pathfindtime;//buffer time for enemies
 	float				pathtimer; //timer to count down
 	int					target_node;// node checker for path finding
+	enum				STATE state; //state for boss obj instance
+	enum				INNER_STATE innerState; // inner state for boss obj instance
+	float				state_timer; // timer for state machine 
+	float				timeCD;
 
 
 	// Member functions
@@ -192,6 +196,7 @@ enum TYPE
 	TYPE_BULLET,
 	TYPE_MINIMAP,
 	TYPE_MAPCHARACTER,
+	TYPE_BOSS,
 
 
 	TYPE_NUM
