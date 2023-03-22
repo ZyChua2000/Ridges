@@ -592,7 +592,7 @@ void GS_Maze_Update(void) {
 		switch (Player->health)
 		{
 		case 2:
-			Health[1]->TextureMap = { 0, 11 };
+			Health[1]->TextureMap = { 0, 11 };			//CAN BE READ OF FILE MAKE IT READ OFF A FILE
 			break;
 		case 3:
 			Health[0]->TextureMap = { 0, 11 };
