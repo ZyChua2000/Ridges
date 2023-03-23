@@ -428,7 +428,7 @@ void GS_World_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
 	//Initialise player health.
-	for (int i = 0; i < Player->health; i++) {
+	for (int i = 0; i < 3; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
