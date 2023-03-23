@@ -487,17 +487,6 @@ void GS_BossLevel_Update(void) {
 		}
 	}
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
 	// ====================
 	// check for collision
 	// ====================
@@ -639,6 +628,20 @@ void GS_BossLevel_Update(void) {
 		}
 	}
 
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
+
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -672,14 +675,10 @@ void GS_BossLevel_Update(void) {
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
-
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
-
-
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
 }
 
 /******************************************************************************/

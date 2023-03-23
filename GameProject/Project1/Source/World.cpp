@@ -451,7 +451,6 @@ void GS_World_Init(void) {
 		binaryMap[110][28] = 1;
 	}
 	ParticleSystemInit();
-
 }
 /******************************************************************************/
 /*!
@@ -468,6 +467,8 @@ void GS_World_Update(void) {
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
 	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
 	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
+
+
 
 	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 	if (mouseY + camY > Player->posCurr.y) {
@@ -669,16 +670,6 @@ void GS_World_Update(void) {
 		}
 	}
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -828,6 +819,20 @@ void GS_World_Update(void) {
 		utilities::unlockGate(gatesNum/2-1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 	}
 
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
+
+
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// =====================================
 	// calculate the matrix for all objects
@@ -857,19 +862,12 @@ void GS_World_Update(void) {
 	}
 		
 	// Camera position and UI items
-
-
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
-	
-	
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-
 
 	Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
 
 }
 
@@ -993,7 +991,7 @@ void GS_World_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
-
+	
 
 	if (state == 1)
 	{

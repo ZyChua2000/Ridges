@@ -325,10 +325,7 @@ void GS_Tower_Init(void) {
 		ifs >> Backpack.Potion; //set to player number of current key
 		ifs.close();
 
-		//Initialise player health.
-		for (int i = 0; i < 3; i++) {
-			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-		}
+
 
 		//Initialise Levers in level
 		utilities::loadObjs(pos, levNum, "towerLevers.txt");
@@ -430,6 +427,10 @@ void GS_Tower_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
+	//Initialise player health.
+	for (int i = 0; i < 3; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	}
 
 	ParticleSystemInit();
 
@@ -647,16 +648,6 @@ void GS_Tower_Update(void) {
 		}
 	}
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -812,6 +803,20 @@ void GS_Tower_Update(void) {
 	}
 
 
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
+
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -846,13 +851,13 @@ void GS_Tower_Update(void) {
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
 
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	
 
 	//BUG NOT WORKING
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
 
 }
 
