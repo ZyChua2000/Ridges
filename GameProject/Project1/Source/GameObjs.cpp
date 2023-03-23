@@ -174,7 +174,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 	AEVec2 zero;
 	AEVec2Zero(&zero);
 
-	AE_ASSERT_PARM(type < sGameObjNum);
+	//AE_ASSERT_PARM(type < sGameObjNum);
 
 	// loop through the object instance list to find a non-used object instance
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -202,6 +202,9 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
+				break;
+			case TYPE_BOSS:
+				pInst->TextureMap = TEXTURE_BOSS;
 				break;
 			default:
 				pInst->TextureMap = { 0,0 };

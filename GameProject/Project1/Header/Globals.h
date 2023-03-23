@@ -67,6 +67,7 @@ extern const AEVec2			TEXTURE_POTION;
 extern const AEVec2			TEXTURE_TOWER;
 extern const AEVec2			TEXTURE_BULLET;
 extern const AEVec2			TEXTURE_ENEMY;
+extern const AEVec2			TEXTURE_BOSS;
 extern const AEVec2			TEXTURE_SPIKE;
 extern const AEVec2			TEXTURE_UNOPENEDCHEST;
 extern const AEVec2			TEXTURE_OPENEDCHEST;

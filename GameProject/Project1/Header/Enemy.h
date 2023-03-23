@@ -16,9 +16,9 @@ struct Node
 {
 	bool b_Obstacle = false;
 	bool b_Closed = false;
-	float f_hcost;
-	float f_fcost;
-	AEVec2 ae_NodePos;
+	float f_hcost{};
+	float f_fcost{};
+	AEVec2 ae_NodePos{};
 	std::vector<Node*> v_Neighbours;
 	Node* parent;
 };
