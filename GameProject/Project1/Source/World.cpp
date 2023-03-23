@@ -503,6 +503,10 @@ void GS_World_Update(void) {
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
 	}
+	else {
+		Player->TextureMap = TEXTURE_PLAYER;
+	}
+	
 
 	//reducing heath for debugging
 	if (AEInputCheckTriggered(AEVK_MINUS))

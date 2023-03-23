@@ -60,6 +60,9 @@ extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
 
 extern const float			TOWER_REFRESH;			// Rate at which tower shoot bullets
 
+extern const float			aoeREFRESH;
+extern const float			challengeATKREFRESH;
+
 extern const AEVec2			TEXTURE_POTION;
 extern const AEVec2			TEXTURE_TOWER;
 extern const AEVec2			TEXTURE_BULLET;
