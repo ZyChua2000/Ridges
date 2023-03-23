@@ -428,7 +428,7 @@ void GS_World_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
 	//Initialise player health.
-	for (int i = 0; i < Player->health; i++) {
+	for (int i = 0; i < 3; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
@@ -1062,18 +1062,18 @@ void GS_World_Draw(void) {
 	// Enter room conditions
 	if (utilities::inRange(Player, WarpPts[0], WarpPts[1])) {
 		gGameStateNext = GS_COLOSSEUM;
-		Player->posCurr = { 102, -32 };
+		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 		
 	}
 	if (utilities::inRange(Player, WarpPts[2], WarpPts[3])) {
 		gGameStateNext = GS_TOWER;
-		Player->posCurr = { 102, -32 };
+		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}
 	if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
 		gGameStateNext = GS_MAZE;
-		Player->posCurr = { 102, -32 };
+		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}
 	
