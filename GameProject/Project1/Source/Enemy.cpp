@@ -202,8 +202,8 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 			}
 		}
 	}
-	if (nodedesc != nullptr) //checks if destination note its not null  
-	{
+
+
 		Node* p = nodedesc; // node pointer points to destination node
 
 		shortest.clear(); // need to clear as shortest is global.
@@ -221,7 +221,7 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 		std::reverse(shortest.begin(), shortest.end()); 
 
 		return shortest;
-	}
+
 }
 
 /******************************************************************
