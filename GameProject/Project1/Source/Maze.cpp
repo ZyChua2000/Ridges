@@ -16,9 +16,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <fstream>
 #include <iostream>
 
-
 /*!
-	Defines
+	Definess
 */
 /******************************************************************************/
 
@@ -36,6 +35,9 @@ static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
 static						AEVec2 binaryPlayerPos;				// Position on Binary Map
+
+static const AEVec2			levelClearMin = { 38,-33 };
+static const AEVec2			levelClearMax = { 40,-32 };
 // -----------------------------------------------------------------------------
 
 
@@ -47,14 +49,11 @@ static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 
 // ---------------------------------------------------------------------------
 
-
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
 static AEVec2				MiniMapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];
 
-static s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
-static unsigned long		FontListNum;								// The number of used fonts
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
@@ -62,10 +61,11 @@ static staticObjInst* mapEditorObj;										// Pointer to the reference map edi
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
 static GameObjInst* enemy[2];
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
 static GameObjInst* Mask;
 static staticObjInst* RefBox;
+static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
+static staticObjInst* NumObj[3];
+static Inventory Backpack;
 
 AEGfxTexture* DarkRoom;
 AEGfxVertexList* DarkMesh = 0;
@@ -93,7 +93,6 @@ static float minimaptime = 0;
 
 static float slashCD = 0;
 static float walkCD = 0;
-Inventory Backpack;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -173,13 +172,6 @@ void GS_Maze_Load(void) {
 	Map->refMesh = true;
 	Map->refTexture = true;
 
-
-
-	//Enemy*  enemy;
-	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
-	//enemy->pMesh = Character->pMesh;
-	//enemy->pTexture = Character->pTexture;
-
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -243,6 +235,15 @@ void GS_Maze_Load(void) {
 	Key->refMesh = true;
 	Key->refTexture = true;
 
+	GameObj* Spike;
+	Spike = sGameObjList + sGameObjNum++;
+	Spike->pMesh = Character->pMesh;
+	Spike->pTexture = Character->pTexture;
+	Spike->type = TYPE_SPIKE;
+	Spike->refMesh = true;
+	Spike->refTexture = true;
+
+
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -293,7 +294,8 @@ void GS_Maze_Load(void) {
 */
 /******************************************************************************/
 void GS_Maze_Init(void) {
-
+	AEVec2* pos = nullptr;
+	int num;
 
 	// =====================================
 	//	Initialize map textures
@@ -308,12 +310,11 @@ void GS_Maze_Init(void) {
 	utilities::importMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *binaryMap, "binaryMaze.txt");
 
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, nullptr, 0);
-
 	// =====================================
 	//	Initialize objects for new game
 	// =====================================
-	//Initialise Player
-	AEVec2 PlayerPos = { 12.f,-8.f };
+		//Initialise Player
+	AEVec2 PlayerPos = { 12,-8 };
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 	std::ifstream ifs{ "Assets/save.txt" };
@@ -322,20 +323,23 @@ void GS_Maze_Init(void) {
 	ifs >> Backpack.Potion; //set to player number of current key
 	ifs.close();
 
-	Player->damage = 1;
-
 	//Initialise player health.
 	for (int i = 0; i < 3; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
+	utilities::loadObjs(pos, num, "mazeSpikes.txt");
+	for (int i = 0; i < num; i++)
+	{
+		staticObjInstCreate(TYPE_SPIKE, 1, &pos[i], 0);
+	}
+	utilities::unloadObjs(pos);
+
+	//Init pathfinding nodes
+	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+
 	// Initialise camera pos
 	camX = Player->posCurr.x, camY = Player->posCurr.y;
-
-	// =====================================
-//	Initialize UI objects
-// =====================================
-
 
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
@@ -343,6 +347,11 @@ void GS_Maze_Init(void) {
 
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
+
+
+	ParticleSystemInit();
+
+	
 }
 
 
@@ -355,6 +364,7 @@ void GS_Maze_Init(void) {
 /******************************************************************************/
 
 void GS_Maze_Update(void) {
+	
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -372,7 +382,6 @@ void GS_Maze_Update(void) {
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
 
-	
 	// =====================================
 	// User Input
 	// =====================================
@@ -426,31 +435,23 @@ void GS_Maze_Update(void) {
 		Player->playerWalk(walkCD);
 	}
 
-	//reducing heath for debugging
-	if (AEInputCheckTriggered(AEVK_MINUS))
+	if(Player->velCurr.x != 0 || Player->velCurr.y !=0 )
 	{
-		Player->deducthealth();
-		switch (Player->health)
-		{
-		case 0:
-			Health[2]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 1:
-			Health[1]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 2:
-			Health[0]->TextureMap = TEXTURE_DEADHEART;
-		}
+		movement = 1;
+		
 	}
+	else 
+	{
+		movement = 0;
+	}
+	//printf("%d\n", movement);
 
-
-
-
-	//if pickup potion then add player health
+		//if pickup potion then add player health
 	if (AEInputCheckTriggered(AEVK_R))
 	{
 		Player->drinkPotion(Health, Backpack);
 	}
+
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
@@ -474,17 +475,19 @@ void GS_Maze_Update(void) {
 		mapEditorObj->scale = 0;
 	}
 
+	/////////////////////////////////////////// MINIMAP///////////////////////////
+	int playerx = Player->posCurr.x;
+	int playery = Player->posCurr.y;
+			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
+		
+	
+
 	//Map editor printing
 	if (AEInputCheckTriggered(AEVK_8)) {
 		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureMaze.txt");
 
 		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
 	}
-
-	if (AEInputCheckTriggered(AEVK_M)) {
-		gGameStateNext = GS_MAINMENU;
-	}
-
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
@@ -500,199 +503,166 @@ void GS_Maze_Update(void) {
 		}
 	}
 
-
-	/////////////////////////////////////////// MINIMAP///////////////////////////
-	int playerx = Player->posCurr.x;
-	int playery = Player->posCurr.y;
-			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
-		
-	
-
 	// ======================================================
 	// update physics of all active game object instances
 	//  -- Get the AABB bounding rectangle of every active instance:
 	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-				pInst->calculateBB();
-			}
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+		pInst->calculateBB();
+	}
 
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-				staticObjInst* pInst = sStaticObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-				if (pInst->pObject->type != TYPE_SLASH) {
-					continue;
-				}
-				pInst->calculateBB();
-			}
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
+			continue;
+		}
+		pInst->calculateBB();
+	}
 
 	// ======================================================
 	//	-- Positions of the instances are updated here with the already computed velocity (above)
 	// ======================================================
 
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
-				{
-					if (pInst->pObject->type == TYPE_CHARACTER) {
-						pInst->velToPos(PLAYER_SPEED);
-					}
-					//invert movement for binary map
-
-					if (pInst->pObject->type == TYPE_ENEMY) {
-						pInst->velToPos(NPC_SPEED);
-					}
-				}
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
+		{
+			if (pInst->pObject->type == TYPE_CHARACTER) {
+				pInst->velToPos(PLAYER_SPEED);
 			}
+		}
+	}
 
-			MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-			NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
 
-			MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-			NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
 
-			//player health following viewport
-			Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-			Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-			Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 
 	// ====================
 	// check for collision
 	// ====================
 
-	//if player receive damage from collision or from mob, player decrease health
-			for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-
-				if (pInst->pObject->type == TYPE_ENEMY) {
-
-					if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-						&& playerHitTime == 0)
-					{
-						if (Player->health > 0)
-						{
-							Player->deducthealth();
-
-							//Hit cooldown
-							playerHitTime = DAMAGE_COODLDOWN_t;
-
-							//knockback
-							Player->playerKnockback(*pInst);
-
-						}
-					}
-
-					for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
-						staticObjInst* jInst = sStaticObjInstList + j;
-						if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
-							continue;
-						}
-						if (pInst->calculateDistance(*jInst) < 0.9f
-							&& jInst->Alpha == 0) {
-							pInst->deducthealth(Player->damage);
-							// Knockback
-							pInst->mobKnockback(*jInst);
-						}
-					}
-				}
 
 
-				if (Player->health == 0) {
-					gGameStateNext = GS_DEATHSCREEN;
-				}
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-				switch (Player->health)
-				{
-				case 0:
-					Health[2]->TextureMap = TEXTURE_DEADHEART;
-					break;
-				case 1:
-					Health[1]->TextureMap = TEXTURE_DEADHEART;
-					break;
-				case 2:
-					Health[0]->TextureMap = TEXTURE_DEADHEART;
-				}
-			}
+	snapCollision(*Player, flag);
 
-			int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
+			continue;
+		}
 
-			snapCollision(*Player, flag);
+		pInst->spikeUpdate(); // Updates alpha of spikes
+
+		if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
+
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
+		}
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
+		}
+
+		switch (Player->health)
+		{
+		case 0:
+			Health[2]->TextureMap = TEXTURE_DEADHEART;
+			break;
+		case 1:
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
+			break;
+		case 2:
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
+		}
+
+	}
 
 	// ===================================
 	// update active game object instances
 	// Example:
 	//		-- Removing effects after certain time
 	// ===================================
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-			{
-				staticObjInst* pInst = sStaticObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
 
-				if (pInst->pObject->type == TYPE_SLASH) {
-					pInst->playerSlashUpdate();
-				}
-			}
+		if (pInst->pObject->type == TYPE_SLASH) {
+			pInst->playerSlashUpdate();
+		}
 
-			for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
+	}
 
-				if (pInst->pObject->type == TYPE_CHARACTER) {
-					pInst->timetracker += g_dt;
-				}
-			}
+	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE) {
+			continue;
+		}
+		if (pInst->pObject->type == TYPE_CHARACTER) {
+			pInst->timetracker += g_dt;
+		}
+	}
 
+
+	if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
+		utilities::completeLevel(maze, Player, Backpack);
+	}
 
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
 
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-			{
-				GameObjInst* pInst = sGameObjInstList + i;
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+	{
+		GameObjInst* pInst = sGameObjInstList + i;
 
-				// skip non-active object
-				if ((pInst->flag & FLAG_ACTIVE) == 0)
-					continue;
+		// skip non-active object
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
+			continue;
 
-				pInst->calculateTransMatrix();
-			}
+		pInst->calculateTransMatrix();
+	}
 
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-			{
-				staticObjInst* pInst = sStaticObjInstList + i;
-
-
-				// skip non-active object
-				if ((pInst->flag & FLAG_ACTIVE) == 0)
-					continue;
-
-				pInst->calculateTransMatrix();
-			}
-
-			// Camera position and UI items
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
 
 
-			NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
-			NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
+		// skip non-active object
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
+			continue;
+
+		pInst->calculateTransMatrix();
+	}
 
 
-			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
+	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
+
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+
+	ParticleSystemUpdate();
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 	//===================MINIMAP Position Update=================//
 	if (flag & COLLISION_TOP || flag & COLLISION_BOTTOM || flag & COLLISION_LEFT || flag & COLLISION_RIGHT)
@@ -725,8 +695,6 @@ void GS_Maze_Update(void) {
 	//printf("%d\n", arrin);
 	//printf("%f\n", mappingarrx[3]);
 	
-	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 }
 
 /******************************************************************************/
@@ -737,7 +705,6 @@ void GS_Maze_Update(void) {
 */
 /******************************************************************************/
 void GS_Maze_Draw(void) {
-
 
 	// Tell the engine to get ready to draw something with texture. 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -777,7 +744,7 @@ void GS_Maze_Draw(void) {
 		}
 	}
 
-	// Spawn Static entities
+	// Spawn spikes
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 	{
 		staticObjInst* pInst = sStaticObjInstList + i;
@@ -785,14 +752,110 @@ void GS_Maze_Draw(void) {
 		// skip non-active object and reference boxes
 		if (pInst->flag != FLAG_ACTIVE)
 			continue;
-		if (pInst->pObject->type == TYPE_REF) {
+		if (pInst->pObject->type != TYPE_SPIKE) {
+			continue;
+		}
+		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			continue;
+		}
+
+			AEGfxSetTransparency(1.0f - pInst->Alpha);
+
+		// For any types using spritesheet
+
+			AEGfxTextureSet(pInst->pObject->pTexture,
+				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+
+		// Set the current object instance's transform matrix using "AEGfxSetTransform"
+		AEGfxSetTransform(pInst->transform.m);
+		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+	}
+
+	if (dark == 0) {
+		AEGfxSetTransparency(1.0f);
+		AEGfxTextureSet(DarkRoom, 0, 0);
+		// Create a scale matrix that scales by 100 x and y
+		AEMtx33 lscale = { 0 };
+		AEMtx33Scale(&lscale, 10, 10);
+		// Create a rotation matrix that rotates by 45 degrees
+		AEMtx33 lrotate = { 0, };
+
+		AEMtx33Rot(&lrotate, 0);
+
+		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+		// Concat the matrices (TRS) 
+		AEMtx33 ltransform = { 0 };
+		AEMtx33Concat(&ltransform, &lrotate, &lscale);
+		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+		// Choose the transform to use 
+		AEGfxSetTransform(ltransform.m);
+		// Actually drawing the mesh
+		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
+	}
+
+	if (minimap == 1)
+	{
+		AEMtx33 lscale = { 0 };
+		AEMtx33 lrotate = { 0, };
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33 ltransform = { 0 };
+
+		if (MapChar)
+		{
+
+
+			//if (posx != prevX || posy != prevY)
+			//{
+			//currX = (camX * SPRITE_SCALE) + posx / 10;
+
+
+
+			// Create a rotation matrix that rotates by 45 degrees
+			for (unsigned long i = 0; i < 3000; i++)
+			{
+				AEMtx33Scale(&lscale, 3, 3);
+				AEMtx33Rot(&lrotate, 0);
+
+				AEMtx33Concat(&ltransform, &lrotate, &lscale);
+				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+
+				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
+
+				AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
+				// Concat the matrices (TRS) 
+
+				// Actually drawing the mesh
+				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+				AEGfxSetTransform(ltransform.m);
+
+				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
+
+				//count++;
+			}
+		}
+	}
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+
+	// Spawn Static entities excluding spikes
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+
+		// skip non-active object and reference boxes
+		if (pInst->flag != FLAG_ACTIVE)
+			continue;
+		if (pInst->pObject->type == TYPE_REF || pInst->pObject->type == TYPE_SPIKE) {
 			continue;
 		}
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 			continue;
 		}
 		// for any transparent textures
-		if (pInst->pObject->type == TYPE_SLASH || pInst->pObject->type == TYPE_SPIKE) {
+		if (pInst->pObject->type == TYPE_SLASH) {
 			AEGfxSetTransparency(1.0f - pInst->Alpha);
 		}
 		else {
@@ -848,137 +911,7 @@ void GS_Maze_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
-
-
 	
-	if (dark == 0) {
-		AEGfxSetTransparency(1.0f);
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 0.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxTextureSet(DarkRoom, 0, 0);
-		// Create a scale matrix that scales by 100 x and y
-		AEMtx33 lscale = { 0 };
-		AEMtx33Scale(&lscale, 10, 10);
-		// Create a rotation matrix that rotates by 45 degrees
-		AEMtx33 lrotate = { 0, };
-
-		AEMtx33Rot(&lrotate, 0);
-
-		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-		// Concat the matrices (TRS) 
-		AEMtx33 ltransform = { 0 };
-		AEMtx33Concat(&ltransform, &lrotate, &lscale);
-		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-		// Choose the transform to use 
-		AEGfxSetTransform(ltransform.m);
-		// Actually drawing the mesh
-		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
-	}
-
-	if (minimap == 1)
-	{
-		AEMtx33 lscale = { 0 };
-		AEMtx33 lrotate = { 0, };
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33 ltransform = { 0 };
-		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-		AEGfxSetTransparency(1.0f);
-		// Tell the engine to get ready to draw something with texture. 
-		
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 0.5f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		
-		//if (MapMesh) {
-		//	// Create a scale matrix that scales by 100 x and y
-		//	
-		//	AEMtx33Scale(&lscale, 10, 10);
-		//	// Create a rotation matrix that rotates by 45 degrees
-		//	
-
-		//	AEMtx33Rot(&lrotate, 0);
-
-		//	// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-		//	
-		//	AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-		//	// Concat the matrices (TRS) 
-		//	AEMtx33Concat(&ltransform, &lrotate, &lscale);
-		//	AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-		//	AEGfxSetTransform(ltransform.m);
-		//	// Actually drawing the mesh
-		//	AEGfxMeshDraw(MapMesh, AE_GFX_MDM_TRIANGLES);
-		//}
-		if (MapChar)
-		{
-			
-
-				//if (posx != prevX || posy != prevY)
-				//{
-				//currX = (camX * SPRITE_SCALE) + posx / 10;
-				
-
-
-				// Create a rotation matrix that rotates by 45 degrees
-				for (unsigned long i = 0; i < 3000; i++)
-				{
-					AEMtx33Scale(&lscale, 3, 3);
-					AEMtx33Rot(&lrotate, 0);
-
-					AEMtx33Concat(&ltransform, &lrotate, &lscale);
-					// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-
-					//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
-					
-						AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
-					// Concat the matrices (TRS) 
-
-					// Actually drawing the mesh
-					AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-					AEGfxSetTransform(ltransform.m);
-				
-						AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
-
-					//count++;
-				}	
-		}	
-	}
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-		// skip non-active object and reference boxes
-		if (pInst->flag != FLAG_ACTIVE)
-			continue;
-		if ((pInst->pObject->type == TYPE_REF && mapeditor == 0) || pInst->pObject->type == TYPE_MAP || pInst->pObject->type == TYPE_LEVERS) {
-			continue;
-		}
-		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
-			continue;
-		}
-		// for any transparent textures
-		// For any types using spritesheet
-		if (pInst->pObject->type == TYPE_HEALTH)
-		{
-			AEGfxTextureSet(pInst->pObject->pTexture,
-				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
-				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-		}
-		else {
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-		}
-		// Set the current object instance's transform matrix using "AEGfxSetTransform"
-		AEGfxSetTransform(pInst->transform.m);
-		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	}
 	if (minimap == 0)
 	{
 		char tracker[50] = "Press M to Track Past Pathing";
@@ -1080,7 +1013,7 @@ void GS_Maze_Free(void) {
 			staticObjInstDestroy(pInst);
 		}
 	}
-
+	deletenodes();
 }
 
 /******************************************************************************/
@@ -1104,5 +1037,9 @@ void GS_Maze_Unload(void) {
 	AEGfxTextureUnload(DarkRoom);
 	AEGfxMeshFree(MapMesh);
 	AEGfxMeshFree(MapChar);
+
+	AEGfxSetCamPosition(0, 0);
 }
+
+// ---------------------------------------------------------------------------
 

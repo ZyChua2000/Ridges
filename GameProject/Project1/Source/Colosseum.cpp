@@ -412,83 +412,6 @@ void GS_Colosseum_Update(void) {
 	}
 
 
-	//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		Player->drinkPotion(Health, Backpack);
-	}
-
-	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-		SLASH_ACTIVATE = true;
-		slashCD = SLASH_COOLDOWN_t;
-		walkCD = WALK_COOLDOWN_t;
-		Player->playerStand();
-	}
-
-	if (SLASH_ACTIVATE == true) {
-		Player->playerSlashCreate(angleMousetoPlayer);
-		SLASH_ACTIVATE = false;
-	}
-
-	if (mapeditor == 1) {
-		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-	}
-	else {
-		mapEditorObj->scale = 0;
-	}
-
-	//Map editor printing
-	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureColosseum.txt");
-
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryColosseum.txt");
-	}
-
-	if (AEInputCheckTriggered(AEVK_M)) {
-		gGameStateNext = GS_MAINMENU;
-	}
-
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-		{
-			continue;
-		}
-		//Interaction with items
-		if (Player->calculateDistance(*pInst) < 0.5f)
-		{
-			Backpack.itemPickUp(pInst);
-		}
-	}
-
-
-	// ======================================================
-	// update physics of all active game object instances
-	//  -- Get the AABB bounding rectangle of every active instance:
-	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-
-
-		// Pathfinding for Enemy AI
-	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
-	{
-		GameObjInst* pEnemy = sGameObjInstList + j;
-
-
-		// skip non-active object
-		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
-			continue;
-
-		if (Player->calculateDistance(*pEnemy) > 10)
-			continue;
-
-		pEnemy->mobsPathFind(*Player);
-	}
 
 	if (waves == 1 && !spawned) {
 		//Initialise enemy in level
@@ -535,6 +458,84 @@ void GS_Colosseum_Update(void) {
 		utilities::unloadObjs(pos);
 		spawned = true;
 		//	waves = 99;
+	}
+
+	//if pickup potion then add player health
+	if (AEInputCheckTriggered(AEVK_R))
+	{
+		Player->drinkPotion(Health, Backpack);
+	}
+
+	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
+		SLASH_ACTIVATE = true;
+		slashCD = SLASH_COOLDOWN_t;
+		walkCD = WALK_COOLDOWN_t;
+		Player->playerStand();
+	}
+
+	if (SLASH_ACTIVATE == true) {
+		Player->playerSlashCreate(angleMousetoPlayer);
+		SLASH_ACTIVATE = false;
+	}
+
+	if (mapeditor == 1) {
+		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
+	}
+	else {
+		mapEditorObj->scale = 0;
+	}
+
+	//Map editor printing
+	if (AEInputCheckTriggered(AEVK_8)) {
+		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
+
+		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
+	}
+
+	if (AEInputCheckTriggered(AEVK_M)) {
+		gGameStateNext = GS_MAINMENU;
+	}
+
+
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
+		{
+			continue;
+		}
+		//Interaction with items
+		if (Player->calculateDistance(*pInst) < 0.5f)
+		{
+			Backpack.itemPickUp(pInst);
+		}
+	}
+
+
+	// ======================================================
+	// update physics of all active game object instances
+	//  -- Get the AABB bounding rectangle of every active instance:
+	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+
+
+		// Pathfinding for Enemy AI
+	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
+	{
+		GameObjInst* pEnemy = sGameObjInstList + j;
+
+
+		// skip non-active object
+		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
+			continue;
+
+		if (Player->calculateDistance(*pEnemy) > 10)
+			continue;
+
+		pEnemy->mobsPathFind(*Player);
 	}
 
 
