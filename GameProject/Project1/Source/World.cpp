@@ -325,6 +325,7 @@ void GS_World_Init(void) {
 	if (loadState == false) {
 		//Initialise Player
 		AEVec2 PlayerPos = { 12,-8 };
+		//AEVec2 PlayerPos = { 106,-22 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 		Backpack.Potion = 0;
@@ -428,7 +429,7 @@ void GS_World_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
 	//Initialise player health.
-	for (int i = 0; i < Player->health; i++) {
+	for (int i = 0; i < 3; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 

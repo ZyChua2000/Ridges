@@ -415,7 +415,6 @@ void GS_Colosseum_Update(void) {
 	if (waves == 1 && !spawned) {
 		//Initialise enemy in level
 		AEVec2* pos = nullptr;
-		int num;
 		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave1.txt");
 		for (int i = 0; i < CURRENT_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
@@ -446,7 +445,6 @@ void GS_Colosseum_Update(void) {
 	if (waves == 3 && !spawned) {
 		//Initialise enemy in level
 		AEVec2* pos = nullptr;
-		int num;
 		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave3.txt");
 		for (int i = 0; i < CURRENT_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);

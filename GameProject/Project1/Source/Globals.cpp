@@ -54,6 +54,7 @@ const AEVec2		TEXTURE_POTION = { 6,9 };
 const AEVec2		TEXTURE_TOWER = { 2,6 };
 const AEVec2		TEXTURE_BULLET = { 5,12 };
 const AEVec2		TEXTURE_ENEMY = { 0,9 };
+const AEVec2		TEXTURE_BOSS = { 3,9 };
 const AEVec2		TEXTURE_SPIKE = { 5,3 };
 const AEVec2		TEXTURE_UNOPENEDCHEST = { 5,7 };
 const AEVec2		TEXTURE_OPENEDCHEST = { 8,7 };
@@ -71,4 +72,4 @@ const AEVec2		TEXTURE_FENCE = { 5,6 };
 const AEVec2		TEXTURE_PLAYER = { 1,8 };
 const float			TOWER_REFRESH = 2.f;			// Rate at which tower shoot bullets
 
-boolean				levelCleared[4] = { false };
+bool				levelCleared[4] = { false };

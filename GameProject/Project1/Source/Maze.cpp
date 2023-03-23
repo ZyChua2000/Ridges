@@ -475,8 +475,8 @@ void GS_Maze_Update(void) {
 	}
 
 	/////////////////////////////////////////// MINIMAP///////////////////////////
-	int playerx = Player->posCurr.x;
-	int playery = Player->posCurr.y;
+	int playerx = static_cast<int>(Player->posCurr.x);
+	int playery = static_cast<int>(Player->posCurr.y);
 			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
 		
 	
@@ -670,9 +670,9 @@ void GS_Maze_Update(void) {
 		posy = posy;
 	}
 	else {
-		posx += Player->velCurr.x;
+		posx += static_cast<int>(Player->velCurr.x);
 
-		posy += Player->velCurr.y;
+		posy += static_cast<int>(Player->velCurr.y);
 
 		
 	}
@@ -796,47 +796,7 @@ void GS_Maze_Draw(void) {
 		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
-	if (minimap == 1)
-	{
-		AEMtx33 lscale = { 0 };
-		AEMtx33 lrotate = { 0, };
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33 ltransform = { 0 };
-
-		if (MapChar)
-		{
-
-
-			//if (posx != prevX || posy != prevY)
-			//{
-			//currX = (camX * SPRITE_SCALE) + posx / 10;
-
-
-
-			// Create a rotation matrix that rotates by 45 degrees
-			for (unsigned long i = 0; i < 3000; i++)
-			{
-				AEMtx33Scale(&lscale, 3, 3);
-				AEMtx33Rot(&lrotate, 0);
-
-				AEMtx33Concat(&ltransform, &lrotate, &lscale);
-				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-
-				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
-
-				AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
-				// Concat the matrices (TRS) 
-
-				// Actually drawing the mesh
-				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-				AEGfxSetTransform(ltransform.m);
-
-				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
-
-				//count++;
-			}
-		}
-	}
+	
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
 	// Spawn Static entities excluding spikes
@@ -910,6 +870,48 @@ void GS_Maze_Draw(void) {
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
+	if (minimap == 1)
+	{
+		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+		AEMtx33 lscale = { 0 };
+		AEMtx33 lrotate = { 0, };
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33 ltransform = { 0 };
+
+		if (MapChar)
+		{
+
+
+			//if (posx != prevX || posy != prevY)
+			//{
+			//currX = (camX * SPRITE_SCALE) + posx / 10;
+
+
+
+			// Create a rotation matrix that rotates by 45 degrees
+			for (unsigned long i = 0; i < 3000; i++)
+			{
+				AEMtx33Scale(&lscale, 3, 3);
+				AEMtx33Rot(&lrotate, 0);
+
+				AEMtx33Concat(&ltransform, &lrotate, &lscale);
+				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+
+				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
+
+				AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
+				// Concat the matrices (TRS) 
+
+				// Actually drawing the mesh
+				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+				AEGfxSetTransform(ltransform.m);
+
+				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
+
+				//count++;
+			}
+		}
+	}
 	
 	if (minimap == 0)
 	{
@@ -920,7 +922,7 @@ void GS_Maze_Draw(void) {
 	char pathtimerdisplay[50];
 	if (10 - pathingcdtime == 10)
 	{
-		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.f", 0);
+		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.d", 0);
 		AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
 	}
 	else

@@ -52,6 +52,7 @@ static float walkCD = 0;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
+static GameObjInst* Boss;
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
@@ -198,7 +199,6 @@ void GS_BossLevel_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
-
 	GameObj* Chest;
 	Chest = sGameObjList + sGameObjNum++;
 	Chest->pMesh = Character->pMesh;
@@ -231,7 +231,6 @@ void GS_BossLevel_Load(void) {
 	Mask->refMesh = true;
 	Mask->refTexture = true;
 
-
 	GameObj* Tower;
 	Tower = sGameObjList + sGameObjNum++;
 	Tower->pMesh = Character->pMesh;
@@ -247,6 +246,14 @@ void GS_BossLevel_Load(void) {
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
 	Bullet->refTexture = true;
+
+	GameObj* Boss;
+	Boss = sGameObjList + 18;
+	Boss->pMesh = Character->pMesh;
+	Boss->pTexture = Character->pTexture;
+	Boss->type = TYPE_BOSS;
+	Boss->refMesh = true;
+	Boss->refTexture = true;
 
 	ParticleSystemLoad();
 }
@@ -296,6 +303,10 @@ void GS_BossLevel_Init(void) {
 
 	//Init pathfinding nodes
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+
+	//init Boss
+	AEVec2 BossPos = { 17,-10 }; // TXT
+	Boss = gameObjInstCreate(TYPE_BOSS, 3, &BossPos, 0, 0);
 
 	// Initialise camera pos
 	camX = 10, camY = -10;
