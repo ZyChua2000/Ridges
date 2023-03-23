@@ -228,7 +228,7 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 /******************************************************************
 function definition deleting nodes
 *******************************************************************/
-void deletenodes()// free New for nodes
+void deletenodes()
 {
 	
 	delete[] nodes;

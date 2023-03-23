@@ -324,7 +324,8 @@ void GS_World_Init(void) {
 	// =====================================
 	if (loadState == false) {
 		//Initialise Player
-		AEVec2 PlayerPos = { 12,-8 };
+		//AEVec2 PlayerPos = { 12,-8 };
+		AEVec2 PlayerPos = { 106,-22 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 		Backpack.Potion = 0;

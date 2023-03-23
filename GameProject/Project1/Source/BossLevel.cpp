@@ -306,7 +306,7 @@ void GS_BossLevel_Init(void) {
 
 	//init Boss
 	AEVec2 BossPos = { 17,-10 }; // TXT
-	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
+	Boss = gameObjInstCreate(TYPE_BOSS, 3, &BossPos, 0, 0);
 
 	// Initialise camera pos
 	camX = 10, camY = -10;
