@@ -476,8 +476,8 @@ void GS_Maze_Update(void) {
 	}
 
 	/////////////////////////////////////////// MINIMAP///////////////////////////
-	int playerx = Player->posCurr.x;
-	int playery = Player->posCurr.y;
+	int playerx = static_cast<int>(Player->posCurr.x);
+	int playery = static_cast<int>(Player->posCurr.y);
 			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
 		
 	
@@ -671,9 +671,9 @@ void GS_Maze_Update(void) {
 		posy = posy;
 	}
 	else {
-		posx += Player->velCurr.x;
+		posx += static_cast<int>(Player->velCurr.x);
 
-		posy += Player->velCurr.y;
+		posy += static_cast<int>(Player->velCurr.y);
 
 		
 	}
@@ -923,7 +923,7 @@ void GS_Maze_Draw(void) {
 	char pathtimerdisplay[50];
 	if (10 - pathingcdtime == 10)
 	{
-		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.f", 0);
+		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.d", 0);
 		AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
 	}
 	else

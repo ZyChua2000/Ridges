@@ -23,7 +23,7 @@ extern unsigned long		sStaticObjInstNum;							// The number of used static game
 extern s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 extern unsigned long		FontListNum;								// The number of used fonts
 
-extern boolean				levelCleared[4];
+extern bool					levelCleared[4];
 
 extern const unsigned long FLAG_ACTIVE;			// For whether object instance is active
 
