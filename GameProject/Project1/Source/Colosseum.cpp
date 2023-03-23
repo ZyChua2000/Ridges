@@ -81,7 +81,7 @@ static int chestnum;
 
 
 float Timer = 0.f;
-
+static float internalTimer = 0.f;
 int waves = 0;
 float wavestimer = 0.f;
 bool spawned = false;
@@ -234,6 +234,8 @@ void GS_Colosseum_Load(void) {
 	Key->type = TYPE_KEY;
 	Key->refMesh = true;
 	Key->refTexture = true;
+
+	ParticleSystemLoad();
 }
 
 /******************************************************************************/
@@ -726,7 +728,19 @@ void GS_Colosseum_Update(void) {
 	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	//BUG NOT WORKING
-	//Player->dustParticles();
+	Player->dustParticles();
+
+	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+	{
+		GameObjInst* pInst = sGameObjInstList + i;
+		if (pInst->pObject && pInst->pObject->type == TYPE_ENEMY) {
+
+			if (pInst->flag == 1) {
+				pInst->dustParticles();
+			}
+		}
+	}
+
 
 	ParticleSystemUpdate();
 	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
@@ -942,6 +956,8 @@ void GS_Colosseum_Free(void) {
 	}
 	deletenodes();
 
+	ParticleSystemFree();
+
 }
 
 /******************************************************************************/
@@ -962,4 +978,6 @@ void GS_Colosseum_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
+
+	ParticleSystemUnload();
 }

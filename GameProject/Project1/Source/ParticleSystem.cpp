@@ -19,8 +19,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 */
 /******************************************************************************/
 
-//similar to system youre currently making for GAM150
-
 
 const unsigned int	PARTICLE_OBJ_NUM_MAX = 16;			//The total number of different objects (Shapes)
 const unsigned int	PARTICLE_OBJ_INST_NUM_MAX = 516;	//The total number of different game object instances
@@ -34,7 +32,8 @@ float internalTimer = 0;
 
 enum TYPE_PARTICLE
 {
-	TYPE_DEFAULT = 0
+	TYPE_DEFAULT = 0,
+	TYPE_ENEMY = 1
 };
 
 /******************************************************************************/
@@ -316,6 +315,7 @@ void GameObjInst::dustParticles() {
 	AEVec2Neg(&reverse, &velCurr);
 	internalTimer += g_dt;
 	if (internalTimer > 0.25f)
+	//if (1)
 	{
 		AEVec2 particlecoords = posCurr;
 		particlecoords.y = posCurr.y - 0.48f;
@@ -328,3 +328,4 @@ void GameObjInst::dustParticles() {
 		internalTimer += g_dt;
 	}
 }
+
