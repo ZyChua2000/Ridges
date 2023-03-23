@@ -1062,18 +1062,18 @@ void GS_World_Draw(void) {
 	// Enter room conditions
 	if (utilities::inRange(Player, WarpPts[0], WarpPts[1])) {
 		gGameStateNext = GS_COLOSSEUM;
-		Player->posCurr = { 102, -32 };
+		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 		
 	}
 	if (utilities::inRange(Player, WarpPts[2], WarpPts[3])) {
 		gGameStateNext = GS_TOWER;
-		Player->posCurr = { 102, -32 };
+		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}
 	if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
 		gGameStateNext = GS_MAZE;
-		Player->posCurr = { 102, -32 };
+		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}
 	
