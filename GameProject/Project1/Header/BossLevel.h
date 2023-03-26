@@ -16,6 +16,25 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 // ---------------------------------------------------------------------------
 
+enum STATE // MOVESETS FOR BOSS
+{
+	STATE_PATROL = 0,//IDLE STATE OR NO STATE
+	STATE_BASIC, //STATE FOR BASIC ATTACK
+	STATE_AOE,  //STATE FOR AOE ATTACK
+	STATE_SPAWN_ENEMIES, // STATE TO SPAWN ENEMIES
+	STATE_SPAWN_BULLETS, // STATE TO SPAWN BULLETS
+	STATE_MAZE_DARKEN,	// STATE TO DARKEN THE WHOLE LEVEL 
+
+};
+
+enum INNER_STATE // INNER STATE FOR BOSS
+{
+	INNER_STATE_ON_ENTER,
+	INNER_STATE_ON_UPDATE,
+	INNER_STATE_ON_EXIT
+};
+
+
 /******************************************************************************/
 /*!
 	"Load" function of this state
