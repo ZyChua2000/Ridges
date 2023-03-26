@@ -62,6 +62,7 @@ static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
+static GameObj hpbar;
 
 static AEVec2* Gates;
 static int gatesNum;
@@ -74,6 +75,8 @@ static float internalTimer = 0.f;
 static float playerHitTime;
 static staticObjInst* RefBox;
 
+static AEMtx33 hpbartransform;
+static f32 width, height;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -256,6 +259,18 @@ void GS_BossLevel_Load(void) {
 	Boss->refMesh = true;
 	Boss->refTexture = true;
 
+	AEGfxMeshStart();
+	AEGfxTriAdd(
+		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
+		0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
+		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+
+	AEGfxTriAdd(
+		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
+		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+	hpbar.pMesh = AEGfxMeshEnd();
+
 	ParticleSystemLoad();
 }
 
@@ -316,14 +331,14 @@ void GS_BossLevel_Init(void) {
 	//	Initialize UI objects
 	// =====================================
 
-
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
-
 
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
+	width = SPRITE_SCALE * 8;
+	height = SPRITE_SCALE * 0.4;
 
 	ParticleSystemInit();
 
@@ -433,6 +448,14 @@ void GS_BossLevel_Update(void) {
 		gGameStateNext = GS_MAINMENU;
 	}
 
+	//simulating damage taken
+	if (width > 0)
+	{
+		if (AEInputCheckTriggered(AEVK_Q))
+		{
+			width -= SPRITE_SCALE * 1;
+		}
+	}
 
 	// ======================================================
 	// update physics of all active game object instances
@@ -682,8 +705,15 @@ void GS_BossLevel_Update(void) {
 		pInst->calculateTransMatrix();
 	}
 
-	// Camera position and UI items
+	//scale, rot, trans for health bar
+	AEMtx33 bar_scale, bar_trans, bar_rot;
+	AEMtx33Scale(&bar_scale, width, height);
+	AEMtx33Rot(&bar_rot, 0);
+	AEMtx33Trans(&bar_trans, camX * SPRITE_SCALE + 110.f, camY * SPRITE_SCALE + 350.f);
+	AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
+	AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
 
+	// Camera position and UI items
 
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
@@ -809,6 +839,12 @@ void GS_BossLevel_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
+	//drawing of health bar
+	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+	AEGfxSetTintColor(0.7f, 0.7f, 0.7f, 0.0f);
+	AEGfxSetBlendMode(AE_GFX_BM_NONE);
+	AEGfxSetTransform(hpbartransform.m);
+	AEGfxMeshDraw(hpbar.pMesh, AE_GFX_MDM_TRIANGLES);
 
 	if (state == 1)
 	{
