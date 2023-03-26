@@ -336,9 +336,8 @@ void GameObjInst::mobKnockback(staticObjInst slash) {
 }
 
 /******************************************************************
-function definition for boss state machine
+function definition for boss finite state machine
 *******************************************************************/
-
 void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 {
 	AEVec2 velDown = { 0,1 };
