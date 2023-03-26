@@ -66,6 +66,7 @@ static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary
 
 static float slashCD = 0;
 static float walkCD = 0;
+static float playerHitTime;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
@@ -434,6 +435,8 @@ void GS_Tower_Init(void) {
 
 	ParticleSystemInit();
 
+	playerHitTime = 0;
+
 }
 
 
@@ -458,11 +461,11 @@ void GS_Tower_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
+	Player->playerDamaged(playerHitTime);
 
 
 	// =====================================
@@ -975,6 +978,7 @@ void GS_Tower_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"

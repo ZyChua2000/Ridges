@@ -9,6 +9,12 @@ extern const float RANGE_FROM_PLAYER;							// define the range for enemy and pl
 
 struct Node;
 
+struct tint {
+	float red;
+	float blue;
+	float green;
+};
+
 // This struct is for GameObj, called and initalised during load for each unique game object
 struct GameObj
 {
@@ -104,6 +110,8 @@ struct GameObjInst
 	enum				INNER_STATE innerState; // inner state for boss obj instance
 	float				state_timer; // timer for state machine 
 	float				timeCD;
+	tint				damagetint;
+	float				damagebuffer;
 
 
 	// Member functions
@@ -170,6 +178,8 @@ struct GameObjInst
 
 	void playerKnockback(GameObjInst mob);
 
+	void playerDamaged(float damageCD);
+	
 	void mobKnockback(staticObjInst slash);
 	
 };

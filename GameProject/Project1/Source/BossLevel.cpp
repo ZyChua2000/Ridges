@@ -71,6 +71,7 @@ static int chestNum;
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
 
+static float playerHitTime;
 static staticObjInst* RefBox;
 
 // ---------------------------------------------------------------------------
@@ -325,6 +326,8 @@ void GS_BossLevel_Init(void) {
 
 
 	ParticleSystemInit();
+
+	playerHitTime = 0;
 }
 
 
@@ -347,12 +350,11 @@ void GS_BossLevel_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
-
+	Player->playerDamaged(playerHitTime);
 
 	// =====================================
 	// User Input
@@ -764,6 +766,7 @@ void GS_BossLevel_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
@@ -799,6 +802,7 @@ void GS_BossLevel_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"

@@ -192,6 +192,8 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 			pInst->velCurr = pVel ? *pVel : zero;
 			pInst->dirCurr = dir;
 			pInst->timetracker = 0;
+			pInst->damagetint = { 1,1,1 };
+			pInst->damagebuffer = 0;
 	
 			switch (type) {
 			case TYPE_CHARACTER:

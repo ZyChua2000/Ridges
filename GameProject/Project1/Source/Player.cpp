@@ -69,8 +69,8 @@ void GameObjInst::playerStand() {
 void GameObjInst::playerKnockback(GameObjInst mob) {
 	AEVec2 nil{ 0,0 };
 	if (velCurr == nil) //If standing still
-		posCurr += mob.velCurr / 4; //Pushback by enemy's velocity
-	else posCurr -= velCurr / 4; // If moving, pushback by player's velocity(walking into mob)
+		posCurr += mob.velCurr/2; //Pushback by enemy's velocity
+	else posCurr -= velCurr / 2; // If moving, pushback by player's velocity(walking into mob)
 }
 
 void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
@@ -87,5 +87,25 @@ void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
 			break;
 		}
 		backPack.Potion--;
+	}
+}
+
+void GameObjInst::playerDamaged(float damageCD) {
+	if (damageCD == 0) {
+		damagetint = { 1,1,1 };
+		damagebuffer = 0;
+	}
+	else {
+		damagebuffer += g_dt;
+		if (damagetint.blue == 0 && damagebuffer > 0.1f) {
+			damagetint.blue = 1;
+			damagetint.green = 1;
+			damagebuffer = 0;
+		}
+		else if (damagetint.blue == 1 && damagebuffer > 0.1f){
+			damagetint.blue = 0;
+			damagetint.green = 0;
+			damagebuffer = 0;
+		}
 	}
 }

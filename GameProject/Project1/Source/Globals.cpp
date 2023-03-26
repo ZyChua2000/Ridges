@@ -42,7 +42,7 @@ const float			BULLET_SPEED = 4.5f;			// Speed of the bullet
 
 const float			SLASH_COOLDOWN_t = 0.5f;		// Time for slash to cooldown
 const float			WALK_COOLDOWN_t = 0.2f;			// Time for walk to be stopped after slash
-const float			DAMAGE_COODLDOWN_t = 0.5f;		// Time for damage invulenrability to reset
+const float			DAMAGE_COODLDOWN_t = 1.5f;		// Time for damage invulenrability to reset
 const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent

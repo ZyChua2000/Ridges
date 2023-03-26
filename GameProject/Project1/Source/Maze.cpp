@@ -93,6 +93,7 @@ static float minimaptime = 0;
 
 static float slashCD = 0;
 static float walkCD = 0;
+static float playerHitTime = 0;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -350,6 +351,7 @@ void GS_Maze_Init(void) {
 
 	ParticleSystemInit();
 
+	playerHitTime = 0;
 	
 }
 
@@ -374,12 +376,11 @@ void GS_Maze_Update(void) {
 	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
-
-	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
+	Player->playerDamaged(playerHitTime);
 
 	// =====================================
 	// User Input
@@ -865,6 +866,7 @@ void GS_Maze_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"

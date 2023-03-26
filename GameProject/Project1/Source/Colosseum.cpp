@@ -78,6 +78,7 @@ static staticObjInst* MenuObj[3];										// Pointer to each enemy object insta
 static staticObjInst* NumObj[3];
 static Inventory Backpack;
 static int chestnum;
+static float playerHitTime = 0;
 
 
 float Timer = 0.f;
@@ -306,6 +307,7 @@ void GS_Colosseum_Init(void) {
 	}
 
 	ParticleSystemInit();
+	playerHitTime = 0;
 
 }
 
@@ -331,11 +333,12 @@ void GS_Colosseum_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	static float playerHitTime = 0;
+	
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
+	Player->playerDamaged(playerHitTime);
 
 
 	// =====================================
@@ -848,6 +851,8 @@ void GS_Colosseum_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+
+		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
