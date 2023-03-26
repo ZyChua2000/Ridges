@@ -932,24 +932,29 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 	switch (pInst->state)
 	{
 	case STATE_PATROL:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
+		switch (pInst->innerState) { 
+		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF PATROL
+			std::cout << "entering state 0 " << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
+			
 			break;
-		case INNER_STATE_ON_UPDATE:
+		case INNER_STATE_ON_UPDATE: // INNER STATE UPDATE OF PATROL
+			std::cout << "updating state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->mobsPathFind(*Player);
 			if (pInst->calculateDistance(*Player) > 1.0f) { // If found player, attack player
 				pInst->innerState = INNER_STATE_ON_EXIT;
 				pInst->state = STATE_BASIC;
+				
 				break;
 			}
 
 			if (static_cast<int>(pInst->timetracker) % static_cast<int>(aoeREFRESH) == 0) {
 				//AOE ATTACK
 				pInst->state = STATE_AOE;
-				pInst->innerState = INNER_STATE_ON_EXIT;
+				pInst->innerState = INNER_STATE_ON_EXIT; 
+				
 				break;
 			}
 
@@ -971,27 +976,36 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 			}
 			break;
 
-		case INNER_STATE_ON_EXIT:
+		case INNER_STATE_ON_EXIT: // INNER STATE UPDATE OF PATROL
+			std::cout << "exiting state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
+			
 			break;
 		} break;
 
 
 	case STATE_BASIC:
 		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
+		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
+			std::cout << "entering state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
+			
 			break;
-		case INNER_STATE_ON_UPDATE:
+		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
+			std::cout << "updating state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			//Slash towards player, draw object
 			pInst->state = STATE_PATROL;
 			pInst->innerState = INNER_STATE_ON_EXIT;
-		case INNER_STATE_ON_EXIT:
+			
+			break;
+		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
+			std::cout << "exiting state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
+			
 			break;
 		}
 
@@ -999,17 +1013,24 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 	case STATE_AOE:
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
+			std::cout << "entering state 2" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
+			
 			break;
 		case INNER_STATE_ON_UPDATE:
+			std::cout << "updating state 2" << std::endl;
 			pInst->timetracker += g_dt;
 			//AOE around
 			pInst->state = STATE_PATROL;
 			pInst->innerState = INNER_STATE_ON_EXIT;
+			
+			break;
 		case INNER_STATE_ON_EXIT:
+			std::cout << "exiting state 2" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
+			
 			break;
 		}
 
@@ -1017,11 +1038,13 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 	case STATE_SPAWN_BULLETS:
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
+			std::cout << "entering state 3" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
 			break;
 		case INNER_STATE_ON_UPDATE:
 			//Spawn bullets
+			std::cout << "updating state 3" << std::endl;
 			if (pInst->timeCD == 0) {
 				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velDown, 0);
 				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velRight, 0);
@@ -1036,8 +1059,32 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 			}
 			break;
 		case INNER_STATE_ON_EXIT:
+			std::cout << "exiting state 3" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
+			break;
+		}
+
+	case STATE_MAZE_DARKEN:
+		switch (pInst->innerState) {
+		case INNER_STATE_ON_ENTER:
+			std::cout << "entering state 4" << std::endl;
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_UPDATE;
+			break;
+		case INNER_STATE_ON_UPDATE:
+			std::cout << "updating state 4" << std::endl;
+			pInst->timetracker += g_dt;
+			//AOE around
+			pInst->state = STATE_PATROL;
+			pInst->innerState = INNER_STATE_ON_EXIT;
+
+			break;
+		case INNER_STATE_ON_EXIT:
+			std::cout << "exiting state 4" << std::endl;
+			pInst->timetracker += g_dt;
+			pInst->innerState = INNER_STATE_ON_ENTER;
+
 			break;
 		}
 		/*this will be the last 4 states
