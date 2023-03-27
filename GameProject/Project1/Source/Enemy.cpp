@@ -222,8 +222,6 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 
 		return shortest;
 	}
-	return shortest;
-}
 
 /******************************************************************
 function definition deleting nodes

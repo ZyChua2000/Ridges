@@ -76,7 +76,17 @@ static float playerHitTime;
 static staticObjInst* RefBox;
 
 static AEMtx33 hpbartransform;
-static f32 width, height;
+
+struct bosshp
+{
+	float maxhp;
+	float currenthp;
+	f32 width;
+	f32 height;
+	float damagetaken;
+};
+bosshp boss;
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -337,8 +347,11 @@ void GS_BossLevel_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	width = SPRITE_SCALE * 8;
-	height = SPRITE_SCALE * 0.4;
+	boss.maxhp = 100;
+	boss.currenthp = 100;
+	boss.width = SPRITE_SCALE * 9 * boss.currenthp/boss.maxhp;
+	boss.height = SPRITE_SCALE * 0.4;
+
 
 	ParticleSystemInit();
 
@@ -449,13 +462,17 @@ void GS_BossLevel_Update(void) {
 	}
 
 	//simulating damage taken
-	if (width > 0)
+	
+	if (boss.currenthp > 0)
 	{
 		if (AEInputCheckTriggered(AEVK_Q))
 		{
-			width -= SPRITE_SCALE * 1;
+			boss.currenthp -= 10.f;
+			boss.damagetaken = boss.maxhp - boss.currenthp;
+			boss.width = SPRITE_SCALE * 9 * boss.currenthp / boss.maxhp;
 		}
 	}
+	
 
 	// ======================================================
 	// update physics of all active game object instances
@@ -707,9 +724,9 @@ void GS_BossLevel_Update(void) {
 
 	//scale, rot, trans for health bar
 	AEMtx33 bar_scale, bar_trans, bar_rot;
-	AEMtx33Scale(&bar_scale, width, height);
+	AEMtx33Scale(&bar_scale, boss.width, boss.height);
 	AEMtx33Rot(&bar_rot, 0);
-	AEMtx33Trans(&bar_trans, camX * SPRITE_SCALE + 110.f, camY * SPRITE_SCALE + 350.f);
+	AEMtx33Trans(&bar_trans, camX* SPRITE_SCALE + 80.f - (boss.damagetaken * SPRITE_SCALE * 4 / boss.maxhp), camY * SPRITE_SCALE + 350.f);
 	AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
 	AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
 
