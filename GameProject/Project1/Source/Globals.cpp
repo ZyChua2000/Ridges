@@ -76,19 +76,16 @@ bool				levelCleared[4] = { false };
 
 bool damageFlag = 0;
 
-AEAudio HeroDamaged;
-AEAudioGroup Damage;
-AEAudio HeroSlash;
+AEAudio HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+AEAudio HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+AEAudio Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+AEAudio BulletShot = AEAudioLoadMusic("Assets/Music/SCI-FI-LASER_GEN-HDF-20725.wav");
 
-AEAudio BulletShot;
-AEAudioGroup BulletGroup;
-
-AEAudio Interact;
-AEAudioGroup InteractGroup;
-
-AEAudio Movement;
-AEAudioGroup MovementGroup;
-
+AEAudio Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");;
+AEAudioGroup MovementGroup = AEAudioCreateGroup();
+AEAudioGroup BulletGroup = AEAudioCreateGroup();
+AEAudioGroup InteractGroup = AEAudioCreateGroup();
+AEAudioGroup Damage = AEAudioCreateGroup();
 
 
 
