@@ -88,6 +88,14 @@ extern AEAudio HeroSlash;
 extern AEAudio BulletShot;
 extern AEAudioGroup BulletGroup;
 
+extern AEAudio Interact;
+extern AEAudioGroup InteractGroup;
+
+extern AEAudio Movement;
+extern AEAudioGroup MovementGroup;
+
+
+
 
 static float				mouseX;					// Position of mouse X
 static float				mouseY;					// Position of mouse Y

@@ -289,6 +289,8 @@ void GS_Tower_Load(void) {
 	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
 	BulletShot = AEAudioLoadMusic("Assets/Music/SCI-FI-LASER_GEN-HDF-20725.wav");
 	BulletGroup = AEAudioCreateGroup();
+	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+	InteractGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -520,6 +522,7 @@ void GS_Tower_Update(void) {
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 		
@@ -531,6 +534,7 @@ void GS_Tower_Update(void) {
 			{
 				//change texture of chest
 				Chest[i]->chest2Potion();
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 	}
@@ -653,8 +657,7 @@ void GS_Tower_Update(void) {
 
 			if (pInst->pObject->type == TYPE_BULLET) {
 				pInst->velToPos(BULLET_SPEED);
-				if (Player->calculateDistance(*pInst) <= 10)
-					AEAudioPlay(BulletShot, BulletGroup, 0.5, 1, 0);
+				
 			}
 		}
 	}

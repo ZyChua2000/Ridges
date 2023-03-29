@@ -83,6 +83,14 @@ AEAudio HeroSlash;
 AEAudio BulletShot;
 AEAudioGroup BulletGroup;
 
+AEAudio Interact;
+AEAudioGroup InteractGroup;
+
+AEAudio Movement;
+AEAudioGroup MovementGroup;
+
+
+
 
 
 
