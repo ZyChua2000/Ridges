@@ -282,9 +282,13 @@ void GS_Tower_Load(void) {
 	Bullet->pTexture = Character->pTexture;
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
-	Bullet->refTexture = true;
-	HeroDamaged = AEAudioLoadMusic("Assets/Music/KNIFE-STAB_GEN-HDF-16423.wav");
+	Bullet->refTexture = true; 
+	
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
 	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	BulletShot = AEAudioLoadMusic("Assets/Music/SCI-FI-LASER_GEN-HDF-20725.wav");
+	BulletGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -518,7 +522,7 @@ void GS_Tower_Update(void) {
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
 			}
 		}
-
+		
 
 		for (int i = 0; i < chestNum; i++)
 		{
@@ -649,6 +653,8 @@ void GS_Tower_Update(void) {
 
 			if (pInst->pObject->type == TYPE_BULLET) {
 				pInst->velToPos(BULLET_SPEED);
+				if (Player->calculateDistance(*pInst) <= 10)
+					AEAudioPlay(BulletShot, BulletGroup, 0.5, 1, 0);
 			}
 		}
 	}
@@ -672,7 +678,7 @@ void GS_Tower_Update(void) {
 			{
 				if (Player->health > 0)
 				{
-					damageFlag = 1;
+					
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -702,7 +708,7 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_BULLET) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
-				damageFlag = 1;
+				
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
 			}
@@ -714,11 +720,7 @@ void GS_Tower_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
-		if (damageFlag == 1)
-		{
-			AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
-			damageFlag = 0;
-		}
+		
 
 		switch (Player->health)
 		{

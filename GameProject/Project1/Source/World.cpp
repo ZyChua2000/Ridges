@@ -290,8 +290,9 @@ void GS_World_Load(void) {
 
 	ParticleSystemLoad();
 
-	HeroDamaged = AEAudioLoadMusic("Assets/Music/KNIFE-STAB_GEN-HDF-16423.wav");
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
 	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
 }
 
 /******************************************************************************/
@@ -572,6 +573,7 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
+		
 		slashCD = SLASH_COOLDOWN_t;
 		walkCD = WALK_COOLDOWN_t;
 		Player->playerStand();
@@ -703,7 +705,7 @@ void GS_World_Update(void) {
 			{
 				if (Player->health > 0)
 				{
-					damageFlag = 1;
+					
 					Player->deducthealth();
 					
 
@@ -735,7 +737,7 @@ void GS_World_Update(void) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				Player->deducthealth();
-				damageFlag = 1;
+				
 				gameObjInstDestroy(pInst);
 			}
 			if (snapCollision(*pInst, flag)) {
@@ -747,11 +749,7 @@ void GS_World_Update(void) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
 		
-		if (damageFlag == 1)
-		{
-			AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
-			damageFlag = 0;
-		}
+		
 		switch (Player->health)
 		{
 		case 0:

@@ -78,6 +78,11 @@ bool damageFlag = 0;
 
 AEAudio HeroDamaged;
 AEAudioGroup Damage;
+AEAudio HeroSlash;
+
+AEAudio BulletShot;
+AEAudioGroup BulletGroup;
+
 
 
 

@@ -143,7 +143,7 @@ struct GameObjInst
 	\return
 		The calculated distance between the 2 objects
 	*************************************************************************/
-	float calculateDistance(GameObjInst dynamicObj);
+	 float calculateDistance(GameObjInst dynamicObj);
 
 	/*!***********************************************************************
 	\brief

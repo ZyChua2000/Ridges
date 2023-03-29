@@ -43,6 +43,7 @@ void GameObjInst::deducthealth(int damage)
 {
 	if (health > 0)
 	{
+		AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
 		health -= damage;
 	}
 }
@@ -109,6 +110,8 @@ void staticObjInst::shootBullet() {
 		break;
 	}
 	GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &position, &velocity, 0);
+
+	
 	jInst->TextureMap = TEXTURE_BULLET;
 }
 

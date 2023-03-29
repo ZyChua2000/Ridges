@@ -59,6 +59,7 @@ void GameObjInst::playerSlashCreate(float angle) {
 	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
 	slashObj->timetracker = 0;
 	slashObj->Alpha = 0;
+	AEAudioPlay(HeroSlash, Damage, 1, 1, 0);
 }
 
 void GameObjInst::playerStand() {
