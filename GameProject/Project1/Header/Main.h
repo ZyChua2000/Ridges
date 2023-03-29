@@ -28,7 +28,6 @@ extern double	g_appTime;
 #include "GameStateList.h"
 #include "GSM.h"
 #include "Mainmenu.h"
-#include "BossLevel.h"
 #include "World.h"
 #include "GameObjs.h"
 #include "Utilities.h"
@@ -43,7 +42,7 @@ extern double	g_appTime;
 #include "ParticleSystem.h"
 #include "mapFunctions.h"
 #include "staticObjs.h"
-
+#include "BossLevel.h"
 
 #endif
 

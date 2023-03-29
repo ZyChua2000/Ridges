@@ -145,13 +145,6 @@ void GS_BossLevel_Load(void) {
 	Map->refMesh = true;
 	Map->refTexture = true;
 
-
-
-	//Enemy*  enemy;
-	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
-	//enemy->pMesh = Character->pMesh;
-	//enemy->pTexture = Character->pTexture;
-
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -306,7 +299,7 @@ void GS_BossLevel_Init(void) {
 
 	//init Boss
 	AEVec2 BossPos = { 17,-10 }; // TXT
-	Boss = gameObjInstCreate(TYPE_BOSS, 3, &BossPos, 0, 0);
+	Boss = gameObjInstCreate(TYPE_BOSS, 3, &BossPos, nullptr, 0);
 
 	// Initialise camera pos
 	camX = 10, camY = -10;
@@ -325,6 +318,7 @@ void GS_BossLevel_Init(void) {
 
 
 	ParticleSystemInit();
+	
 }
 
 
@@ -473,6 +467,17 @@ void GS_BossLevel_Update(void) {
 			continue;
 		}
 		pInst->calculateBB();
+	}
+
+	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
+	{
+		GameObjInst* pBoss = sGameObjInstList + j;
+
+		// skip non-active object
+		if (pBoss->flag != FLAG_ACTIVE || pBoss->pObject->type != TYPE_BOSS)
+			continue;
+
+		BossStateMachine(pBoss, Player);
 	}
 
 	// ======================================================
@@ -937,12 +942,23 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 			std::cout << "entering state 0 " << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
-			
-			break;
+
 		case INNER_STATE_ON_UPDATE: // INNER STATE UPDATE OF PATROL
 			std::cout << "updating state 0" << std::endl;
 			pInst->timetracker += g_dt;
-			pInst->mobsPathFind(*Player);
+			//pInst->mobsPathFind(*Player);
+			pInst->velCurr.x = 0.05 ;//
+			//pInst->velCurr.y = 0.05 ;//
+			//AEVec2Normalize(&pInst->velCurr, &pInst->velCurr);//normalise to unit vec 1
+			pInst->posCurr.x += (g_dt * NPC_SPEED); 
+			//pInst->posCurr.y += (g_dt * NPC_SPEED);
+
+			//pInst->velCurr.x = -0.05;//
+			pInst->velCurr.y = 0.05;//
+			//AEVec2Normalize(&pInst->velCurr, &pInst->velCurr);//normalise to unit vec 1
+			//pInst->posCurr.x += (g_dt * NPC_SPEED); //
+			pInst->posCurr.y += (g_dt * NPC_SPEED);
+
 			if (pInst->calculateDistance(*Player) > 1.0f) { // If found player, attack player
 				pInst->innerState = INNER_STATE_ON_EXIT;
 				pInst->state = STATE_BASIC;
@@ -982,7 +998,7 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			
 			break;
-		} break;
+		} 
 
 
 	case STATE_BASIC:

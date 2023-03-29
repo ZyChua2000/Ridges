@@ -48,7 +48,4 @@ function declaration deleting nodes
 *******************************************************************/
 void deletenodes();
 
-/******************************************************************
-function declaration for boss state machine
-*******************************************************************/
-void BossStateMachine(GameObjInst* pInst);
+

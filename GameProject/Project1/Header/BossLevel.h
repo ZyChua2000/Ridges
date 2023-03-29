@@ -11,7 +11,8 @@ Reproduction or disclosure of this file or its contents without the
 prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
-
+#pragma once
+#include "Main.h"
 
 
 // ---------------------------------------------------------------------------
@@ -89,6 +90,11 @@ void GS_BossLevel_Free(void);
 */
 /******************************************************************************/
 void GS_BossLevel_Unload(void);
+
+/******************************************************************
+function declaration for boss state machine
+*******************************************************************/
+void BossStateMachine(GameObjInst* pInst, GameObjInst* Player);
 
 // ---------------------------------------------------------------------------
 
