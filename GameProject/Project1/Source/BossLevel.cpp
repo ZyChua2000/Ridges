@@ -350,6 +350,7 @@ void GS_BossLevel_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
+	BossStateMachine(Boss);
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
@@ -927,7 +928,7 @@ void GS_BossLevel_Unload(void) {
 /******************************************************************
 function definition for boss finite state machine
 *******************************************************************/
-void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
+void BossStateMachine(GameObjInst* pInst)
 {
 	AEVec2 velDown = { 0,1 };
 	AEVec2 velRight = { 0,1 };
@@ -946,42 +947,44 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 			std::cout << "updating state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->mobsPathFind(*Player);
-			if (pInst->calculateDistance(*Player) > 1.0f) { // If found player, attack player
+			if (pInst->calculateDistance(*Player) < 1.0f) { // If found player, attack player
 				pInst->innerState = INNER_STATE_ON_EXIT;
-				pInst->state = STATE_BASIC;
-				
+				pInst->stateFlag = STATE_BASIC;
 				break;
 			}
 
-			if (static_cast<int>(pInst->timetracker) % static_cast<int>(aoeREFRESH) == 0) {
+			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0) {
+				//CHALLENGE ATTACK
+				// random between 0, 1 and 2
+				pInst->innerState = INNER_STATE_ON_EXIT;
+				int random = rand() % 3;
+				if (random == 0) {
+					pInst->stateFlag = STATE_MAZE_DARKEN;
+				}
+				else if (random == 1) {
+					pInst->stateFlag = STATE_SPAWN_BULLETS;
+				}
+				else if (random == 2) {
+					pInst->stateFlag = STATE_SPAWN_ENEMIES;
+				}
+				break;
+			}
+
+			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH*10) == 0) {
 				//AOE ATTACK
-				pInst->state = STATE_AOE;
+				pInst->stateFlag = STATE_AOE;
 				pInst->innerState = INNER_STATE_ON_EXIT; 
 				
 				break;
 			}
 
-			if (static_cast<int>(pInst->timetracker) % static_cast<int>(challengeATKREFRESH) == 0) {
-				//CHALLENGE ATTACK
-				// random between 0, 1 and 2
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = rand() % 4;
-				if (random == 0) {
-					pInst->state = STATE_MAZE_DARKEN;
-				}
-				else if (random == 1) {
-					pInst->state = STATE_SPAWN_BULLETS;
-				}
-				else if (random == 2) {
-					pInst->state = STATE_SPAWN_ENEMIES;
-				}
-				break;
-			}
+
 			break;
 
 		case INNER_STATE_ON_EXIT: // INNER STATE UPDATE OF PATROL
 			std::cout << "exiting state 0" << std::endl;
 			pInst->timetracker += g_dt;
+			pInst->state = pInst->stateFlag;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			
 			break;
@@ -993,103 +996,161 @@ void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
 		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
 			std::cout << "entering state 1" << std::endl;
 			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			
+			//stand still for 1 second
+			pInst->timeCD += g_dt;
+
+			if (pInst->timeCD > 1.0f) {
+				pInst->innerState = INNER_STATE_ON_UPDATE;
+				pInst->timeCD = 0;
+			}
+
 			break;
 		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
 			std::cout << "updating state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			//Slash towards player, draw object
-			pInst->state = STATE_PATROL;
+			pInst->stateFlag = STATE_PATROL;
 			pInst->innerState = INNER_STATE_ON_EXIT;
-			
+
 			break;
 		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
 			std::cout << "exiting state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
-			
+			pInst->state = pInst->stateFlag;
+
 			break;
-		}
+		}break;
 
 
 	case STATE_AOE:
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
 			std::cout << "entering state 2" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			
+			//stand still for 1 second
+			pInst->timeCD += g_dt;
+
+			if (pInst->timeCD > 1.0f) {
+				pInst->innerState = INNER_STATE_ON_UPDATE;
+				pInst->timeCD = 0;
+			}
+
 			break;
 		case INNER_STATE_ON_UPDATE:
 			std::cout << "updating state 2" << std::endl;
-			pInst->timetracker += g_dt;
-			//AOE around
-			pInst->state = STATE_PATROL;
+			//AOE Attack
+			pInst->stateFlag = STATE_PATROL;
 			pInst->innerState = INNER_STATE_ON_EXIT;
-			
+
 			break;
 		case INNER_STATE_ON_EXIT:
 			std::cout << "exiting state 2" << std::endl;
-			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
-			
+			pInst->state = pInst->stateFlag;
+
 			break;
-		}
+		} break;
 
 
-	case STATE_SPAWN_BULLETS:
+	case STATE_SPAWN_ENEMIES:
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
 			std::cout << "entering state 3" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
+			//stand still for 1 second
+			pInst->timeCD += g_dt;
+
+			if (pInst->timeCD > 1.0f) {
+				pInst->innerState = INNER_STATE_ON_UPDATE;
+				pInst->timeCD = 0;
+			}
 			break;
 		case INNER_STATE_ON_UPDATE:
-			//Spawn bullets
+
 			std::cout << "updating state 3" << std::endl;
-			if (pInst->timeCD == 0) {
-				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velDown, 0);
-				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velRight, 0);
-			}
+			//Spawn enemies
 
 			// Stay still for awhile
 			pInst->timeCD += g_dt;
-			if (pInst->timeCD == 2.0f) {
+			if (pInst->timeCD > 2.0f) {
 				pInst->timeCD = 0;
+				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;
-				pInst->state = STATE_PATROL;
 			}
 			break;
 		case INNER_STATE_ON_EXIT:
 			std::cout << "exiting state 3" << std::endl;
-			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
+			pInst->state = pInst->stateFlag;
 			break;
-		}
+		} break;
+
+	case STATE_SPAWN_BULLETS:
+		switch (pInst->innerState) {
+		case INNER_STATE_ON_ENTER:
+			std::cout << "entering state 4" << std::endl;
+			//stand still for 1 second
+			pInst->timeCD += g_dt;
+
+			if (pInst->timeCD > 1.0f) {
+				pInst->innerState = INNER_STATE_ON_UPDATE;
+				pInst->timeCD = 0;
+			}
+			break;
+		case INNER_STATE_ON_UPDATE:
+
+			std::cout << "updating state 4" << std::endl;
+			//Spawn Bullets
+
+			// Stay still for awhile
+			pInst->timeCD += g_dt;
+			if (pInst->timeCD > 2.0f) {
+				pInst->timeCD = 0;
+				pInst->stateFlag = STATE_PATROL;
+				pInst->innerState = INNER_STATE_ON_EXIT;
+			}
+			break;
+		case INNER_STATE_ON_EXIT:
+			std::cout << "exiting state 4" << std::endl;
+			pInst->innerState = INNER_STATE_ON_ENTER;
+			pInst->state = pInst->stateFlag;
+			break;
+		}break;
 
 	case STATE_MAZE_DARKEN:
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
-			std::cout << "entering state 4" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
+			std::cout << "entering state 5" << std::endl;
+			//stand still for 1 second
+			pInst->timeCD += g_dt;
+
+			if (pInst->timeCD > 1.0f) {
+				pInst->innerState = INNER_STATE_ON_UPDATE;
+				pInst->timeCD = 0;
+			}
 			break;
 		case INNER_STATE_ON_UPDATE:
-			std::cout << "updating state 4" << std::endl;
-			pInst->timetracker += g_dt;
-			//AOE around
-			pInst->state = STATE_PATROL;
-			pInst->innerState = INNER_STATE_ON_EXIT;
 
+			std::cout << "updating state 5" << std::endl;
+			//Spawn darken
+
+			// Stay still for awhile
+			pInst->timeCD += g_dt;
+			if (pInst->timeCD > 2.0f) {
+				pInst->timeCD = 0;
+				pInst->stateFlag = STATE_PATROL;
+				pInst->innerState = INNER_STATE_ON_EXIT;
+			}
 			break;
 		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 4" << std::endl;
-			pInst->timetracker += g_dt;
+			std::cout << "exiting state 5" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
-
+			pInst->state = pInst->stateFlag;
 			break;
-		}
+		} break;
+
+
+
+
 		/*this will be the last 4 states
 		 pinst->state = (srand(3,6));*/
 
