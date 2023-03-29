@@ -235,6 +235,9 @@ void GS_Colosseum_Load(void) {
 	Key->type = TYPE_KEY;
 	Key->refMesh = true;
 	Key->refTexture = true;
+
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/KNIFE-STAB_GEN-HDF-16423.wav");
+	Damage = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -597,6 +600,7 @@ void GS_Colosseum_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					damageFlag = 1;
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -625,6 +629,11 @@ void GS_Colosseum_Update(void) {
 
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
+		}
+		if (damageFlag == 1)
+		{
+			AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
+			damageFlag = 0;
 		}
 
 		switch (Player->health)

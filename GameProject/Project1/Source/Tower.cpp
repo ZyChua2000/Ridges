@@ -283,6 +283,8 @@ void GS_Tower_Load(void) {
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
 	Bullet->refTexture = true;
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/KNIFE-STAB_GEN-HDF-16423.wav");
+	Damage = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -670,6 +672,7 @@ void GS_Tower_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					damageFlag = 1;
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -699,6 +702,7 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_BULLET) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
+				damageFlag = 1;
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
 			}
@@ -709,6 +713,11 @@ void GS_Tower_Update(void) {
 
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
+		}
+		if (damageFlag == 1)
+		{
+			AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
+			damageFlag = 0;
 		}
 
 		switch (Player->health)

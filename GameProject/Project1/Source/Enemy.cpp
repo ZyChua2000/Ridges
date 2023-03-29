@@ -120,7 +120,7 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	std::vector<Node*> shortest;
 	// NOTE TO SELF: SRC IS START, DESC IS END
 	Node* nodesrc = &nodes[(-(int)y) * path_width + (int)x];
-	Node* nodedesc= &nodes[(-(int)y1) * path_width + (int)x1];
+	Node* nodedesc = &nodes[(-(int)y1) * path_width + (int)x1];
 
 	// assign enemy GameObjInst pos xy to node Pos xy
 	nodesrc->ae_NodePos.x = x;
@@ -139,10 +139,10 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	{
 		for (int y2 = 0; y2 < path_height; y2++)
 		{
-			nodes[y2 *path_width + x2].b_Closed = false;
-			nodes[y2 *path_width + x2].f_hcost = INFINITY;
-			nodes[y2 *path_width + x2].f_fcost = INFINITY;
-			nodes[y2 *path_width + x2].parent = nullptr;	// set nodes to have no parents at the start
+			nodes[y2 * path_width + x2].b_Closed = false;
+			nodes[y2 * path_width + x2].f_hcost = INFINITY;
+			nodes[y2 * path_width + x2].f_fcost = INFINITY;
+			nodes[y2 * path_width + x2].parent = nullptr;	// set nodes to have no parents at the start
 		}
 
 	}
@@ -174,12 +174,12 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 
 
 		//check each of this nodes neighbour
-		for(Node *NeighbourNode : current->v_Neighbours)
+		for (Node* NeighbourNode : current->v_Neighbours)
 		{
 
 			// if the neighbour is not visited and is 
 			// not an obstacle, add it to ist
-			if (!NeighbourNode->b_Closed && NeighbourNode->b_Obstacle == false) 
+			if (!NeighbourNode->b_Closed && NeighbourNode->b_Obstacle == false)
 				NodesNotTested.push_back(NeighbourNode);
 
 			// Calculate the neighbours potential lowest parent distance
@@ -190,7 +190,7 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 			// as the path sourceshortestt its distance scores as necessary
 			if (f_possiblelowest < NeighbourNode->f_fcost)
 			{
-				NeighbourNode->parent = current; 
+				NeighbourNode->parent = current;
 				NeighbourNode->f_fcost = f_possiblelowest;
 
 				// The best path length to the neighbour being tested has changed, so
@@ -204,26 +204,26 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	}
 
 
-		Node* p = nodedesc; // node pointer points to destination node
+	Node* p = nodedesc; // node pointer points to destination node
 
-		shortest.clear(); // need to clear as shortest is global.
+	shortest.clear(); // need to clear as shortest is global.
 
-		while (p->parent != nullptr) // p-> parent not equal to nullptr
-		{
-			//adding node to vector shortest
-			p = p->parent; 
+	while (p->parent != nullptr) // p-> parent not equal to nullptr
+	{
+		//adding node to vector shortest
+		p = p->parent;
 
-			// move up parent all the way till source
-			shortest.push_back(p);
+		// move up parent all the way till source
+		shortest.push_back(p);
 
-		}
-		// reverse vector so it goes from source to destination instead of destination to source
-		std::reverse(shortest.begin(), shortest.end()); 
-
-		return shortest;
 	}
+	// reverse vector so it goes from source to destination instead of destination to source
+	std::reverse(shortest.begin(), shortest.end());
+
 	return shortest;
 }
+	
+
 
 /******************************************************************
 function definition deleting nodes

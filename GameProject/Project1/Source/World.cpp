@@ -98,6 +98,7 @@ static float playerHitTime;
 
 static staticObjInst* RefBox;
 
+ 
 
 
 // ---------------------------------------------------------------------------
@@ -288,6 +289,9 @@ void GS_World_Load(void) {
 	Bullet->refTexture = true;
 
 	ParticleSystemLoad();
+
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/KNIFE-STAB_GEN-HDF-16423.wav");
+	Damage = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -454,6 +458,8 @@ void GS_World_Init(void) {
 	}
 	ParticleSystemInit();
 	playerHitTime = 0;
+
+	
 }
 /******************************************************************************/
 /*!
@@ -465,6 +471,8 @@ void GS_World_Init(void) {
 
 void GS_World_Update(void) {
 
+
+	
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -695,7 +703,9 @@ void GS_World_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					damageFlag = 1;
 					Player->deducthealth();
+					
 
 					//Hit cooldown
 					playerHitTime = DAMAGE_COODLDOWN_t;
@@ -725,6 +735,7 @@ void GS_World_Update(void) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				Player->deducthealth();
+				damageFlag = 1;
 				gameObjInstDestroy(pInst);
 			}
 			if (snapCollision(*pInst, flag)) {
@@ -735,7 +746,12 @@ void GS_World_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
-
+		
+		if (damageFlag == 1)
+		{
+			AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
+			damageFlag = 0;
+		}
 		switch (Player->health)
 		{
 		case 0:
@@ -748,6 +764,7 @@ void GS_World_Update(void) {
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
+	
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
