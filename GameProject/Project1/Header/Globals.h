@@ -81,6 +81,22 @@ extern const AEVec2			TEXTURE_FLOOR;
 extern const AEVec2			TEXTURE_FENCE;
 
 
+extern bool damageFlag;
+extern AEAudio HeroDamaged;
+extern AEAudioGroup Damage;
+extern AEAudio HeroSlash;
+extern AEAudio BulletShot;
+extern AEAudioGroup BulletGroup;
+
+extern AEAudio Interact;
+extern AEAudioGroup InteractGroup;
+
+extern AEAudio Movement;
+extern AEAudioGroup MovementGroup;
+
+
+
+
 static float				mouseX;					// Position of mouse X
 static float				mouseY;					// Position of mouse Y
 

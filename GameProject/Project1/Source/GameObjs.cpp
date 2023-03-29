@@ -43,6 +43,7 @@ void GameObjInst::deducthealth(int damage)
 {
 	if (health > 0)
 	{
+		AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
 		health -= damage;
 	}
 }
@@ -109,6 +110,8 @@ void staticObjInst::shootBullet() {
 		break;
 	}
 	GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &position, &velocity, 0);
+
+	
 	jInst->TextureMap = TEXTURE_BULLET;
 }
 
@@ -192,6 +195,8 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 			pInst->velCurr = pVel ? *pVel : zero;
 			pInst->dirCurr = dir;
 			pInst->timetracker = 0;
+			pInst->damagetint = { 1,1,1 };
+			pInst->damagebuffer = 0;
 	
 			switch (type) {
 			case TYPE_CHARACTER:

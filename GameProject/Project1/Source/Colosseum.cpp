@@ -78,6 +78,7 @@ static staticObjInst* MenuObj[3];										// Pointer to each enemy object insta
 static staticObjInst* NumObj[3];
 static Inventory Backpack;
 static int chestnum;
+static float playerHitTime = 0;
 
 
 float Timer = 0.f;
@@ -280,10 +281,6 @@ void GS_Colosseum_Init(void) {
 
 	Player->damage = 1;
 
-	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	}
 
 	//Init pathfinding nodes
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
@@ -304,7 +301,13 @@ void GS_Colosseum_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
 
+	//Initialise player health.
+	for (int i = 0; i < 3; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	}
+
 	ParticleSystemInit();
+	playerHitTime = 0;
 
 }
 
@@ -330,11 +333,12 @@ void GS_Colosseum_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	static float playerHitTime = 0;
+	
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
+	Player->playerDamaged(playerHitTime);
 
 
 	// =====================================
@@ -355,6 +359,10 @@ void GS_Colosseum_Update(void) {
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
+	}
+	else {
+		Player->TextureMap = TEXTURE_PLAYER;
+		AEAudioStopGroup(MovementGroup);
 	}
 
 	//reducing heath for debugging
@@ -385,6 +393,7 @@ void GS_Colosseum_Update(void) {
 				Chest[i]->chest2Potion();
 				spawned = false;
 				waves = 1;
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 	}
@@ -574,16 +583,6 @@ void GS_Colosseum_Update(void) {
 		}
 	}
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -603,6 +602,7 @@ void GS_Colosseum_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -632,6 +632,7 @@ void GS_Colosseum_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
+		
 
 		switch (Player->health)
 		{
@@ -688,6 +689,20 @@ void GS_Colosseum_Update(void) {
 		}
 	}
 
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -722,14 +737,11 @@ void GS_Colosseum_Update(void) {
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
 
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	//BUG NOT WORKING
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-
 }
 
 /******************************************************************************/
@@ -846,6 +858,8 @@ void GS_Colosseum_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+
+		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
