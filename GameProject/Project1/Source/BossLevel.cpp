@@ -307,7 +307,7 @@ void GS_BossLevel_Init(void) {
 
 	//init Boss
 	AEVec2 BossPos = { 17,-10 }; // TXT
-	Boss = gameObjInstCreate(TYPE_BOSS, 3, &BossPos, 0, 0);
+	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
 
 	// Initialise camera pos
 	camX = 10, camY = -10;
@@ -932,6 +932,7 @@ void BossStateMachine(GameObjInst* pInst)
 {
 	AEVec2 velDown = { 0,1 };
 	AEVec2 velRight = { 0,1 };
+	static AEVec2 playerPosition{ 0,0 };
 	//states declared at GameObjs.h
 	switch (pInst->state)
 	{
@@ -947,7 +948,7 @@ void BossStateMachine(GameObjInst* pInst)
 			std::cout << "updating state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->mobsPathFind(*Player);
-			if (pInst->calculateDistance(*Player) < 1.0f) { // If found player, attack player
+			if (pInst->calculateDistance(*Player) < 2.0f) { // If found player, attack player
 				pInst->innerState = INNER_STATE_ON_EXIT;
 				pInst->stateFlag = STATE_BASIC;
 				break;
@@ -996,21 +997,29 @@ void BossStateMachine(GameObjInst* pInst)
 		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
 			std::cout << "entering state 1" << std::endl;
 			pInst->timetracker += g_dt;
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
+			pInst->innerState = INNER_STATE_ON_UPDATE;
+			playerPosition = Player->posCurr;
 
 			break;
 		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
 			std::cout << "updating state 1" << std::endl;
 			pInst->timetracker += g_dt;
-			//Slash towards player, draw object
-			pInst->stateFlag = STATE_PATROL;
-			pInst->innerState = INNER_STATE_ON_EXIT;
+
+			//stand still for 1 second
+			pInst->timeCD += g_dt;
+			if (pInst->timeCD > 1.0f) {
+				pInst->timeCD = 0;
+				float angle = utilities::getAngle(pInst->posCurr.x, pInst->posCurr.y, playerPosition.x, playerPosition.y);
+				AEVec2 slashPosition = { pInst->posCurr.x -cos(angle) / 1.3f, pInst->posCurr.y -sin(angle) / 1.3f };
+				staticObjInstCreate(TYPE_SLASH, 2, &slashPosition, PI + angle);
+
+				//Run slash command
+				pInst->stateFlag = STATE_PATROL;
+				pInst->innerState = INNER_STATE_ON_EXIT;
+
+			}
+			
+
 
 			break;
 		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
