@@ -284,7 +284,9 @@ void GS_Maze_Load(void) {
 
 	MapChar = AEGfxMeshEnd();
 
-
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
 }
 
 /******************************************************************************/
@@ -561,14 +563,18 @@ void GS_Maze_Update(void) {
 		pInst->spikeUpdate(); // Updates alpha of spikes
 
 		if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
-
+			
+			
+			
 			Player->deducthealth();
+			
 			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
 
+		
 		switch (Player->health)
 		{
 		case 0:
@@ -582,6 +588,8 @@ void GS_Maze_Update(void) {
 		}
 
 	}
+	
+	
 
 	// ===================================
 	// update active game object instances

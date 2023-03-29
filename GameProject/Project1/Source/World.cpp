@@ -98,6 +98,7 @@ static float playerHitTime;
 
 static staticObjInst* RefBox;
 
+ 
 
 
 // ---------------------------------------------------------------------------
@@ -288,6 +289,15 @@ void GS_World_Load(void) {
 	Bullet->refTexture = true;
 
 	ParticleSystemLoad();
+
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+	InteractGroup = AEAudioCreateGroup();
+	
+	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
+	MovementGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -454,6 +464,8 @@ void GS_World_Init(void) {
 	}
 	ParticleSystemInit();
 	playerHitTime = 0;
+
+	
 }
 /******************************************************************************/
 /*!
@@ -465,6 +477,8 @@ void GS_World_Init(void) {
 
 void GS_World_Update(void) {
 
+
+	
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -541,6 +555,7 @@ void GS_World_Update(void) {
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 
@@ -550,6 +565,7 @@ void GS_World_Update(void) {
 			//Interaction with Chest
 			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
 			{
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 				//change texture of chest
 				Chest[i]->chest2Potion();
 			}
@@ -564,6 +580,7 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
+		
 		slashCD = SLASH_COOLDOWN_t;
 		walkCD = WALK_COOLDOWN_t;
 		Player->playerStand();
@@ -695,7 +712,9 @@ void GS_World_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					
 					Player->deducthealth();
+					
 
 					//Hit cooldown
 					playerHitTime = DAMAGE_COODLDOWN_t;
@@ -725,6 +744,7 @@ void GS_World_Update(void) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				Player->deducthealth();
+				
 				gameObjInstDestroy(pInst);
 			}
 			if (snapCollision(*pInst, flag)) {
@@ -735,7 +755,8 @@ void GS_World_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
-
+		
+		
 		switch (Player->health)
 		{
 		case 0:
@@ -748,6 +769,7 @@ void GS_World_Update(void) {
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
+	
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 

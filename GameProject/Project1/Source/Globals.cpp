@@ -73,3 +73,24 @@ const AEVec2		TEXTURE_PLAYER = { 1,8 };
 const float			TOWER_REFRESH = 2.f;			// Rate at which tower shoot bullets
 
 bool				levelCleared[4] = { false };
+
+bool damageFlag = 0;
+
+AEAudio HeroDamaged;
+AEAudioGroup Damage;
+AEAudio HeroSlash;
+
+AEAudio BulletShot;
+AEAudioGroup BulletGroup;
+
+AEAudio Interact;
+AEAudioGroup InteractGroup;
+
+AEAudio Movement;
+AEAudioGroup MovementGroup;
+
+
+
+
+
+

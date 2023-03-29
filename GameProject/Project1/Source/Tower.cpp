@@ -282,7 +282,15 @@ void GS_Tower_Load(void) {
 	Bullet->pTexture = Character->pTexture;
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
-	Bullet->refTexture = true;
+	Bullet->refTexture = true; 
+	
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	BulletShot = AEAudioLoadMusic("Assets/Music/SCI-FI-LASER_GEN-HDF-20725.wav");
+	BulletGroup = AEAudioCreateGroup();
+	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+	InteractGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -514,9 +522,10 @@ void GS_Tower_Update(void) {
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
-
+		
 
 		for (int i = 0; i < chestNum; i++)
 		{
@@ -525,6 +534,7 @@ void GS_Tower_Update(void) {
 			{
 				//change texture of chest
 				Chest[i]->chest2Potion();
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 	}
@@ -647,6 +657,7 @@ void GS_Tower_Update(void) {
 
 			if (pInst->pObject->type == TYPE_BULLET) {
 				pInst->velToPos(BULLET_SPEED);
+				
 			}
 		}
 	}
@@ -670,6 +681,7 @@ void GS_Tower_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -699,6 +711,7 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_BULLET) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
+				
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
 			}
@@ -710,6 +723,7 @@ void GS_Tower_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
+		
 
 		switch (Player->health)
 		{

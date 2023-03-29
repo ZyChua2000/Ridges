@@ -235,6 +235,12 @@ void GS_Colosseum_Load(void) {
 	Key->type = TYPE_KEY;
 	Key->refMesh = true;
 	Key->refTexture = true;
+
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+	InteractGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -389,6 +395,7 @@ void GS_Colosseum_Update(void) {
 				Chest[i]->chest2Potion();
 				spawned = false;
 				waves = 1;
+				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 	}
@@ -597,6 +604,7 @@ void GS_Colosseum_Update(void) {
 			{
 				if (Player->health > 0)
 				{
+					
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -626,6 +634,7 @@ void GS_Colosseum_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
+		
 
 		switch (Player->health)
 		{
