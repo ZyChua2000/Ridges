@@ -477,7 +477,7 @@ void GS_World_Init(void) {
 
 void GS_World_Update(void) {
 
-
+	
 	
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
@@ -519,13 +519,14 @@ void GS_World_Update(void) {
 	}
 
 	Player->playerStand();
-
+	
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
 	}
 	else {
 		Player->TextureMap = TEXTURE_PLAYER;
+		AEAudioStopGroup(MovementGroup);
 	}
 	
 

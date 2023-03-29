@@ -235,12 +235,6 @@ void GS_Colosseum_Load(void) {
 	Key->type = TYPE_KEY;
 	Key->refMesh = true;
 	Key->refTexture = true;
-
-	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
-	Damage = AEAudioCreateGroup();
-	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
-	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
-	InteractGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -365,6 +359,10 @@ void GS_Colosseum_Update(void) {
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
+	}
+	else {
+		Player->TextureMap = TEXTURE_PLAYER;
+		AEAudioStopGroup(MovementGroup);
 	}
 
 	//reducing heath for debugging

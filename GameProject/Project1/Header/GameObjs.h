@@ -112,6 +112,7 @@ struct GameObjInst
 	float				timeCD;
 	tint				damagetint;
 	float				damagebuffer;
+	enum				STATE stateFlag;
 
 
 	// Member functions

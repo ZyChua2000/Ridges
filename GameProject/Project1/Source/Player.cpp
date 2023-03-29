@@ -13,18 +13,31 @@ void staticObjInst::playerSlashUpdate() {
 //player walk
 void GameObjInst::playerWalk(float walkCD)
 {
-	bool moving = false;
-	
-	if (walkCD == 0) {
+	AEVec2 velNull = { 0,0 };
+	//Audio
+	if (AEInputCheckTriggered(AEVK_W) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)){
+		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+	}
 
+	if (AEInputCheckTriggered(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)) {
+		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+	}
+
+	if (AEInputCheckTriggered(AEVK_S) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_D)) {
+		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+	}
+
+	if (AEInputCheckTriggered(AEVK_D) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_W)) {
+		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+	}
+
+	//Velocity
+	if (walkCD == 0) {
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 		{
 			velCurr.y = 1;// this is direction , positive y direction
 			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
 			velCurr.y *= (g_dt * PLAYER_SPEED);
-			
-			
-			
 		}
 		if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 		{
@@ -50,15 +63,7 @@ void GameObjInst::playerWalk(float walkCD)
 			
 		}
 
-
-		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_D))
-			moving = true;
-		if (moving == true)
-			AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
-
-		if (moving == false)
-		AEAudioStopGroup(MovementGroup);
-
+		//Animation
 		if ((int)(timetracker * 4) % 2 == 1) {
 			TextureMap.x = 3;
 			TextureMap.y = 12;
@@ -67,21 +72,7 @@ void GameObjInst::playerWalk(float walkCD)
 			TextureMap.x = 4;
 			TextureMap.y = 12;
 		}
-		
-		
-			
-		
-		
-
 	}
-	
-		
-
-	
-
-
-		
-
 }
 
 void GameObjInst::playerSlashCreate(float angle) {

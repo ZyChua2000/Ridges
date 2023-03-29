@@ -283,10 +283,6 @@ void GS_Maze_Load(void) {
 		2.f, 2.f, 0xFFFF0000, 1.0f, 0.0f);
 
 	MapChar = AEGfxMeshEnd();
-
-	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
-	Damage = AEAudioCreateGroup();
-	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
 }
 
 /******************************************************************************/
@@ -435,6 +431,10 @@ void GS_Maze_Update(void) {
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
+	}
+	else {
+		Player->TextureMap = TEXTURE_PLAYER;
+		AEAudioStopGroup(MovementGroup);
 	}
 
 	if(Player->velCurr.x != 0 || Player->velCurr.y !=0 )
