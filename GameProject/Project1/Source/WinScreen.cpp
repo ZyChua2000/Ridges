@@ -289,9 +289,12 @@ void GS_WinScreen_Unload(void) {
 			AEGfxMeshFree((sWinObjList + i)->pMesh);
 	}
 
-	for (int i = 0; i < 3; i++) {
-		AEGfxTextureUnload(CycleBG[i]);
+	for (int i = 0; i < 6; i++) {
+		AEGfxTextureUnload(WinanimationBG[i]);
 	}
+
+	//AEGfxMeshFree(CreditMesh);
+	
 }
 
 // ---------------------------------------------------------------------------
