@@ -72,6 +72,7 @@ AEGfxVertexList* DarkMesh = 0;
 AEGfxVertexList* MapMesh = 0;
 AEGfxVertexList* MapChar = 0;
 
+
 static int dark = 0;
 float spiketimer = 0.f;
 static int minimap = 0;
@@ -94,6 +95,13 @@ static float minimaptime = 0;
 static float slashCD = 0;
 static float walkCD = 0;
 static float playerHitTime = 0;
+
+
+static staticObjInst* PauseObj;
+static staticObjInst* StartScreenbj;
+
+bool mazepause = 0;
+bool mazelevelstart = 0;
 
 AEAudio MazeBG;
 AEAudioGroup MazeBGG;
@@ -289,6 +297,26 @@ void GS_Maze_Load(void) {
 
 	 MazeBG = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Warped.mp3");
 	 MazeBGG = AEAudioCreateGroup();
+
+	 PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
+	 PauseObj->pObject = sGameObjList + sGameObjNum++;
+	 PauseObj->pObject->pMesh = Slash->pMesh;
+	 PauseObj->pObject->pTexture = AEGfxTextureLoad("Assets/PauseScreen.png");
+	 PauseObj->pObject->type = TYPE_PAUSE;
+	 PauseObj->pObject->refMesh = true;
+	 PauseObj->pObject->refTexture = true;
+	 //AEMtx33Identity(&PauseObj->transform);
+	 AEMtx33Scale(&PauseObj->transform, 1600, 900);
+
+	 StartScreenbj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
+	 StartScreenbj->pObject = sGameObjList + sGameObjNum++;
+	 StartScreenbj->pObject->pMesh = Slash->pMesh;
+	 StartScreenbj->pObject->pTexture = AEGfxTextureLoad("Assets/MazeStart.png");
+	 StartScreenbj->pObject->type = TYPE_PAUSE;
+	 StartScreenbj->pObject->refMesh = true;
+	 StartScreenbj->pObject->refTexture = true;
+	 //AEMtx33Identity(&PauseObj->transform);
+	 AEMtx33Scale(&PauseObj->transform, 1600, 900);
 }
 
 /******************************************************************************/
@@ -358,6 +386,8 @@ void GS_Maze_Init(void) {
 	playerHitTime = 0;
 
 	AEAudioPlay(MazeBG, MazeBGG, 0.1, 1, 1);
+
+	mazelevelstart = 1;
 	
 }
 
@@ -371,346 +401,354 @@ void GS_Maze_Init(void) {
 /******************************************************************************/
 
 void GS_Maze_Update(void) {
-	
-	// Normalising mouse to 0,0 at the center
-	s32 mouseIntX, mouseIntY;
-	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
-	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
-	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
-	if (mouseY + camY > Player->posCurr.y) {
-		angleMousetoPlayer = -angleMousetoPlayer;
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+		mazepause = !mazepause;
+		mazelevelstart = 0;
 	}
-	//Time-related variables
-	utilities::decreaseTime(slashCD);
-	utilities::decreaseTime(walkCD);
-	utilities::decreaseTime(playerHitTime);
-	Player->playerDamaged(playerHitTime);
+	if (mazepause == 1) {
 
-	// =====================================
-	// User Input
-	// =====================================
-	//Debugging mode
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		state ^= 1;
-	}
+		// Normalising mouse to 0,0 at the center
+		s32 mouseIntX, mouseIntY;
+		AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
+		mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
+		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-	if (AEInputCheckTriggered(AEVK_9)) {
-		mapeditor ^= 1;
-	}
-	//Dark Mesh toggle
-	if (AEInputCheckTriggered(AEVK_1))
-	{
-		dark ^= 1;
-	}
+		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+		if (mouseY + camY > Player->posCurr.y) {
+			angleMousetoPlayer = -angleMousetoPlayer;
+		}
+		//Time-related variables
+		utilities::decreaseTime(slashCD);
+		utilities::decreaseTime(walkCD);
+		utilities::decreaseTime(playerHitTime);
+		Player->playerDamaged(playerHitTime);
 
-	//Minimap toggle
-	if (pathingcd == 0) {
-		if (AEInputCheckTriggered(AEVK_M))
+		// =====================================
+		// User Input
+		// =====================================
+		//Debugging mode
+		if (AEInputCheckTriggered(AEVK_F3)) {
+			state ^= 1;
+		}
+
+		if (AEInputCheckTriggered(AEVK_9)) {
+			mapeditor ^= 1;
+		}
+		//Dark Mesh toggle
+		if (AEInputCheckTriggered(AEVK_1))
 		{
-			pathingcd = 1;
-			minimap ^= 1;
-		}
-	}
-	if (pathingcd == 1)
-	{
-		pathingcdtime += g_dt;
-		if ((int)pathingcdtime >= 10)
-		{
-			pathingcd = 0;
-			pathingcdtime = 0;
-		}
-	}
-	if (minimap == 1)
-	{
-		minimaptime += g_dt;
-		if ((int)minimaptime >= 3)
-		{
-			minimap = 0;
-			minimaptime = 0;
+			dark ^= 1;
 		}
 
-
-	}
-
-	Player->playerStand();
-
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
-		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
-		Player->playerWalk(walkCD);
-	}
-	else {
-		Player->TextureMap = TEXTURE_PLAYER;
-		AEAudioStopGroup(MovementGroup);
-	}
-
-	if(Player->velCurr.x != 0 || Player->velCurr.y !=0 )
-	{
-		movement = 1;
-		
-	}
-	else 
-	{
-		movement = 0;
-	}
-	//printf("%d\n", movement);
-
-		//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		Player->drinkPotion(Health, Backpack);
-	}
-
-
-	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-		SLASH_ACTIVATE = true;
-		slashCD = SLASH_COOLDOWN_t;
-		walkCD = WALK_COOLDOWN_t;
-		Player->playerStand();
-	}
-
-	if (SLASH_ACTIVATE == true) {
-		Player->playerSlashCreate(angleMousetoPlayer);
-		SLASH_ACTIVATE = false;
-	}
-
-	if (mapeditor == 1) {
-		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-	}
-	else {
-		mapEditorObj->scale = 0;
-	}
-
-	/////////////////////////////////////////// MINIMAP///////////////////////////
-	int playerx = static_cast<int>(Player->posCurr.x);
-	int playery = static_cast<int>(Player->posCurr.y);
-			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
-		
-	
-
-	//Map editor printing
-	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureMaze.txt");
-
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-		{
-			continue;
-		}
-		//Interaction with items
-		if (Player->calculateDistance(*pInst) < 0.5f)
-		{
-			Backpack.itemPickUp(pInst);
-		}
-	}
-
-	// ======================================================
-	// update physics of all active game object instances
-	//  -- Get the AABB bounding rectangle of every active instance:
-	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-		pInst->calculateBB();
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-		if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
-			continue;
-		}
-		pInst->calculateBB();
-	}
-
-	// ======================================================
-	//	-- Positions of the instances are updated here with the already computed velocity (above)
-	// ======================================================
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
-		{
-			if (pInst->pObject->type == TYPE_CHARACTER) {
-				pInst->velToPos(PLAYER_SPEED);
+		//Minimap toggle
+		if (pathingcd == 0) {
+			if (AEInputCheckTriggered(AEVK_M))
+			{
+				pathingcd = 1;
+				minimap ^= 1;
 			}
 		}
-	}
-
-
-	// ====================
-	// check for collision
-	// ====================
-
-
-
-	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
-
-	snapCollision(*Player, flag);
-
-	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
-			continue;
-		}
-
-		pInst->spikeUpdate(); // Updates alpha of spikes
-
-		if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
-			
-			
-			
-			Player->deducthealth();
-			
-			playerHitTime = DAMAGE_COODLDOWN_t;
-		}
-		if (Player->health == 0) {
-			gGameStateNext = GS_DEATHSCREEN;
-		}
-
-		
-		switch (Player->health)
+		if (pathingcd == 1)
 		{
-		case 0:
-			Health[2]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 1:
-			Health[1]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 2:
-			Health[0]->TextureMap = TEXTURE_DEADHEART;
+			pathingcdtime += g_dt;
+			if ((int)pathingcdtime >= 10)
+			{
+				pathingcd = 0;
+				pathingcdtime = 0;
+			}
+		}
+		if (minimap == 1)
+		{
+			minimaptime += g_dt;
+			if ((int)minimaptime >= 3)
+			{
+				minimap = 0;
+				minimaptime = 0;
+			}
+
+
 		}
 
-	}
-	
-	
+		Player->playerStand();
 
-	// ===================================
-	// update active game object instances
-	// Example:
-	//		-- Removing effects after certain time
-	// ===================================
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
+		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
+			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
+			Player->playerWalk(walkCD);
+		}
+		else {
+			Player->TextureMap = TEXTURE_PLAYER;
+			AEAudioStopGroup(MovementGroup);
 		}
 
-		if (pInst->pObject->type == TYPE_SLASH) {
-			pInst->playerSlashUpdate();
+		if (Player->velCurr.x != 0 || Player->velCurr.y != 0)
+		{
+			movement = 1;
+
+		}
+		else
+		{
+			movement = 0;
+		}
+		//printf("%d\n", movement);
+
+			//if pickup potion then add player health
+		if (AEInputCheckTriggered(AEVK_R))
+		{
+			Player->drinkPotion(Health, Backpack);
 		}
 
-	}
 
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
+		if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
+			SLASH_ACTIVATE = true;
+			slashCD = SLASH_COOLDOWN_t;
+			walkCD = WALK_COOLDOWN_t;
+			Player->playerStand();
 		}
-		if (pInst->pObject->type == TYPE_CHARACTER) {
-			pInst->timetracker += g_dt;
+
+		if (SLASH_ACTIVATE == true) {
+			Player->playerSlashCreate(angleMousetoPlayer);
+			SLASH_ACTIVATE = false;
 		}
-	}
+
+		if (mapeditor == 1) {
+			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
+		}
+		else {
+			mapEditorObj->scale = 0;
+		}
+
+		/////////////////////////////////////////// MINIMAP///////////////////////////
+		int playerx = static_cast<int>(Player->posCurr.x);
+		int playery = static_cast<int>(Player->posCurr.y);
+		MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
 
 
-	if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
-		AEAudioStopGroup(MazeBGG);
-		utilities::completeLevel(maze, Player, Backpack);
-	}
 
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+		//Map editor printing
+		if (AEInputCheckTriggered(AEVK_8)) {
+			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureMaze.txt");
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
+		}
 
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+		{
+			staticObjInst* pInst = sStaticObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
+			{
+				continue;
+			}
+			//Interaction with items
+			if (Player->calculateDistance(*pInst) < 0.5f)
+			{
+				Backpack.itemPickUp(pInst);
+			}
+		}
 
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+		// ======================================================
+		// update physics of all active game object instances
+		//  -- Get the AABB bounding rectangle of every active instance:
+		//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+		//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+			pInst->calculateBB();
+		}
 
-	// =====================================
-	// calculate the matrix for all objects
-	// =====================================
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+			staticObjInst* pInst = sStaticObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+			if (pInst->pObject->type != TYPE_SLASH && pInst->pObject->type != TYPE_SPIKE) {
+				continue;
+			}
+			pInst->calculateBB();
+		}
 
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	{
-		GameObjInst* pInst = sGameObjInstList + i;
+		// ======================================================
+		//	-- Positions of the instances are updated here with the already computed velocity (above)
+		// ======================================================
 
-		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		pInst->calculateTransMatrix();
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-
-		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		pInst->calculateTransMatrix();
-	}
+		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
+			{
+				if (pInst->pObject->type == TYPE_CHARACTER) {
+					pInst->velToPos(PLAYER_SPEED);
+				}
+			}
+		}
 
 
-	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
-	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
+		// ====================
+		// check for collision
+		// ====================
 
-	ParticleSystemUpdate();
 
-	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
-	//===================MINIMAP Position Update=================//
-	if (flag & COLLISION_TOP || flag & COLLISION_BOTTOM || flag & COLLISION_LEFT || flag & COLLISION_RIGHT)
-	{
-		posx = posx;
-		posy = posy;
-	}
-	else {
-		posx += static_cast<int>(Player->velCurr.x);
 
-		posy += static_cast<int>(Player->velCurr.y);
+		int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
-		
-	}
-	
-	if (movement == 1)
-	{
-		
-		
-			mappingarrx[arrin] = (camX * SPRITE_SCALE)+posx/100;
-		
+		snapCollision(*Player, flag);
 
-		
-			mappingarry[arrin] = (camY * SPRITE_SCALE)+posy/100;
+		for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+			staticObjInst* pInst = sStaticObjInstList + i;
+			if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
+				continue;
+			}
+
+			pInst->spikeUpdate(); // Updates alpha of spikes
+
+			if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
+
+
+
+				Player->deducthealth();
+
+				playerHitTime = DAMAGE_COODLDOWN_t;
+			}
+			if (Player->health == 0) {
+				gGameStateNext = GS_DEATHSCREEN;
+			}
+
+
+			switch (Player->health)
+			{
+			case 0:
+				Health[2]->TextureMap = TEXTURE_DEADHEART;
+				break;
+			case 1:
+				Health[1]->TextureMap = TEXTURE_DEADHEART;
+				break;
+			case 2:
+				Health[0]->TextureMap = TEXTURE_DEADHEART;
+			}
+
+		}
+
+
+
+		// ===================================
+		// update active game object instances
+		// Example:
+		//		-- Removing effects after certain time
+		// ===================================
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+		{
+			staticObjInst* pInst = sStaticObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+
+			if (pInst->pObject->type == TYPE_SLASH) {
+				pInst->playerSlashUpdate();
+			}
+
+		}
+
+		for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+			if (pInst->pObject->type == TYPE_CHARACTER) {
+				pInst->timetracker += g_dt;
+			}
+		}
+
+
+		if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
+			AEAudioStopGroup(MazeBGG);
+			utilities::completeLevel(maze, Player, Backpack);
+		}
+
+		utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
+		MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+		NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+		MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+		NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+		//player health following viewport
+		Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+		Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+		Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
+		// =====================================
+		// calculate the matrix for all objects
+		// =====================================
+
+		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+		{
+			GameObjInst* pInst = sGameObjInstList + i;
+
+			// skip non-active object
+			if ((pInst->flag & FLAG_ACTIVE) == 0)
+				continue;
+
+			pInst->calculateTransMatrix();
+		}
+
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+		{
+			staticObjInst* pInst = sStaticObjInstList + i;
+
+
+			// skip non-active object
+			if ((pInst->flag & FLAG_ACTIVE) == 0)
+				continue;
+
+			pInst->calculateTransMatrix();
+		}
+
+
+		NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
+		NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
+
+		ParticleSystemUpdate();
+
+		//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
+		//===================MINIMAP Position Update=================//
+		if (flag & COLLISION_TOP || flag & COLLISION_BOTTOM || flag & COLLISION_LEFT || flag & COLLISION_RIGHT)
+		{
+			posx = posx;
+			posy = posy;
+		}
+		else {
+			posx += static_cast<int>(Player->velCurr.x);
+
+			posy += static_cast<int>(Player->velCurr.y);
+
+
+		}
+
+		if (movement == 1)
+		{
+
+
+			mappingarrx[arrin] = (camX * SPRITE_SCALE) + posx / 100;
+
+
+
+			mappingarry[arrin] = (camY * SPRITE_SCALE) + posy / 100;
 			arrin++;
-			
+
+		}
+		if (count >= 3000)
+			count = 0;
+		//printf("%d\n", arrin);
+		//printf("%f\n", mappingarrx[3]);
+
 	}
-	if (count >= 3000)
-		count = 0;
-	//printf("%d\n", arrin);
-	//printf("%f\n", mappingarrx[3]);
 	
 }
 
@@ -723,291 +761,319 @@ void GS_Maze_Update(void) {
 /******************************************************************************/
 void GS_Maze_Draw(void) {
 
-	// Tell the engine to get ready to draw something with texture. 
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-	// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+	if (!mazepause) {
 
-	for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
-		for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
-			AEVec2 Pos = { i + 0.5f, -j - 0.5f };
-
-			if (utilities::checkWithinCam(Pos, camX, camY)) {
-				continue;
-			}
+		if (mazelevelstart)
+		{
+			staticObjInst* pInst = StartScreenbj;
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
 			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-			if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
-				AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
+			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+
+			pInst->transform.m[0][0] = 1600;
+			pInst->transform.m[1][1] = 900;
+
+			// Set the current object instance's transform matrix using "AEGfxSetTransform"
+			AEGfxSetTransform(pInst->transform.m);
+			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+		}
+
+		else
+		{
+
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+			for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
+				for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
+					AEVec2 Pos = { i + 0.5f, -j - 0.5f };
+
+					if (utilities::checkWithinCam(Pos, camX, camY)) {
+						continue;
+					}
+					AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+					if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
+						AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
+					}
+
+					AEGfxSetTransparency(1.0f);
+
+					AEMtx33 Translate, Scale, Transform;
+					AEMtx33Trans(&Translate, Pos.x, Pos.y);
+					AEMtx33Scale(&Scale, (f32)SPRITE_SCALE, (f32)SPRITE_SCALE);
+					AEMtx33Concat(&Transform, &Scale, &Translate);
+
+					AEGfxTextureSet(Player->pObject->pTexture,
+						TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j].x,
+						TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j].y);
+
+					AEGfxSetTransform(Transform.m);
+
+					AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+
+				}
 			}
 
-			AEGfxSetTransparency(1.0f);
-
-			AEMtx33 Translate, Scale, Transform;
-			AEMtx33Trans(&Translate, Pos.x, Pos.y);
-			AEMtx33Scale(&Scale, (f32)SPRITE_SCALE, (f32)SPRITE_SCALE);
-			AEMtx33Concat(&Transform, &Scale, &Translate);
-
-			AEGfxTextureSet(Player->pObject->pTexture,
-				TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH * MapObjInstList[i][j].x,
-				TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT * MapObjInstList[i][j].y);
-
-			AEGfxSetTransform(Transform.m);
-
-			AEGfxMeshDraw(Player->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-
-		}
-	}
-
-	// Spawn spikes
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-		// skip non-active object and reference boxes
-		if (pInst->flag != FLAG_ACTIVE)
-			continue;
-		if (pInst->pObject->type != TYPE_SPIKE) {
-			continue;
-		}
-		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
-			continue;
-		}
-
-			AEGfxSetTransparency(1.0f - pInst->Alpha);
-
-		// For any types using spritesheet
-
-			AEGfxTextureSet(pInst->pObject->pTexture,
-				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
-				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-
-		// Set the current object instance's transform matrix using "AEGfxSetTransform"
-		AEGfxSetTransform(pInst->transform.m);
-		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	}
-
-	if (dark == 0) {
-		AEGfxSetTransparency(1.0f);
-		AEGfxTextureSet(DarkRoom, 0, 0);
-		// Create a scale matrix that scales by 100 x and y
-		AEMtx33 lscale = { 0 };
-		AEMtx33Scale(&lscale, 20, 20);
-		// Create a rotation matrix that rotates by 45 degrees
-		AEMtx33 lrotate = { 0, };
-
-		AEMtx33Rot(&lrotate, 0);
-
-		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-		// Concat the matrices (TRS) 
-		AEMtx33 ltransform = { 0 };
-		AEMtx33Concat(&ltransform, &lrotate, &lscale);
-		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-		// Choose the transform to use 
-		AEGfxSetTransform(ltransform.m);
-		// Actually drawing the mesh
-		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
-	}
-
-	
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-
-	// Spawn Static entities excluding spikes
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-		// skip non-active object and reference boxes
-		if (pInst->flag != FLAG_ACTIVE)
-			continue;
-		if (pInst->pObject->type == TYPE_REF || pInst->pObject->type == TYPE_SPIKE) {
-			continue;
-		}
-		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
-			continue;
-		}
-		// for any transparent textures
-		if (pInst->pObject->type == TYPE_SLASH) {
-			AEGfxSetTransparency(1.0f - pInst->Alpha);
-		}
-		else {
-			AEGfxSetTransparency(1.0f);
-		}
-		// For any types using spritesheet
-		if (pInst->pObject->type != TYPE_SLASH)
-		{
-			AEGfxTextureSet(pInst->pObject->pTexture,
-				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
-				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-		}
-		else {
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-		}
-		// Set the current object instance's transform matrix using "AEGfxSetTransform"
-		AEGfxSetTransform(pInst->transform.m);
-		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	}
-
-
-
-	AEGfxSetTransparency(1.0f);
-
-
-
-	// Spawn dynamic entities
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	{
-		GameObjInst* pInst = sGameObjInstList + i;
-
-		// skip non-active object
-		if (pInst->flag != FLAG_ACTIVE)
-			continue;
-		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
-
-			continue;
-		}
-		// for any sprite textures
-		if (pInst->pObject->type != TYPE_NUM) {
-			AEGfxTextureSet(pInst->pObject->pTexture,
-				pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
-				pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-		}
-
-
-		else {
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-		}
-		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
-		// Set the current object instance's transform matrix using "AEGfxSetTransform"
-		AEGfxSetTransform(pInst->transform.m);
-		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	}
-	if (minimap == 1)
-	{
-		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-		AEMtx33 lscale = { 0 };
-		AEMtx33 lrotate = { 0, };
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33 ltransform = { 0 };
-
-		if (MapChar)
-		{
-
-
-			//if (posx != prevX || posy != prevY)
-			//{
-			//currX = (camX * SPRITE_SCALE) + posx / 10;
-
-
-
-			// Create a rotation matrix that rotates by 45 degrees
-			for (unsigned long i = 0; i < 3000; i++)
+			// Spawn spikes
+			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 			{
-				AEMtx33Scale(&lscale, 3, 3);
+				staticObjInst* pInst = sStaticObjInstList + i;
+
+				// skip non-active object and reference boxes
+				if (pInst->flag != FLAG_ACTIVE)
+					continue;
+				if (pInst->pObject->type != TYPE_SPIKE) {
+					continue;
+				}
+				if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+					continue;
+				}
+
+				AEGfxSetTransparency(1.0f - pInst->Alpha);
+
+				// For any types using spritesheet
+
+				AEGfxTextureSet(pInst->pObject->pTexture,
+					pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+					pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+
+				// Set the current object instance's transform matrix using "AEGfxSetTransform"
+				AEGfxSetTransform(pInst->transform.m);
+				// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+				AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
+
+			if (dark == 0) {
+				AEGfxSetTransparency(1.0f);
+				AEGfxTextureSet(DarkRoom, 0, 0);
+				// Create a scale matrix that scales by 100 x and y
+				AEMtx33 lscale = { 0 };
+				AEMtx33Scale(&lscale, 20, 20);
+				// Create a rotation matrix that rotates by 45 degrees
+				AEMtx33 lrotate = { 0, };
+
 				AEMtx33Rot(&lrotate, 0);
 
-				AEMtx33Concat(&ltransform, &lrotate, &lscale);
 				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-
-				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
-
-				AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
+				AEMtx33 ltranslate = { 0 };
+				AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
 				// Concat the matrices (TRS) 
-
-				// Actually drawing the mesh
+				AEMtx33 ltransform = { 0 };
+				AEMtx33Concat(&ltransform, &lrotate, &lscale);
 				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+				// Choose the transform to use 
 				AEGfxSetTransform(ltransform.m);
-
-				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
-
-				//count++;
+				// Actually drawing the mesh
+				AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
 			}
-		}
-	}
-	
-	if (minimap == 0)
-	{
-		char tracker[50] = "Press M to Track Past Pathing";
-		AEGfxPrint(1, tracker, 0.60f, 0.75f, 1.5f, 1.0f, 1.0f, 1.0f);
-	}
-	
-	char pathtimerdisplay[50];
-	if (10 - pathingcdtime == 10)
-	{
-		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.d", 0);
-		AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
-	}
-	else
-	{
-		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.f", 10 - pathingcdtime);
-		AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
-	}
-	
-	if (state == 1)
-	{
-		char debug[20] = "Debug Screen";
-		char input[20] = "Input";
-		char a[20] = "A";
-		char w[20] = "W";
-		char s[20] = "S";
-		char d[20] = "D";
-		char playerpos[100] = { (char)Player->posCurr.x,(char)Player->posCurr.y };
-		char mouse_xy_buffer[50] = " "; // buffer
-		char camxy_buffer[50] = " ";
-		AEGfxPrint(1, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(1, input, -0.99f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
 
-		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.4f", mouseX + camX);
-		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.4f", mouseY + camY);
-		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(1, a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(1, w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(1, s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
-		AEGfxPrint(1, d, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(playerpos, "Player Position X: %.4f", (Player->posCurr.x));
-		AEGfxPrint(1, playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(playerpos, "Player Position Y: %.4f", (Player->posCurr.y));
-		AEGfxPrint(1, playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-		sprintf_s(camxy_buffer, "Camera Position X: %.4f", camX);
-		AEGfxPrint(1, camxy_buffer, -0.99f, 0.30f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(camxy_buffer, "Camera Position Y: %.4f", camY);
-		AEGfxPrint(1, camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
-		char Collision[2400] = " ";
-		sprintf_s(Collision, "Collided: %d", binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))]);
-		AEGfxPrint(1, Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
+			// Spawn Static entities excluding spikes
+			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+			{
+				staticObjInst* pInst = sStaticObjInstList + i;
+
+				// skip non-active object and reference boxes
+				if (pInst->flag != FLAG_ACTIVE)
+					continue;
+				if (pInst->pObject->type == TYPE_REF || pInst->pObject->type == TYPE_SPIKE) {
+					continue;
+				}
+				if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+					continue;
+				}
+				// for any transparent textures
+				if (pInst->pObject->type == TYPE_SLASH) {
+					AEGfxSetTransparency(1.0f - pInst->Alpha);
+				}
+				else {
+					AEGfxSetTransparency(1.0f);
+				}
+				// For any types using spritesheet
+				if (pInst->pObject->type != TYPE_SLASH)
+				{
+					AEGfxTextureSet(pInst->pObject->pTexture,
+						pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+						pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+				}
+				else {
+					AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+				}
+				// Set the current object instance's transform matrix using "AEGfxSetTransform"
+				AEGfxSetTransform(pInst->transform.m);
+				// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+				AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
 
 
 
+			AEGfxSetTransparency(1.0f);
 
-		if (AEInputCheckCurr(AEVK_W))
-		{
-			sprintf_s(w, "W Pressed");
-			AEGfxPrint(1, w, -0.99f, 0.60f, 1.0f, 0.0f, 1.0f, 0.0f);
-		}
-		if (AEInputCheckCurr(AEVK_A))
-		{
-			sprintf_s(a, "A Pressed");
-			AEGfxPrint(1, a, -0.99f, 0.55f, 1.0f, 0.0f, 1.0f, 0.0f);
-		}
-		if (AEInputCheckCurr(AEVK_S))
-		{
-			sprintf_s(s, "S Pressed");
-			AEGfxPrint(1, s, -0.99f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f);
-		}
-		if (AEInputCheckCurr(AEVK_D))
-		{
-			sprintf_s(s, "D Pressed");
-			AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
+
+
+			// Spawn dynamic entities
+			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+			{
+				GameObjInst* pInst = sGameObjInstList + i;
+
+				// skip non-active object
+				if (pInst->flag != FLAG_ACTIVE)
+					continue;
+				if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+
+					continue;
+				}
+				// for any sprite textures
+				if (pInst->pObject->type != TYPE_NUM) {
+					AEGfxTextureSet(pInst->pObject->pTexture,
+						pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+						pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+				}
+
+
+				else {
+					AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+				}
+				AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
+				// Set the current object instance's transform matrix using "AEGfxSetTransform"
+				AEGfxSetTransform(pInst->transform.m);
+				// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+				AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
+			if (minimap == 1)
+			{
+				AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+				AEMtx33 lscale = { 0 };
+				AEMtx33 lrotate = { 0, };
+				AEMtx33 ltranslate = { 0 };
+				AEMtx33 ltransform = { 0 };
+
+				if (MapChar)
+				{
+
+
+					//if (posx != prevX || posy != prevY)
+					//{
+					//currX = (camX * SPRITE_SCALE) + posx / 10;
+
+
+
+					// Create a rotation matrix that rotates by 45 degrees
+					for (unsigned long i = 0; i < 3000; i++)
+					{
+						AEMtx33Scale(&lscale, 3, 3);
+						AEMtx33Rot(&lrotate, 0);
+
+						AEMtx33Concat(&ltransform, &lrotate, &lscale);
+						// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+
+						//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
+
+						AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
+						// Concat the matrices (TRS) 
+
+						// Actually drawing the mesh
+						AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+						AEGfxSetTransform(ltransform.m);
+
+						AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
+
+						//count++;
+					}
+				}
+			}
+
+			if (minimap == 0)
+			{
+				char tracker[50] = "Press M to Track Past Pathing";
+				AEGfxPrint(1, tracker, 0.60f, 0.75f, 1.5f, 1.0f, 1.0f, 1.0f);
+			}
+
+			char pathtimerdisplay[50];
+			if (10 - pathingcdtime == 10)
+			{
+				sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.d", 0);
+				AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
+			}
+			else
+			{
+				sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.f", 10 - pathingcdtime);
+				AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
+			}
+
+			if (state == 1)
+			{
+				char debug[20] = "Debug Screen";
+				char input[20] = "Input";
+				char a[20] = "A";
+				char w[20] = "W";
+				char s[20] = "S";
+				char d[20] = "D";
+				char playerpos[100] = { (char)Player->posCurr.x,(char)Player->posCurr.y };
+				char mouse_xy_buffer[50] = " "; // buffer
+				char camxy_buffer[50] = " ";
+				AEGfxPrint(1, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
+				AEGfxPrint(1, input, -0.99f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
+
+				sprintf_s(mouse_xy_buffer, "Mouse Position X: %.4f", mouseX + camX);
+				AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
+				sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.4f", mouseY + camY);
+				AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
+				AEGfxPrint(1, a, -0.99f, 0.55f, 1.0f, 1.0f, 1.0f, 1.0f);
+				AEGfxPrint(1, w, -0.99f, 0.60f, 1.0f, 1.0f, 1.0f, 1.0f);
+				AEGfxPrint(1, s, -0.99f, 0.50f, 1.0f, 1.0f, 1.0f, 1.0f);
+				AEGfxPrint(1, d, -0.99f, 0.45f, 1.0f, 1.0f, 1.0f, 1.0f);
+				sprintf_s(playerpos, "Player Position X: %.4f", (Player->posCurr.x));
+				AEGfxPrint(1, playerpos, -0.99f, 0.40f, 1.0f, 1.0f, 1.0f, 1.0f);
+				sprintf_s(playerpos, "Player Position Y: %.4f", (Player->posCurr.y));
+				AEGfxPrint(1, playerpos, -0.99f, 0.35f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+				sprintf_s(camxy_buffer, "Camera Position X: %.4f", camX);
+				AEGfxPrint(1, camxy_buffer, -0.99f, 0.30f, 1.0f, 1.0f, 1.0f, 1.0f);
+				sprintf_s(camxy_buffer, "Camera Position Y: %.4f", camY);
+				AEGfxPrint(1, camxy_buffer, -0.99f, 0.25f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+				char Collision[2400] = " ";
+				sprintf_s(Collision, "Collided: %d", binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))]);
+				AEGfxPrint(1, Collision, -0.99f, 0.20f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+
+
+
+				if (AEInputCheckCurr(AEVK_W))
+				{
+					sprintf_s(w, "W Pressed");
+					AEGfxPrint(1, w, -0.99f, 0.60f, 1.0f, 0.0f, 1.0f, 0.0f);
+				}
+				if (AEInputCheckCurr(AEVK_A))
+				{
+					sprintf_s(a, "A Pressed");
+					AEGfxPrint(1, a, -0.99f, 0.55f, 1.0f, 0.0f, 1.0f, 0.0f);
+				}
+				if (AEInputCheckCurr(AEVK_S))
+				{
+					sprintf_s(s, "S Pressed");
+					AEGfxPrint(1, s, -0.99f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f);
+				}
+				if (AEInputCheckCurr(AEVK_D))
+				{
+					sprintf_s(s, "D Pressed");
+					AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
+				}
+			}
 		}
 	}
 }
