@@ -50,7 +50,7 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	//set background color
 	AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
-	GameStateMgrInit(GS_SPLASHSCREEN);
+	GameStateMgrInit(GS_MAINMENU);
 
 	while (gGameStateCurr != GS_QUIT)
 	{

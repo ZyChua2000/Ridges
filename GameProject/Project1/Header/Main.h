@@ -43,9 +43,6 @@ extern double	g_appTime;
 #include "mapFunctions.h"
 #include "staticObjs.h"
 #include "BossLevel.h"
-#include "SplashScreen.h"
-
-#include "HelpScreen.h"
 
 #endif
 
