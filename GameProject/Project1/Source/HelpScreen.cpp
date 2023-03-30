@@ -147,6 +147,16 @@ void GS_HelpScreen_Update(void) {
 		cycle++;
 
 	}
+	if (AEInputCheckTriggered(AEVK_LEFT))
+	{
+		cycle--;
+
+	}
+	if (cycle <= 0)
+	{
+		cycle = 0;
+		
+	}
 	if (cycle >= 3)
 	{
 		cycle = 0;
