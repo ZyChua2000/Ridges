@@ -95,8 +95,8 @@ static AEMtx33 hpbartransform;
 
 struct bosshp
 {
-	float maxhp;
-	float currenthp;
+	int maxhp;
+	int* currenthp;
 	f32 width;
 	f32 height;
 	float damagetaken;
@@ -282,9 +282,9 @@ void GS_BossLevel_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	boss.maxhp = 100;
-	boss.currenthp = 100;
-	boss.width = SPRITE_SCALE * 9 * boss.currenthp/boss.maxhp;
+	boss.maxhp = 20;
+	boss.currenthp = &Boss->health;
+	boss.width = SPRITE_SCALE * 9 * *boss.currenthp/boss.maxhp;
 	boss.height = SPRITE_SCALE * 0.4;
 
 
@@ -427,9 +427,9 @@ void GS_BossLevel_Update(void) {
 	{
 		if (AEInputCheckTriggered(AEVK_Q))
 		{
-			boss.currenthp -= 10.f;
-			boss.damagetaken = boss.maxhp - boss.currenthp;
-			boss.width = SPRITE_SCALE * 9 * boss.currenthp / boss.maxhp;
+			*boss.currenthp -= 10.f;
+			boss.damagetaken = boss.maxhp - *boss.currenthp;
+			boss.width = SPRITE_SCALE * 9 * *boss.currenthp / boss.maxhp;
 		}
 	}
 	
@@ -982,8 +982,10 @@ void GS_BossLevel_Unload(void) {
 
 	AEGfxMeshFree(pMesh1);
 	AEGfxMeshFree(pMesh2);
+	AEGfxMeshFree(pMesh3);
 	AEGfxMeshFree(hpbar.pMesh);
 	AEGfxTextureUnload(spriteSheet);
+	AEGfxTextureUnload(darkRoom);
 	AEGfxTextureUnload(slashText);
 	AEGfxTextureUnload(refText);
 
