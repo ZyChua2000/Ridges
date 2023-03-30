@@ -55,7 +55,7 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	while (gGameStateCurr != GS_QUIT)
 	{
 
-		_CrtSetBreakAlloc(2297);
+		//s_CrtSetBreakAlloc(2293);
 		// reset the system modules
 		AESysReset();
 

@@ -403,7 +403,7 @@ void GS_MainMenu_Unload(void) {
 		AEGfxTextureUnload(animationBG[i]);
 	}
 
-//	AEGfxMeshFree(CreditMesh);
+	AEGfxMeshFree(CreditMesh);
 	AEGfxTextureUnload(Credit_Img);
 
 }
