@@ -94,6 +94,9 @@ static float minimaptime = 0;
 static float slashCD = 0;
 static float walkCD = 0;
 static float playerHitTime = 0;
+
+AEAudio MazeBG;
+AEAudioGroup MazeBGG;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -283,6 +286,9 @@ void GS_Maze_Load(void) {
 		2.f, 2.f, 0xFFFF0000, 1.0f, 0.0f);
 
 	MapChar = AEGfxMeshEnd();
+
+	 MazeBG = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Warped.mp3");
+	 MazeBGG = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -350,6 +356,8 @@ void GS_Maze_Init(void) {
 	ParticleSystemInit();
 
 	playerHitTime = 0;
+
+	AEAudioPlay(MazeBG, MazeBGG, 0.1, 1, 1);
 	
 }
 
@@ -621,6 +629,7 @@ void GS_Maze_Update(void) {
 
 
 	if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
+		AEAudioStopGroup(MazeBGG);
 		utilities::completeLevel(maze, Player, Backpack);
 	}
 

@@ -82,6 +82,8 @@ AEAudio HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav")
 AEAudio Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
 AEAudio BulletShot = AEAudioLoadMusic("Assets/Music/SCI-FI-LASER_GEN-HDF-20725.wav");
 
+
+
 AEAudio Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");;
 AEAudioGroup MovementGroup = AEAudioCreateGroup();
 AEAudioGroup BulletGroup = AEAudioCreateGroup();
