@@ -57,36 +57,25 @@ static GameObjInst* Player;												// Pointer to the "Player" game object in
 static GameObjInst* Boss;
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers[3];										// Pointer to each enemy object instance
 static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
 static staticObjInst* NumObj[3];
-static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Key;
 static Inventory Backpack;
-static staticObjInst* Spike;
 static GameObj hpbar;
 
-static AEGfxTexture* spriteSheet;
-static AEGfxTexture* slashText;
-static AEGfxTexture* refText;
+
 static AEGfxTexture* darkRoom;
 static AEGfxVertexList* pMesh1;
 static AEGfxVertexList* pMesh2;
 static AEGfxVertexList* pMesh3;
 
-static AEVec2* Gates;
-static int gatesNum;
-static int levNum;
-static int chestNum;
 static int dark;
 static float darkTimer;
 
 static int levelclearedNum;
 
 static std::vector<int> stageList;
-
-static float spikedmgtimer = 0.f;
-static float internalTimer = 0.f;
+static std::vector<AEGfxTexture*> textureList;
+static std::vector<AEGfxVertexList*> meshList;
 
 static float playerHitTime;
 static staticObjInst* RefBox;
@@ -132,15 +121,11 @@ void GS_BossLevel_Load(void) {
 	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
-	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
-
-	
-
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
 		*RefLine = 0, *Health = 0, *Enemy = 0, *Boss = 0, *Key = 0,
 		*Bullet = 0, *BossCircle = 0, *BossCircleAttack = 0;
 
-	//Mesh for Sprite Sheet
+	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / TEXTURE_MAXWIDTH, 16.0f / TEXTURE_MAXHEIGHT,
@@ -151,9 +136,9 @@ void GS_BossLevel_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / TEXTURE_MAXWIDTH, 0.0f);
 
-	pMesh1 = AEGfxMeshEnd();
+	meshList.push_back(AEGfxMeshEnd());
 	
-	// Mesh for whole texture files
+	// Mesh for whole texture files - 1
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -164,28 +149,9 @@ void GS_BossLevel_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	pMesh2 = AEGfxMeshEnd();
+	meshList.push_back(AEGfxMeshEnd());
 
-	//Load Textures
-	slashText = AEGfxTextureLoad("Assets/slash.png");
-	refText = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
-	spriteSheet = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
-
-	// Load mesh and texture into game objects
-	utilities::loadMeshNTexture(Character, pMesh1, spriteSheet, TYPE_CHARACTER);
-	utilities::loadMeshNTexture(Item, pMesh1, spriteSheet, TYPE_ITEMS);
-	utilities::loadMeshNTexture(Map, pMesh1, spriteSheet, TYPE_MAP);
-	utilities::loadMeshNTexture(Slash, pMesh2, slashText, TYPE_SLASH);
-	utilities::loadMeshNTexture(RefLine, pMesh2, slashText, TYPE_REF);
-	utilities::loadMeshNTexture(Health, pMesh1, spriteSheet, TYPE_HEALTH);
-	utilities::loadMeshNTexture(Enemy, pMesh1, spriteSheet, TYPE_ENEMY);
-	utilities::loadMeshNTexture(Key, pMesh1, spriteSheet, TYPE_KEY);
-	utilities::loadMeshNTexture(Bullet, pMesh1, spriteSheet, TYPE_BULLET);
-	utilities::loadMeshNTexture(Boss, pMesh1, spriteSheet, TYPE_BOSS);
-	utilities::loadMeshNTexture(BossCircle, pMesh1, spriteSheet, TYPE_BOSSCIRCLE);
-	utilities::loadMeshNTexture(BossCircleAttack, pMesh1, spriteSheet, TYPE_BOSSCIRCLEATTACK);
-
-
+	// Mesh for hpbar - 2
 	AEGfxMeshStart();
 	AEGfxTriAdd(
 		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
@@ -196,8 +162,9 @@ void GS_BossLevel_Load(void) {
 		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
 		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
 		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
-	hpbar.pMesh = AEGfxMeshEnd();
+	meshList.push_back(AEGfxMeshEnd());
 
+	// Mesh for dark room - 3
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -207,8 +174,29 @@ void GS_BossLevel_Load(void) {
 	AEGfxTriAdd(-80.0f, -45.f, 0xFFFFFFFF, 0.0f, 1.0f,
 		-80.0f, 45.f, 0xFFFFFFFF, 0.0f, 0.0f,
 		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
-	pMesh3 = AEGfxMeshEnd();
-	darkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
+	meshList.push_back(AEGfxMeshEnd());
+
+	//Load Textures
+	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
+	textureList.push_back(AEGfxTextureLoad("Assets/Darkroom.png")); // 3
+
+	// Load mesh and texture into game objects
+	utilities::loadMeshNTexture(Character, meshList[0], textureList[2], TYPE_CHARACTER);
+	utilities::loadMeshNTexture(Item, meshList[0], textureList[2], TYPE_ITEMS);
+	utilities::loadMeshNTexture(Map, meshList[0], textureList[2], TYPE_MAP);
+	utilities::loadMeshNTexture(Slash, meshList[1], textureList[0], TYPE_SLASH);
+	utilities::loadMeshNTexture(RefLine, meshList[1], textureList[1], TYPE_REF);
+	utilities::loadMeshNTexture(Health, meshList[0], textureList[2], TYPE_HEALTH);
+	utilities::loadMeshNTexture(Enemy, meshList[0], textureList[2], TYPE_ENEMY);
+	utilities::loadMeshNTexture(Key, meshList[0], textureList[2], TYPE_KEY);
+	utilities::loadMeshNTexture(Bullet, meshList[0], textureList[2], TYPE_BULLET);
+	utilities::loadMeshNTexture(Boss, meshList[0], textureList[2], TYPE_BOSS);
+	utilities::loadMeshNTexture(BossCircle, meshList[0], textureList[2], TYPE_BOSSCIRCLE);
+	utilities::loadMeshNTexture(BossCircleAttack, meshList[0], textureList[2], TYPE_BOSSCIRCLEATTACK);
+
+	
 
 	ParticleSystemLoad();
 }
@@ -265,7 +253,7 @@ void GS_BossLevel_Init(void) {
 	//init Boss
 	AEVec2 BossPos = { 17,-10 }; // TXT
 	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
-	Boss->health = 3;
+	Boss->health = 20;
 	Boss->pathfindtime = 0.25f;
 	Boss->pathtimer = Boss->pathfindtime;
 
@@ -423,11 +411,11 @@ void GS_BossLevel_Update(void) {
 
 	//simulating damage taken
 	
-	if (boss.currenthp > 0)
+	if (*boss.currenthp > 0)
 	{
 		if (AEInputCheckTriggered(AEVK_Q))
 		{
-			*boss.currenthp -= 10.f;
+			*boss.currenthp -= 1;
 			boss.damagetaken = boss.maxhp - *boss.currenthp;
 			boss.width = SPRITE_SCALE * 9 * *boss.currenthp / boss.maxhp;
 		}
@@ -514,35 +502,50 @@ void GS_BossLevel_Update(void) {
 			continue;
 		}
 
-		if (pInst->pObject->type == TYPE_ENEMY) {
+		if (pInst->pObject->type == TYPE_ENEMY || pInst->pObject->type == TYPE_BOSS) {
 
-			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-				&& playerHitTime == 0)
-			{
-				if (Player->health > 0)
+			if (pInst->pObject->type == TYPE_ENEMY) {
+				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+					&& playerHitTime == 0)
 				{
-					Player->deducthealth();
+					if (Player->health > 0)
+					{
+						Player->deducthealth();
 
-					//Hit cooldown
-					playerHitTime = DAMAGE_COODLDOWN_t;
+						//Hit cooldown
+						playerHitTime = DAMAGE_COODLDOWN_t;
 
-					//knockback
-					Player->playerKnockback(*pInst);
+						//knockback
+						Player->playerKnockback(*pInst);
 
+					}
+				}
+
+				for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+					staticObjInst* jInst = sStaticObjInstList + j;
+					if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+						continue;
+					}
+
+					if (pInst->calculateDistance(*jInst) < 0.9f
+						&& jInst->Alpha == 0) {
+						pInst->deducthealth(Player->damage);
+						// Knockback
+						pInst->mobKnockback(*jInst);
+					}
 				}
 			}
+			if (pInst->pObject->type == TYPE_BOSS) {
+				for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+					staticObjInst* jInst = sStaticObjInstList + j;
+					if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+						continue;
+					}
 
-			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
-				staticObjInst* jInst = sStaticObjInstList + j;
-				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
-					continue;
-				}
-
-				if (pInst->calculateDistance(*jInst) < 0.9f
-					&& jInst->Alpha == 0) {
-					pInst->deducthealth(Player->damage);
-					// Knockback
-					pInst->mobKnockback(*jInst);
+					if (pInst->calculateDistance(*jInst) < 0.9f
+						&& jInst->Alpha == 0) {
+						pInst->deducthealth(Player->damage);
+					}
 				}
 			}
 		}
@@ -574,6 +577,8 @@ void GS_BossLevel_Update(void) {
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
+
+
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
@@ -699,6 +704,9 @@ void GS_BossLevel_Update(void) {
 
 		pInst->calculateTransMatrix();
 	}
+
+	boss.damagetaken = boss.maxhp - *boss.currenthp;
+	boss.width = SPRITE_SCALE * 9 * *boss.currenthp / boss.maxhp;
 
 	//scale, rot, trans for health bar
 	AEMtx33 bar_scale, bar_trans, bar_rot;
@@ -844,7 +852,7 @@ void GS_BossLevel_Draw(void) {
 
 	if (dark == 0) {
 		AEGfxSetTransparency(1.0f);
-		AEGfxTextureSet(darkRoom, 0, 0);
+		AEGfxTextureSet(textureList[3], 0, 0);
 		// Create a scale matrix that scales by 100 x and y
 		AEMtx33 lscale = { 0 };
 		AEMtx33Scale(&lscale, 20, 20);
@@ -863,7 +871,7 @@ void GS_BossLevel_Draw(void) {
 		// Choose the transform to use 
 		AEGfxSetTransform(ltransform.m);
 		// Actually drawing the mesh
-		AEGfxMeshDraw(pMesh3, AE_GFX_MDM_TRIANGLES);
+		AEGfxMeshDraw(meshList[3], AE_GFX_MDM_TRIANGLES);
 	}
 
 	//drawing of health bar
@@ -871,7 +879,7 @@ void GS_BossLevel_Draw(void) {
 	AEGfxSetTintColor(0.7f, 0.7f, 0.7f, 0.0f);
 	AEGfxSetBlendMode(AE_GFX_BM_NONE);
 	AEGfxSetTransform(hpbartransform.m);
-	AEGfxMeshDraw(hpbar.pMesh, AE_GFX_MDM_TRIANGLES);
+	AEGfxMeshDraw(meshList[2], AE_GFX_MDM_TRIANGLES);
 
 	if (state == 1)
 	{
@@ -973,21 +981,15 @@ void GS_BossLevel_Free(void) {
 /******************************************************************************/
 void GS_BossLevel_Unload(void) {
 	// free all mesh data (shapes) of each object using "AEGfxTriFree"
-	for (unsigned int i = 0; i < sGameObjNum; i++) {
-		if ((sGameObjList + i)->refMesh == false)
-			AEGfxMeshFree((sGameObjList + i)->pMesh);
-		if ((sGameObjList + i)->refTexture == false)
-			AEGfxTextureUnload((sGameObjList + i)->pTexture);
+
+	for (AEGfxVertexList* Mesh : meshList) {
+		AEGfxMeshFree(Mesh);
 	}
 
-	AEGfxMeshFree(pMesh1);
-	AEGfxMeshFree(pMesh2);
-	AEGfxMeshFree(pMesh3);
-	AEGfxMeshFree(hpbar.pMesh);
-	AEGfxTextureUnload(spriteSheet);
-	AEGfxTextureUnload(darkRoom);
-	AEGfxTextureUnload(slashText);
-	AEGfxTextureUnload(refText);
+	for (AEGfxTexture* texture : textureList) {
+		AEGfxTextureUnload(texture);
+	}
+
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
