@@ -482,6 +482,22 @@ void GS_Tower_Update(void) {
 		towerpause = !towerpause;
 		towerlevelstart = 0;
 	}
+
+	if (towerpause == 0) {
+		if (AEInputCheckReleased(AEVK_LBUTTON)) {
+
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				towerpause = !towerpause;
+			}
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				gGameStateNext = GS_MAINMENU;
+			}
+		}
+	}
 	if (towerpause == 1) {
 
 		// Normalising mouse to 0,0 at the center

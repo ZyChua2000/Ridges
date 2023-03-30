@@ -406,6 +406,21 @@ void GS_Maze_Update(void) {
 		mazepause = !mazepause;
 		mazelevelstart = 0;
 	}
+	if (mazepause == 0) {
+		if (AEInputCheckReleased(AEVK_LBUTTON)) {
+
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				mazepause = !mazepause;
+			}
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				gGameStateNext = GS_MAINMENU;
+			}
+		}
+	}
 	if (mazepause == 1) {
 
 		// Normalising mouse to 0,0 at the center
@@ -787,6 +802,31 @@ void GS_Maze_Draw(void) {
 		else
 		{
 
+			staticObjInst* pInst = PauseObj;
+			// Tell the engine to get ready to draw something with texture. 
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+
+			pInst->transform.m[0][2] = camX * SPRITE_SCALE;
+			pInst->transform.m[1][2] = camY * SPRITE_SCALE;
+			pInst->transform.m[0][0] = 1600;
+			pInst->transform.m[1][1] = 900;
+
+			// Set the current object instance's transform matrix using "AEGfxSetTransform"
+			AEGfxSetTransform(pInst->transform.m);
+			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
+			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+		}
+	}
+
+		else
+		{
+
 			// Tell the engine to get ready to draw something with texture. 
 			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
@@ -1075,7 +1115,7 @@ void GS_Maze_Draw(void) {
 				}
 			}
 		}
-	}
+	
 }
 
 /******************************************************************************/

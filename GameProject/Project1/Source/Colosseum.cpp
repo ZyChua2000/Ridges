@@ -361,6 +361,25 @@ void GS_Colosseum_Update(void) {
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		pause = !pause;
 		levelstart = 0;
+
+
+		
+	}
+
+	if (pause == 0) {
+		if (AEInputCheckReleased(AEVK_LBUTTON)) {
+
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				pause = !pause;
+			}
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				gGameStateNext = GS_MAINMENU;
+			}
+		}
 	}
 		if (pause == 1) {
 
