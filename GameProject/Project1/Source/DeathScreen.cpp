@@ -156,6 +156,11 @@ void GS_DeathScreen_Update(void) {
 		gGameStateNext = GS_COLOSSEUM;
 	}
 
+	if (AEInputCheckTriggered(AEVK_H)) {
+		gGameStateNext = GS_HELP;
+		return;
+	}
+
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float(mX);
