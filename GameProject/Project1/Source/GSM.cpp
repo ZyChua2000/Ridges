@@ -126,14 +126,6 @@ void GameStateMgrUpdate()
 		GameStateDraw = GS_SplashScreen_Draw;
 		GameStateFree = GS_SplashScreen_Free;
 		GameStateUnload = GS_SplashScreen_Unload;
-
-	case GS_HELP:
-		GameStateLoad = GS_HelpScreen_Load;
-		GameStateInit = GS_HelpScreen_Init;
-		GameStateUpdate = GS_HelpScreen_Update;
-		GameStateDraw = GS_HelpScreen_Draw;
-		GameStateFree = GS_HelpScreen_Free;
-		GameStateUnload = GS_HelpScreen_Unload;
 		break;
 	default:
 		AE_FATAL_ERROR("invalid state!!");
