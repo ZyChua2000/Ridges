@@ -402,6 +402,10 @@ void GS_MainMenu_Unload(void) {
 	for (int i = 0; i < 6; i++) {
 		AEGfxTextureUnload(animationBG[i]);
 	}
+
+//	AEGfxMeshFree(CreditMesh);
+	AEGfxTextureUnload(Credit_Img);
+
 }
 
 // ---------------------------------------------------------------------------
