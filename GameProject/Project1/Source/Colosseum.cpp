@@ -251,7 +251,7 @@ void GS_Colosseum_Load(void) {
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
 	PauseObj->pObject = sGameObjList + sGameObjNum++;
 	PauseObj->pObject->pMesh = Slash->pMesh;
-	PauseObj->pObject->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
+	PauseObj->pObject->pTexture = AEGfxTextureLoad("Assets/PauseScreen.png");
 	PauseObj->pObject->type = TYPE_PAUSE;
 	PauseObj->pObject->refMesh = true;
 	PauseObj->pObject->refTexture = true;
@@ -261,7 +261,7 @@ void GS_Colosseum_Load(void) {
 	StartScreenbj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
 	StartScreenbj->pObject = sGameObjList + sGameObjNum++;
 	StartScreenbj->pObject->pMesh = Slash->pMesh;
-	StartScreenbj->pObject->pTexture = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
+	StartScreenbj->pObject->pTexture = AEGfxTextureLoad("Assets/ColloStart.png");
 	StartScreenbj->pObject->type = TYPE_PAUSE;
 	StartScreenbj->pObject->refMesh = true;
 	StartScreenbj->pObject->refTexture = true;
