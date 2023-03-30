@@ -15,6 +15,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <fstream>
 #include <iostream>
 #include <time.h>
+#include <vector>
 
 
 /*!
@@ -68,6 +69,8 @@ static AEVec2* Gates;
 static int gatesNum;
 static int levNum;
 static int chestNum;
+std::vector<int> stageList;
+static int levelclearedNum;
 
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
@@ -356,6 +359,20 @@ void GS_BossLevel_Init(void) {
 	ParticleSystemInit();
 
 	playerHitTime = 0;
+	stageList.clear();
+	levelclearedNum = 0;
+	if (levelCleared[0] == true) {
+		stageList.push_back(0);
+		levelclearedNum++;
+	}
+	if (levelCleared[1] == true) {
+		stageList.push_back(1);
+		levelclearedNum++;
+	}
+	if (levelCleared[2] == true) {
+		stageList.push_back(2);
+		levelclearedNum++;
+	}
 }
 
 
@@ -1007,21 +1024,23 @@ void BossStateMachine(GameObjInst* pInst)
 				break;
 			}
 
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0) {
-				//CHALLENGE ATTACK
-				// random between 0, 1 and 2
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = rand() % 3;
-				if (random == 0) {
-					pInst->stateFlag = STATE_MAZE_DARKEN;
+			if (levelclearedNum != 0) {
+				if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0) {
+					//CHALLENGE ATTACK
+					// random between 0, 1 and 2
+					pInst->innerState = INNER_STATE_ON_EXIT;
+					int random = stageList[rand() % levelclearedNum];
+					if (random == 0) {
+						pInst->stateFlag = STATE_MAZE_DARKEN;
+					}
+					else if (random == 1) {
+						pInst->stateFlag = STATE_SPAWN_BULLETS;
+					}
+					else if (random == 2) {
+						pInst->stateFlag = STATE_SPAWN_ENEMIES;
+					}
+					break;
 				}
-				else if (random == 1) {
-					pInst->stateFlag = STATE_SPAWN_BULLETS;
-				}
-				else if (random == 2) {
-					pInst->stateFlag = STATE_SPAWN_ENEMIES;
-				}
-				break;
 			}
 
 			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH*10) == 0) {
