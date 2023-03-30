@@ -19,6 +19,8 @@
     <ClCompile Include="Source\World.cpp" />
     <ClCompile Include="Source\Player.cpp" />
     <ClCompile Include="Source\mapFunctions.cpp" />
+    <ClCompile Include="Source\HelpScreen.cpp" />
+    <ClCompile Include="Source\SplashScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\AEVecOverloads.h" />
@@ -40,5 +42,7 @@
     <ClInclude Include="Header\World.h" />
     <ClInclude Include="Header\mapFunctions.h" />
     <ClInclude Include="Header\staticObjs.h" />
+    <ClInclude Include="Header\HelpScreen.h" />
+    <ClInclude Include="Header\SplashScreen.h" />
   </ItemGroup>
 </Project>

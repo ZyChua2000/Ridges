@@ -178,7 +178,11 @@ void GS_MainMenu_Update(void) {
 		gGameStateNext = GS_BOSSLEVEL;
 		return;
 	}
-
+	if (AEInputCheckTriggered(AEVK_H)) {
+		AEAudioStopGroup(Group1);
+		gGameStateNext = GS_HELP;
+		return;
+	}
 
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
