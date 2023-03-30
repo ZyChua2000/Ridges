@@ -69,13 +69,17 @@ static GameObj hpbar;
 static AEGfxTexture* spriteSheet;
 static AEGfxTexture* slashText;
 static AEGfxTexture* refText;
+static AEGfxTexture* darkRoom;
 static AEGfxVertexList* pMesh1;
 static AEGfxVertexList* pMesh2;
+static AEGfxVertexList* pMesh3;
 
 static AEVec2* Gates;
 static int gatesNum;
 static int levNum;
 static int chestNum;
+static int dark;
+static float darkTimer;
 
 static int levelclearedNum;
 
@@ -194,6 +198,18 @@ void GS_BossLevel_Load(void) {
 		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
 	hpbar.pMesh = AEGfxMeshEnd();
 
+	AEGfxMeshStart();
+
+	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
+		-80.0f, -45.f, 0xFFFFFF00, 0.0f, 1.0f,
+		80.0f, 45.f, 0xFF00FFFF, 1.0f, 0.0f);
+
+	AEGfxTriAdd(-80.0f, -45.f, 0xFFFFFFFF, 0.0f, 1.0f,
+		-80.0f, 45.f, 0xFFFFFFFF, 0.0f, 0.0f,
+		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
+	pMesh3 = AEGfxMeshEnd();
+	darkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
+
 	ParticleSystemLoad();
 }
 
@@ -205,6 +221,9 @@ void GS_BossLevel_Load(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Init(void) {
+	dark = 1;
+	darkTimer = 0;
+
 	AEVec2* pos = nullptr;
 
 	// =====================================
@@ -298,6 +317,15 @@ void GS_BossLevel_Init(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Update(void) {
+	if (dark == 0) {
+		darkTimer += g_dt;
+	}
+
+	if (darkTimer > 3.0f) {
+		darkTimer = 0;
+		dark = 1;
+	}
+
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -814,6 +842,30 @@ void GS_BossLevel_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
+	if (dark == 0) {
+		AEGfxSetTransparency(1.0f);
+		AEGfxTextureSet(darkRoom, 0, 0);
+		// Create a scale matrix that scales by 100 x and y
+		AEMtx33 lscale = { 0 };
+		AEMtx33Scale(&lscale, 20, 20);
+		// Create a rotation matrix that rotates by 45 degrees
+		AEMtx33 lrotate = { 0, };
+
+		AEMtx33Rot(&lrotate, 0);
+
+		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33Trans(&ltranslate, Player->posCurr.x * SPRITE_SCALE, Player->posCurr.y* SPRITE_SCALE);
+		// Concat the matrices (TRS) 
+		AEMtx33 ltransform = { 0 };
+		AEMtx33Concat(&ltransform, &lrotate, &lscale);
+		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+		// Choose the transform to use 
+		AEGfxSetTransform(ltransform.m);
+		// Actually drawing the mesh
+		AEGfxMeshDraw(pMesh3, AE_GFX_MDM_TRIANGLES);
+	}
+
 	//drawing of health bar
 	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 	AEGfxSetTintColor(0.7f, 0.7f, 0.7f, 0.0f);
@@ -930,6 +982,7 @@ void GS_BossLevel_Unload(void) {
 
 	AEGfxMeshFree(pMesh1);
 	AEGfxMeshFree(pMesh2);
+	AEGfxMeshFree(hpbar.pMesh);
 	AEGfxTextureUnload(spriteSheet);
 	AEGfxTextureUnload(slashText);
 	AEGfxTextureUnload(refText);
@@ -946,8 +999,6 @@ function definition for boss finite state machine
 *******************************************************************/
 void BossStateMachine(GameObjInst* pInst)
 {
-	AEVec2 velDown = { 0,1 };
-	AEVec2 velRight = { 0,1 };
 	AEVec2 enemyPos1{ 7, -6.5 };
 	AEVec2 enemyPos2{ 17, -13.5 };
 	static AEVec2 playerPosition{ 0,0 };
@@ -977,7 +1028,7 @@ void BossStateMachine(GameObjInst* pInst)
 				//CHALLENGE ATTACK
 				// random between 0, 1 and 2
 				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = rand() % 3;
+				int random = 0;
 				if (random == 0) {
 					pInst->stateFlag = STATE_MAZE_DARKEN;
 				}
@@ -1117,23 +1168,27 @@ void BossStateMachine(GameObjInst* pInst)
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 3" << std::endl;
 			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
+			pInst->innerState = INNER_STATE_ON_UPDATE;
 			break;
 		case INNER_STATE_ON_UPDATE:
 
 			std::cout << "updating state 3" << std::endl;
 			//Spawn enemies
 			// Stay still for awhile
+
+
 			pInst->timeCD += g_dt;
+
 			if (pInst->timeCD > 2.0f) {
 				pInst->timeCD = 0;
-				gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos1, nullptr, 0);
-				gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos2, nullptr, 0);
+				GameObjInst* first = gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos1, nullptr, 0);
+				GameObjInst* second = gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos2, nullptr, 0);
+				first->health = 3;
+				first->pathfindtime = 0.25f;
+				first->pathtimer = first->pathfindtime;
+				second->health = 3;
+				second->pathfindtime = 0.25f;
+				second->pathtimer = second->pathfindtime;
 				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
@@ -1151,25 +1206,44 @@ void BossStateMachine(GameObjInst* pInst)
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 4" << std::endl;
 			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
+			pInst->innerState = INNER_STATE_ON_UPDATE;
 			break;
 		case INNER_STATE_ON_UPDATE:
-
+			pInst->timeCD += g_dt;
 			std::cout << "updating state 4" << std::endl;
 			//Spawn Bullets
-
-			// Stay still for awhile
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 2.0f) {
+			AEVec2 dirVec = Player->posCurr - Boss->posCurr;
+			AEVec2 normDir;
+			AEVec2Normalize(&normDir, &dirVec);
+			switch (stage) {
+			case 0:
+				gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
+				stage = 1;
+				break;
+			case 1:
+				if (pInst->timeCD == 0.5f) {
+				gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
+				stage = 2;
 				pInst->timeCD = 0;
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
+				}
+				break;
+			case 2:
+				if (pInst->timeCD == 0.5f) {
+					gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
+					stage = 3;
+					pInst->timeCD = 0;
+				}
+				break;
+			case 3:
+				if (pInst->timeCD > 2.0f) {
+					pInst->timeCD = 0;
+					pInst->stateFlag = STATE_PATROL;
+					pInst->innerState = INNER_STATE_ON_EXIT;
+					stage = 0;
+				}
+				break;
 			}
+
 			break;
 		case INNER_STATE_ON_EXIT:
 			std::cout << "exiting state 4" << std::endl;
@@ -1183,22 +1257,16 @@ void BossStateMachine(GameObjInst* pInst)
 		case INNER_STATE_ON_ENTER:
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 5" << std::endl;
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
+			pInst->innerState = INNER_STATE_ON_UPDATE;
 
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
 			break;
 		case INNER_STATE_ON_UPDATE:
 
 			std::cout << "updating state 5" << std::endl;
-			//Spawn darken
-
+			dark = 0;
 			// Stay still for awhile
 			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 2.0f) {
+			if (pInst->timeCD > 1.0f) {
 				pInst->timeCD = 0;
 				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;

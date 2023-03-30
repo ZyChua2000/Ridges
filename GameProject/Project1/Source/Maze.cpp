@@ -786,7 +786,7 @@ void GS_Maze_Draw(void) {
 		AEGfxTextureSet(DarkRoom, 0, 0);
 		// Create a scale matrix that scales by 100 x and y
 		AEMtx33 lscale = { 0 };
-		AEMtx33Scale(&lscale, 10, 10);
+		AEMtx33Scale(&lscale, 20, 20);
 		// Create a rotation matrix that rotates by 45 degrees
 		AEMtx33 lrotate = { 0, };
 
