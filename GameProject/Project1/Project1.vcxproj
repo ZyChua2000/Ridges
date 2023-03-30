@@ -156,7 +156,6 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="HelpScreen.cpp" />
     <ClCompile Include="Source\AEVecOverloads.cpp" />
     <ClCompile Include="Source\BossLevel.cpp" />
     <ClCompile Include="Source\collision.cpp" />
@@ -166,6 +165,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClCompile Include="Source\GameObjs.cpp" />
     <ClCompile Include="Source\Globals.cpp" />
     <ClCompile Include="Source\GSM.cpp" />
+    <ClCompile Include="Source\HelpScreen.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Mainmenu.cpp" />
     <ClCompile Include="Source\mapFunctions.cpp" />
@@ -187,6 +187,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClInclude Include="Header\GameStateList.h" />
     <ClInclude Include="Header\Globals.h" />
     <ClInclude Include="Header\GSM.h" />
+    <ClInclude Include="Header\HelpScreen.h" />
     <ClInclude Include="Header\Main.h" />
     <ClInclude Include="Header\Mainmenu.h" />
     <ClInclude Include="Header\mapFunctions.h" />
@@ -196,7 +197,6 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClInclude Include="Header\Tower.h" />
     <ClInclude Include="Header\Utilities.h" />
     <ClInclude Include="Header\World.h" />
-    <ClInclude Include="HelpScreen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -150,6 +150,7 @@ void GS_HelpScreen_Update(void) {
 	if (cycle >= 3)
 	{
 		cycle = 0;
+		gGameStateNext=gGameStatePrev;
 	}
 	mBack->pObject->pTexture = CycleBG[cycle];
 
