@@ -16,11 +16,30 @@ struct Node
 {
 	bool b_Obstacle = false;
 	bool b_Closed = false;
-	float f_hcost{};
-	float f_fcost{};
-	AEVec2 ae_NodePos{};
+	float f_hcost;
+	float f_fcost;
+	AEVec2 ae_NodePos;
 	std::vector<Node*> v_Neighbours;
 	Node* parent;
+};
+
+
+enum STATE // MOVESETS FOR BOSS
+{
+	STATE_PATROL = 0,//IDLE STATE OR NO STATE
+	STATE_BASIC, //STATE FOR BASIC ATTACK
+	STATE_AOE,  //STATE FOR AOE ATTACK
+	STATE_SPAWN_ENEMIES, // STATE TO SPAWN ENEMIES
+	STATE_SPAWN_BULLETS, // STATE TO SPAWN BULLETS
+	STATE_MAZE_DARKEN,	// STATE TO DARKEN THE WHOLE LEVEL 
+
+};
+
+enum INNER_STATE // INNER STATE FOR BOSS
+{
+	INNER_STATE_ON_ENTER,
+	INNER_STATE_ON_UPDATE,
+	INNER_STATE_ON_EXIT
 };
 
 /******************************************************************

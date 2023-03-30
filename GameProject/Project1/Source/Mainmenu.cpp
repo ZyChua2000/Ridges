@@ -151,30 +151,23 @@ void GS_MainMenu_Update(void) {
 	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
 
 	
-		
-	
-	
 	if (AEInputCheckTriggered(AEVK_3)) {
-		AEAudioStopGroup(Group1);
 		gGameStateNext = GS_MAZE;
 		return;
 	}
 
 	if (AEInputCheckTriggered(AEVK_4)) {
-		AEAudioStopGroup(Group1);
 		gGameStateNext = GS_COLOSSEUM;
 		return;
 	}
 
 	if (AEInputCheckTriggered(AEVK_5)) {
-		AEAudioStopGroup(Group1);
 		gGameStateNext = GS_TOWER;
 		return;
 	}
 
 
 	if (AEInputCheckTriggered(AEVK_6)) {
-		AEAudioStopGroup(Group1);
 		gGameStateNext = GS_BOSSLEVEL;
 		return;
 	}

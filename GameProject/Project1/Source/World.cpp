@@ -94,11 +94,9 @@ static int chestNum;
 
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
-static float playerHitTime;
 
 static staticObjInst* RefBox;
 
- 
 
 
 // ---------------------------------------------------------------------------
@@ -289,15 +287,6 @@ void GS_World_Load(void) {
 	Bullet->refTexture = true;
 
 	ParticleSystemLoad();
-
-	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
-	Damage = AEAudioCreateGroup();
-	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
-	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
-	InteractGroup = AEAudioCreateGroup();
-	
-	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
-	MovementGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -336,7 +325,6 @@ void GS_World_Init(void) {
 	if (loadState == false) {
 		//Initialise Player
 		AEVec2 PlayerPos = { 12,-8 };
-		//AEVec2 PlayerPos = { 106,-22 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 		Backpack.Potion = 0;
@@ -463,9 +451,7 @@ void GS_World_Init(void) {
 		binaryMap[110][28] = 1;
 	}
 	ParticleSystemInit();
-	playerHitTime = 0;
 
-	
 }
 /******************************************************************************/
 /*!
@@ -477,29 +463,22 @@ void GS_World_Init(void) {
 
 void GS_World_Update(void) {
 
-	
-	
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
 	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
 	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-
-
 	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	
+	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
-
-	Player->playerDamaged(playerHitTime);
-
 
 
 	// =====================================
@@ -519,14 +498,13 @@ void GS_World_Update(void) {
 	}
 
 	Player->playerStand();
-	
+
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
 	}
 	else {
 		Player->TextureMap = TEXTURE_PLAYER;
-		AEAudioStopGroup(MovementGroup);
 	}
 	
 
@@ -556,7 +534,6 @@ void GS_World_Update(void) {
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
-				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 
@@ -566,7 +543,6 @@ void GS_World_Update(void) {
 			//Interaction with Chest
 			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
 			{
-				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 				//change texture of chest
 				Chest[i]->chest2Potion();
 			}
@@ -581,7 +557,6 @@ void GS_World_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 		SLASH_ACTIVATE = true;
-		
 		slashCD = SLASH_COOLDOWN_t;
 		walkCD = WALK_COOLDOWN_t;
 		Player->playerStand();
@@ -694,6 +669,16 @@ void GS_World_Update(void) {
 		}
 	}
 
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -713,9 +698,7 @@ void GS_World_Update(void) {
 			{
 				if (Player->health > 0)
 				{
-					
 					Player->deducthealth();
-					
 
 					//Hit cooldown
 					playerHitTime = DAMAGE_COODLDOWN_t;
@@ -745,7 +728,6 @@ void GS_World_Update(void) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				Player->deducthealth();
-				
 				gameObjInstDestroy(pInst);
 			}
 			if (snapCollision(*pInst, flag)) {
@@ -756,8 +738,7 @@ void GS_World_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
-		
-		
+
 		switch (Player->health)
 		{
 		case 0:
@@ -770,7 +751,6 @@ void GS_World_Update(void) {
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
 		}
 	}
-	
 
 	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
 
@@ -848,20 +828,6 @@ void GS_World_Update(void) {
 		utilities::unlockGate(gatesNum/2-1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 	}
 
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
-
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// =====================================
 	// calculate the matrix for all objects
@@ -891,8 +857,14 @@ void GS_World_Update(void) {
 	}
 		
 	// Camera position and UI items
+
+
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
+	
+	
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+
 
 	Player->dustParticles();
 
@@ -912,6 +884,7 @@ void GS_World_Update(void) {
 	
 
 	ParticleSystemUpdate();
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
 
 }
 
@@ -1030,14 +1003,12 @@ void GS_World_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-
-		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
-	
+
 
 	if (state == 1)
 	{

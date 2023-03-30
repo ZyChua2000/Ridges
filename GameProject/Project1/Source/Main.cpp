@@ -77,9 +77,8 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 
 			AEInputUpdate();
 
-			GameStateUpdate();
+			GameStateUpdate(); 
 			
-
 			GameStateDraw();
 
 			AESysFrameEnd();

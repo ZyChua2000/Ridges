@@ -13,25 +13,6 @@ void staticObjInst::playerSlashUpdate() {
 //player walk
 void GameObjInst::playerWalk(float walkCD)
 {
-	AEVec2 velNull = { 0,0 };
-	//Audio
-	if (AEInputCheckTriggered(AEVK_W) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)){
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
-	}
-
-	if (AEInputCheckTriggered(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
-	}
-
-	if (AEInputCheckTriggered(AEVK_S) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_D)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
-	}
-
-	if (AEInputCheckTriggered(AEVK_D) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_W)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
-	}
-
-	//Velocity
 	if (walkCD == 0) {
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 		{
@@ -44,7 +25,6 @@ void GameObjInst::playerWalk(float walkCD)
 			velCurr.y = -1;// this is direction , negative y direction
 			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
 			velCurr.y *= (g_dt * PLAYER_SPEED);
-			
 		}
 		if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 		{
@@ -52,7 +32,6 @@ void GameObjInst::playerWalk(float walkCD)
 			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
 			velCurr.x *= (g_dt * PLAYER_SPEED);
 			scale = -1;
-			
 		}
 		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 		{
@@ -60,10 +39,8 @@ void GameObjInst::playerWalk(float walkCD)
 			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
 			velCurr.x *= (g_dt * PLAYER_SPEED);
 			scale = 1;
-			
 		}
 
-		//Animation
 		if ((int)(timetracker * 4) % 2 == 1) {
 			TextureMap.x = 3;
 			TextureMap.y = 12;
@@ -82,7 +59,6 @@ void GameObjInst::playerSlashCreate(float angle) {
 	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
 	slashObj->timetracker = 0;
 	slashObj->Alpha = 0;
-	AEAudioPlay(HeroSlash, Damage, 1, 1, 0);
 }
 
 void GameObjInst::playerStand() {
@@ -93,8 +69,8 @@ void GameObjInst::playerStand() {
 void GameObjInst::playerKnockback(GameObjInst mob) {
 	AEVec2 nil{ 0,0 };
 	if (velCurr == nil) //If standing still
-		posCurr += mob.velCurr/2; //Pushback by enemy's velocity
-	else posCurr -= velCurr / 2; // If moving, pushback by player's velocity(walking into mob)
+		posCurr += mob.velCurr / 4; //Pushback by enemy's velocity
+	else posCurr -= velCurr / 4; // If moving, pushback by player's velocity(walking into mob)
 }
 
 void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
@@ -111,25 +87,5 @@ void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
 			break;
 		}
 		backPack.Potion--;
-	}
-}
-
-void GameObjInst::playerDamaged(float damageCD) {
-	if (damageCD == 0) {
-		damagetint = { 1,1,1 };
-		damagebuffer = 0;
-	}
-	else {
-		damagebuffer += g_dt;
-		if (damagetint.blue == 0 && damagebuffer > 0.1f) {
-			damagetint.blue = 1;
-			damagetint.green = 1;
-			damagebuffer = 0;
-		}
-		else if (damagetint.blue == 1 && damagebuffer > 0.1f){
-			damagetint.blue = 0;
-			damagetint.green = 0;
-			damagebuffer = 0;
-		}
 	}
 }

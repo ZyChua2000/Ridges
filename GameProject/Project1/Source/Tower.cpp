@@ -66,7 +66,6 @@ static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary
 
 static float slashCD = 0;
 static float walkCD = 0;
-static float playerHitTime;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
@@ -282,8 +281,7 @@ void GS_Tower_Load(void) {
 	Bullet->pTexture = Character->pTexture;
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
-	Bullet->refTexture = true; 
-	
+	Bullet->refTexture = true;
 }
 
 /******************************************************************************/
@@ -327,7 +325,10 @@ void GS_Tower_Init(void) {
 		ifs >> Backpack.Potion; //set to player number of current key
 		ifs.close();
 
-
+		//Initialise player health.
+		for (int i = 0; i < 3; i++) {
+			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+		}
 
 		//Initialise Levers in level
 		utilities::loadObjs(pos, levNum, "towerLevers.txt");
@@ -429,14 +430,8 @@ void GS_Tower_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	}
 
 	ParticleSystemInit();
-
-	playerHitTime = 0;
 
 }
 
@@ -462,11 +457,11 @@ void GS_Tower_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
+	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
-	Player->playerDamaged(playerHitTime);
 
 
 	// =====================================
@@ -487,10 +482,6 @@ void GS_Tower_Update(void) {
 	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
-	}
-	else {
-		Player->TextureMap = TEXTURE_PLAYER;
-		AEAudioStopGroup(MovementGroup);
 	}
 
 	//reducing heath for debugging
@@ -519,10 +510,9 @@ void GS_Tower_Update(void) {
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
-				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
-		
+
 
 		for (int i = 0; i < chestNum; i++)
 		{
@@ -531,7 +521,6 @@ void GS_Tower_Update(void) {
 			{
 				//change texture of chest
 				Chest[i]->chest2Potion();
-				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
 	}
@@ -654,11 +643,20 @@ void GS_Tower_Update(void) {
 
 			if (pInst->pObject->type == TYPE_BULLET) {
 				pInst->velToPos(BULLET_SPEED);
-				
 			}
 		}
 	}
 
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -678,7 +676,6 @@ void GS_Tower_Update(void) {
 			{
 				if (Player->health > 0)
 				{
-					
 					Player->deducthealth();
 
 					//Hit cooldown
@@ -708,7 +705,6 @@ void GS_Tower_Update(void) {
 		if (pInst->pObject->type == TYPE_BULLET) {
 			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
-				
 				Player->deducthealth();
 				gameObjInstDestroy(pInst);
 			}
@@ -720,7 +716,6 @@ void GS_Tower_Update(void) {
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
-		
 
 		switch (Player->health)
 		{
@@ -817,20 +812,6 @@ void GS_Tower_Update(void) {
 	}
 
 
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -865,13 +846,13 @@ void GS_Tower_Update(void) {
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
 
-	
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	//BUG NOT WORKING
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 
 }
 
@@ -989,7 +970,6 @@ void GS_Tower_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"

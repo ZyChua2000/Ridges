@@ -78,7 +78,6 @@ static staticObjInst* MenuObj[3];										// Pointer to each enemy object insta
 static staticObjInst* NumObj[3];
 static Inventory Backpack;
 static int chestnum;
-static float playerHitTime = 0;
 
 
 float Timer = 0.f;
@@ -283,6 +282,10 @@ void GS_Colosseum_Init(void) {
 
 	Player->damage = 1;
 
+	//Initialise player health.
+	for (int i = 0; i < 3; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	}
 
 	//Init pathfinding nodes
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
@@ -303,13 +306,7 @@ void GS_Colosseum_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
 
-	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	}
-
 	ParticleSystemInit();
-	playerHitTime = 0;
 
 }
 
@@ -329,13 +326,6 @@ void GS_Colosseum_Update(void) {
 		pause = !pause;
 	}
 		if (pause == 1) {
-
-	
-	//Time-related variables
-	utilities::decreaseTime(slashCD);
-	utilities::decreaseTime(walkCD);
-	utilities::decreaseTime(playerHitTime);
-	Player->playerDamaged(playerHitTime);
 
 
 			// Normalising mouse to 0,0 at the center
@@ -357,14 +347,6 @@ void GS_Colosseum_Update(void) {
 
 
 
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
-		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
-		Player->playerWalk(walkCD);
-	}
-	else {
-		Player->TextureMap = TEXTURE_PLAYER;
-		AEAudioStopGroup(MovementGroup);
-	}
 
 			// =====================================
 			// User Input
@@ -389,228 +371,17 @@ void GS_Colosseum_Update(void) {
 			//reducing heath for debugging
 			if (AEInputCheckTriggered(AEVK_MINUS))
 			{
-				//change texture of chest
-				Chest[i]->chest2Potion();
-				spawned = false;
-				waves = 1;
-				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
-			}
-		}
-	}
-
-
-	if (CURRENT_MOBS == 0) {
-		switch (waves) {
-		case 1:
-			waves = 2;
-			break;
-		case 2:
-			waves = 3;
-			break;
-		case 3:
-			//move to next level
-			utilities::completeLevel(colosseum, Player, Backpack);
-			waves = 4;
-			break;
-		default:
-			break;
-		}
-		spawned = false;
-	}
-
-
-
-	if (waves == 1 && !spawned) {
-		//Initialise enemy in level
-		AEVec2* pos = nullptr;
-		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave1.txt");
-		for (int i = 0; i < CURRENT_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
-		}
-		utilities::unloadObjs(pos);
-		spawned = true;
-		//	waves = 15;
-	}
-
-	if (waves == 2 && !spawned) {
-		//Initialise enemy in level
-		AEVec2* pos = nullptr;
-		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave2.txt");
-		for (int i = 0; i < CURRENT_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
-		}
-		utilities::unloadObjs(pos);
-		spawned = true;
-		//	waves = 17;
-	}
-
-	if (waves == 3 && !spawned) {
-		//Initialise enemy in level
-		AEVec2* pos = nullptr;
-		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave3.txt");
-		for (int i = 0; i < CURRENT_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
-		}
-		utilities::unloadObjs(pos);
-		spawned = true;
-		//	waves = 99;
-	}
-
-	//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		Player->drinkPotion(Health, Backpack);
-	}
-
-	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-		SLASH_ACTIVATE = true;
-		slashCD = SLASH_COOLDOWN_t;
-		walkCD = WALK_COOLDOWN_t;
-		Player->playerStand();
-	}
-
-	if (SLASH_ACTIVATE == true) {
-		Player->playerSlashCreate(angleMousetoPlayer);
-		SLASH_ACTIVATE = false;
-	}
-
-	if (mapeditor == 1) {
-		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-	}
-	else {
-		mapEditorObj->scale = 0;
-	}
-
-	//Map editor printing
-	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
-
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
-	}
-
-	if (AEInputCheckTriggered(AEVK_M)) {
-		gGameStateNext = GS_MAINMENU;
-	}
-
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-		{
-			continue;
-		}
-		//Interaction with items
-		if (Player->calculateDistance(*pInst) < 0.5f)
-		{
-			Backpack.itemPickUp(pInst);
-		}
-	}
-
-
-	// ======================================================
-	// update physics of all active game object instances
-	//  -- Get the AABB bounding rectangle of every active instance:
-	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-
-
-		// Pathfinding for Enemy AI
-	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
-	{
-		GameObjInst* pEnemy = sGameObjInstList + j;
-
-
-		// skip non-active object
-		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
-			continue;
-
-		if (Player->calculateDistance(*pEnemy) > 10)
-			continue;
-
-		pEnemy->mobsPathFind(*Player);
-	}
-
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-		pInst->calculateBB();
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-		if (pInst->pObject->type != TYPE_SLASH) {
-			continue;
-		}
-		pInst->calculateBB();
-	}
-
-
-	// ======================================================
-	//	-- Positions of the instances are updated here with the already computed velocity (above)col
-	// ======================================================
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
-		{
-			if (pInst->pObject->type == TYPE_CHARACTER) {
-				pInst->velToPos(PLAYER_SPEED);
-			}
-			//invert movement for binary map
-
-			if (pInst->pObject->type == TYPE_ENEMY) {
-				pInst->velToPos(NPC_SPEED);
-			}
-		}
-	}
-
-
-	// ====================
-	// check for collision
-	// ====================
-
-	//if player receive damage from collision or from mob, player decrease health
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-
-		if (pInst->pObject->type == TYPE_ENEMY) {
-
-			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-				&& playerHitTime == 0)
-			{
-				if (Player->health > 0)
+				Player->deducthealth();
+				switch (Player->health)
 				{
-					
-					Player->deducthealth();
-
-					//Hit cooldown
-					playerHitTime = DAMAGE_COODLDOWN_t;
-
-					//knockback
-					Player->playerKnockback(*pInst);
-
+				case 0:
+					Health[2]->TextureMap = TEXTURE_DEADHEART;
+					break;
+				case 1:
+					Health[1]->TextureMap = TEXTURE_DEADHEART;
+					break;
+				case 2:
+					Health[0]->TextureMap = TEXTURE_DEADHEART;
 				}
 			}
 
@@ -753,10 +524,11 @@ void GS_Colosseum_Update(void) {
 			}
 
 
-		if (Player->health == 0) {
-			gGameStateNext = GS_DEATHSCREEN;
-		}
-		
+			// ======================================================
+			// update physics of all active game object instances
+			//  -- Get the AABB bounding rectangle of every active instance:
+			//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+			//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 
 
 				// Pathfinding for Enemy AI
@@ -984,65 +756,8 @@ void GS_Colosseum_Update(void) {
 			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 
 		}
+	
 
-		if (pInst->pObject->type == TYPE_CHARACTER) {
-			pInst->timetracker += g_dt;
-		}
-	}
-
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
-	// =====================================
-	// calculate the matrix for all objects
-	// =====================================
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	{
-		GameObjInst* pInst = sGameObjInstList + i;
-
-		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		pInst->calculateTransMatrix();
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-
-
-		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		pInst->calculateTransMatrix();
-	}
-
-	// Camera position and UI items
-
-
-	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
-	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
-
-
-
-	//BUG NOT WORKING
-	//Player->dustParticles();
-
-	ParticleSystemUpdate();
 }
 
 /******************************************************************************/
@@ -1159,8 +874,6 @@ void GS_Colosseum_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-
-		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"

@@ -52,7 +52,6 @@ static float walkCD = 0;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static GameObjInst* Boss;
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
@@ -71,7 +70,6 @@ static int chestNum;
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
 
-static float playerHitTime;
 static staticObjInst* RefBox;
 
 // ---------------------------------------------------------------------------
@@ -200,6 +198,7 @@ void GS_BossLevel_Load(void) {
 	Enemy->refMesh = true;
 	Enemy->refTexture = true;
 
+
 	GameObj* Chest;
 	Chest = sGameObjList + sGameObjNum++;
 	Chest->pMesh = Character->pMesh;
@@ -232,6 +231,7 @@ void GS_BossLevel_Load(void) {
 	Mask->refMesh = true;
 	Mask->refTexture = true;
 
+
 	GameObj* Tower;
 	Tower = sGameObjList + sGameObjNum++;
 	Tower->pMesh = Character->pMesh;
@@ -247,14 +247,6 @@ void GS_BossLevel_Load(void) {
 	Bullet->type = TYPE_BULLET;
 	Bullet->refMesh = true;
 	Bullet->refTexture = true;
-
-	GameObj* Boss;
-	Boss = sGameObjList + 18;
-	Boss->pMesh = Character->pMesh;
-	Boss->pTexture = Character->pTexture;
-	Boss->type = TYPE_BOSS;
-	Boss->refMesh = true;
-	Boss->refTexture = true;
 
 	ParticleSystemLoad();
 }
@@ -305,10 +297,6 @@ void GS_BossLevel_Init(void) {
 	//Init pathfinding nodes
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
-	//init Boss
-	AEVec2 BossPos = { 17,-10 }; // TXT
-	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
-
 	// Initialise camera pos
 	camX = 10, camY = -10;
 
@@ -326,8 +314,6 @@ void GS_BossLevel_Init(void) {
 
 
 	ParticleSystemInit();
-
-	playerHitTime = 0;
 }
 
 
@@ -350,12 +336,12 @@ void GS_BossLevel_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	BossStateMachine(Boss);
+	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
-	Player->playerDamaged(playerHitTime);
+
 
 	// =====================================
 	// User Input
@@ -501,6 +487,17 @@ void GS_BossLevel_Update(void) {
 		}
 	}
 
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
 	// ====================
 	// check for collision
 	// ====================
@@ -642,20 +639,6 @@ void GS_BossLevel_Update(void) {
 		}
 	}
 
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
 	// =====================================
 	// calculate the matrix for all objects
 	// =====================================
@@ -689,10 +672,14 @@ void GS_BossLevel_Update(void) {
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
+
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
+
+
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 }
 
 /******************************************************************************/
@@ -767,7 +754,6 @@ void GS_BossLevel_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
@@ -803,7 +789,6 @@ void GS_BossLevel_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
@@ -923,251 +908,6 @@ void GS_BossLevel_Unload(void) {
 
 
 	ParticleSystemUnload();
-}
-
-/******************************************************************
-function definition for boss finite state machine
-*******************************************************************/
-void BossStateMachine(GameObjInst* pInst)
-{
-	AEVec2 velDown = { 0,1 };
-	AEVec2 velRight = { 0,1 };
-	static AEVec2 playerPosition{ 0,0 };
-	//states declared at GameObjs.h
-	switch (pInst->state)
-	{
-	case STATE_PATROL:
-		switch (pInst->innerState) { 
-		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF PATROL
-			std::cout << "entering state 0 " << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			
-			break;
-		case INNER_STATE_ON_UPDATE: // INNER STATE UPDATE OF PATROL
-			std::cout << "updating state 0" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->mobsPathFind(*Player);
-			if (pInst->calculateDistance(*Player) < 2.0f) { // If found player, attack player
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				pInst->stateFlag = STATE_BASIC;
-				break;
-			}
-
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0) {
-				//CHALLENGE ATTACK
-				// random between 0, 1 and 2
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = rand() % 3;
-				if (random == 0) {
-					pInst->stateFlag = STATE_MAZE_DARKEN;
-				}
-				else if (random == 1) {
-					pInst->stateFlag = STATE_SPAWN_BULLETS;
-				}
-				else if (random == 2) {
-					pInst->stateFlag = STATE_SPAWN_ENEMIES;
-				}
-				break;
-			}
-
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH*10) == 0) {
-				//AOE ATTACK
-				pInst->stateFlag = STATE_AOE;
-				pInst->innerState = INNER_STATE_ON_EXIT; 
-				
-				break;
-			}
-
-
-			break;
-
-		case INNER_STATE_ON_EXIT: // INNER STATE UPDATE OF PATROL
-			std::cout << "exiting state 0" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->state = pInst->stateFlag;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			
-			break;
-		} break;
-
-
-	case STATE_BASIC:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
-			std::cout << "entering state 1" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			playerPosition = Player->posCurr;
-
-			break;
-		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
-			std::cout << "updating state 1" << std::endl;
-			pInst->timetracker += g_dt;
-
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 1.0f) {
-				pInst->timeCD = 0;
-				float angle = utilities::getAngle(pInst->posCurr.x, pInst->posCurr.y, playerPosition.x, playerPosition.y);
-				AEVec2 slashPosition = { pInst->posCurr.x -cos(angle) / 1.3f, pInst->posCurr.y -sin(angle) / 1.3f };
-				staticObjInstCreate(TYPE_SLASH, 2, &slashPosition, PI + angle);
-
-				//Run slash command
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-
-			}
-			
-
-
-			break;
-		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
-			std::cout << "exiting state 1" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-
-			break;
-		}break;
-
-
-	case STATE_AOE:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			std::cout << "entering state 2" << std::endl;
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
-
-			break;
-		case INNER_STATE_ON_UPDATE:
-			std::cout << "updating state 2" << std::endl;
-			//AOE Attack
-			pInst->stateFlag = STATE_PATROL;
-			pInst->innerState = INNER_STATE_ON_EXIT;
-
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 2" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-
-			break;
-		} break;
-
-
-	case STATE_SPAWN_ENEMIES:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			std::cout << "entering state 3" << std::endl;
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
-			break;
-		case INNER_STATE_ON_UPDATE:
-
-			std::cout << "updating state 3" << std::endl;
-			//Spawn enemies
-
-			// Stay still for awhile
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 2.0f) {
-				pInst->timeCD = 0;
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 3" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-			break;
-		} break;
-
-	case STATE_SPAWN_BULLETS:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			std::cout << "entering state 4" << std::endl;
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
-			break;
-		case INNER_STATE_ON_UPDATE:
-
-			std::cout << "updating state 4" << std::endl;
-			//Spawn Bullets
-
-			// Stay still for awhile
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 2.0f) {
-				pInst->timeCD = 0;
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 4" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-			break;
-		}break;
-
-	case STATE_MAZE_DARKEN:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			std::cout << "entering state 5" << std::endl;
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 1.0f) {
-				pInst->innerState = INNER_STATE_ON_UPDATE;
-				pInst->timeCD = 0;
-			}
-			break;
-		case INNER_STATE_ON_UPDATE:
-
-			std::cout << "updating state 5" << std::endl;
-			//Spawn darken
-
-			// Stay still for awhile
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 2.0f) {
-				pInst->timeCD = 0;
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 5" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-			break;
-		} break;
-
-
-
-
-		/*this will be the last 4 states
-		 pinst->state = (srand(3,6));*/
-
-
-
-
-
-	}
 }
 
 // ---------------------------------------------------------------------------
