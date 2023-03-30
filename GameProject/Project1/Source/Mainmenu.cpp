@@ -197,7 +197,7 @@ void GS_MainMenu_Update(void) {
 		return;
 	}
 	if (AEInputCheckTriggered(AEVK_H)) {
-		AEAudioStopGroup(Group1);
+		AEAudioPauseGroup(Group1);
 		gGameStateNext = GS_HELP;
 		return;
 	}
