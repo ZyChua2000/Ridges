@@ -43,6 +43,7 @@ void GameObjInst::deducthealth(int damage)
 {
 	if (health > 0)
 	{
+		AEAudioPlay(HeroDamaged, Damage, 1, 1, 0);
 		health -= damage;
 	}
 }
@@ -109,6 +110,8 @@ void staticObjInst::shootBullet() {
 		break;
 	}
 	GameObjInst* jInst = gameObjInstCreate(TYPE_BULLET, 0.5f, &position, &velocity, 0);
+
+	
 	jInst->TextureMap = TEXTURE_BULLET;
 }
 
@@ -174,7 +177,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 	AEVec2 zero;
 	AEVec2Zero(&zero);
 
-	AE_ASSERT_PARM(type < sGameObjNum);
+	//AE_ASSERT_PARM(type < sGameObjNum);
 
 	// loop through the object instance list to find a non-used object instance
 	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -192,6 +195,8 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 			pInst->velCurr = pVel ? *pVel : zero;
 			pInst->dirCurr = dir;
 			pInst->timetracker = 0;
+			pInst->damagetint = { 1,1,1 };
+			pInst->damagebuffer = 0;
 	
 			switch (type) {
 			case TYPE_CHARACTER:
@@ -202,6 +207,9 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
+				break;
+			case TYPE_BOSS:
+				pInst->TextureMap = TEXTURE_BOSS;
 				break;
 			default:
 				pInst->TextureMap = { 0,0 };

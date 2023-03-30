@@ -120,7 +120,7 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	std::vector<Node*> shortest;
 	// NOTE TO SELF: SRC IS START, DESC IS END
 	Node* nodesrc = &nodes[(-(int)y) * path_width + (int)x];
-	Node* nodedesc= &nodes[(-(int)y1) * path_width + (int)x1];
+	Node* nodedesc = &nodes[(-(int)y1) * path_width + (int)x1];
 
 	// assign enemy GameObjInst pos xy to node Pos xy
 	nodesrc->ae_NodePos.x = x;
@@ -139,10 +139,10 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	{
 		for (int y2 = 0; y2 < path_height; y2++)
 		{
-			nodes[y2 *path_width + x2].b_Closed = false;
-			nodes[y2 *path_width + x2].f_hcost = INFINITY;
-			nodes[y2 *path_width + x2].f_fcost = INFINITY;
-			nodes[y2 *path_width + x2].parent = nullptr;	// set nodes to have no parents at the start
+			nodes[y2 * path_width + x2].b_Closed = false;
+			nodes[y2 * path_width + x2].f_hcost = INFINITY;
+			nodes[y2 * path_width + x2].f_fcost = INFINITY;
+			nodes[y2 * path_width + x2].parent = nullptr;	// set nodes to have no parents at the start
 		}
 
 	}
@@ -174,12 +174,12 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 
 
 		//check each of this nodes neighbour
-		for(Node *NeighbourNode : current->v_Neighbours)
+		for (Node* NeighbourNode : current->v_Neighbours)
 		{
 
 			// if the neighbour is not visited and is 
 			// not an obstacle, add it to ist
-			if (!NeighbourNode->b_Closed && NeighbourNode->b_Obstacle == false) 
+			if (!NeighbourNode->b_Closed && NeighbourNode->b_Obstacle == false)
 				NodesNotTested.push_back(NeighbourNode);
 
 			// Calculate the neighbours potential lowest parent distance
@@ -190,7 +190,7 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 			// as the path sourceshortestt its distance scores as necessary
 			if (f_possiblelowest < NeighbourNode->f_fcost)
 			{
-				NeighbourNode->parent = current; 
+				NeighbourNode->parent = current;
 				NeighbourNode->f_fcost = f_possiblelowest;
 
 				// The best path length to the neighbour being tested has changed, so
@@ -202,33 +202,33 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 			}
 		}
 	}
-	if (nodedesc != nullptr) //checks if destination note its not null  
+
+
+	Node* p = nodedesc; // node pointer points to destination node
+
+	shortest.clear(); // need to clear as shortest is global.
+
+	while (p->parent != nullptr) // p-> parent not equal to nullptr
 	{
-		Node* p = nodedesc; // node pointer points to destination node
+		//adding node to vector shortest
+		p = p->parent;
 
-		shortest.clear(); // need to clear as shortest is global.
+		// move up parent all the way till source
+		shortest.push_back(p);
 
-		while (p->parent != nullptr) // p-> parent not equal to nullptr
-		{
-			//adding node to vector shortest
-			p = p->parent; 
-
-			// move up parent all the way till source
-			shortest.push_back(p);
-
-		}
-		// reverse vector so it goes from source to destination instead of destination to source
-		std::reverse(shortest.begin(), shortest.end()); 
-
-		return shortest;
 	}
+	// reverse vector so it goes from source to destination instead of destination to source
+	std::reverse(shortest.begin(), shortest.end());
 
+	return shortest;
 }
+	
+
 
 /******************************************************************
 function definition deleting nodes
 *******************************************************************/
-void deletenodes()// free New for nodes
+void deletenodes()
 {
 	
 	delete[] nodes;
@@ -336,132 +336,4 @@ void GameObjInst::mobKnockback(staticObjInst slash) {
 	posCurr -= slash2Mob;
 }
 
-/******************************************************************
-function definition for boss state machine
-*******************************************************************/
 
-void BossStateMachine(GameObjInst* pInst, GameObjInst* Player)
-{
-	AEVec2 velDown = { 0,1 };
-	AEVec2 velRight = { 0,1 };
-	//states declared at GameObjs.h
-	switch (pInst->state)
-	{
-	case STATE_PATROL:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-			pInst->timetracker += g_dt;
-			pInst->mobsPathFind(*Player);
-			if (pInst->calculateDistance(*Player) > 1.0f) { // If found player, attack player
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				pInst->state = STATE_BASIC;
-				break;
-			}
-
-			if (static_cast<int>(pInst->timetracker) % static_cast<int>(aoeREFRESH) == 0) {
-				//AOE ATTACK
-				pInst->state = STATE_AOE;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				break;
-			}
-
-			if (static_cast<int>(pInst->timetracker) % static_cast<int>(challengeATKREFRESH) == 0) {
-				//CHALLENGE ATTACK
-				// random between 0, 1 and 2
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = rand() % 4;
-				if (random == 0) {
-					pInst->state = STATE_MAZE_DARKEN;
-				}
-				else if (random == 1) {
-					pInst->state = STATE_SPAWN_BULLETS;
-				}
-				else if (random == 2){
-					pInst->state = STATE_SPAWN_ENEMIES;
-				}
-				break;
-			}
-			break;
-
-		case INNER_STATE_ON_EXIT:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			break;
-		} break;
-
-
-	case STATE_BASIC:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-			pInst->timetracker += g_dt;
-			//Slash towards player, draw object
-			pInst->state = STATE_PATROL;
-			pInst->innerState = INNER_STATE_ON_EXIT;
-		case INNER_STATE_ON_EXIT:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			break;
-		}
-			
-
-	case STATE_AOE:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-			pInst->timetracker += g_dt;
-			//AOE around
-			pInst->state = STATE_PATROL;
-			pInst->innerState = INNER_STATE_ON_EXIT;
-		case INNER_STATE_ON_EXIT:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			break;
-		}
-
-
-	case STATE_SPAWN_BULLETS:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-			//Spawn bullets
-			if (pInst->timeCD == 0) {
-				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velDown, 0);
-				gameObjInstCreate(TYPE_BULLET, 1, nullptr, &velRight, 0);
-			}
-			
-			// Stay still for awhile
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD == 2.0f) {
-				pInst->timeCD = 0;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				pInst->state = STATE_PATROL;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			break;
-		}
-	 /*this will be the last 4 states
-	  pinst->state = (srand(3,6));*/
-
-			
-
-
-
-	}
-}

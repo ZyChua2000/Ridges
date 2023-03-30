@@ -23,7 +23,7 @@ extern unsigned long		sStaticObjInstNum;							// The number of used static game
 extern s8					FontList[FONT_NUM_MAX];						// Each element in this array represents a Font
 extern unsigned long		FontListNum;								// The number of used fonts
 
-extern boolean				levelCleared[4];
+extern bool					levelCleared[4];
 
 extern const unsigned long FLAG_ACTIVE;			// For whether object instance is active
 
@@ -67,6 +67,7 @@ extern const AEVec2			TEXTURE_POTION;
 extern const AEVec2			TEXTURE_TOWER;
 extern const AEVec2			TEXTURE_BULLET;
 extern const AEVec2			TEXTURE_ENEMY;
+extern const AEVec2			TEXTURE_BOSS;
 extern const AEVec2			TEXTURE_SPIKE;
 extern const AEVec2			TEXTURE_UNOPENEDCHEST;
 extern const AEVec2			TEXTURE_OPENEDCHEST;
@@ -78,6 +79,22 @@ extern const AEVec2			TEXTURE_NUMBERS[10];
 extern const AEVec2			TEXTURE_PLAYER;
 extern const AEVec2			TEXTURE_FLOOR;
 extern const AEVec2			TEXTURE_FENCE;
+
+
+extern bool damageFlag;
+extern AEAudio HeroDamaged;
+extern AEAudioGroup Damage;
+extern AEAudio HeroSlash;
+extern AEAudio BulletShot;
+extern AEAudioGroup BulletGroup;
+
+extern AEAudio Interact;
+extern AEAudioGroup InteractGroup;
+
+extern AEAudio Movement;
+extern AEAudioGroup MovementGroup;
+
+
 
 
 static float				mouseX;					// Position of mouse X
