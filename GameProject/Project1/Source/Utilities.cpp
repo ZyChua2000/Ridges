@@ -143,11 +143,4 @@ namespace utilities {
 		}
 		return false;
 	}
-
-	void loadMeshNTexture(GameObj*& Obj, AEGfxVertexList* Mesh, AEGfxTexture* Texture, int type) {
-		Obj = sGameObjList + type;
-		Obj ->pMesh = Mesh;
-		Obj ->pTexture = Texture;
-		Obj ->type = type;
-	}
 }

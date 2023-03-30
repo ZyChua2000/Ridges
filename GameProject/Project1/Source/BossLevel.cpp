@@ -12,11 +12,9 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 #include "Main.h"
-#include <vector>
 #include <fstream>
 #include <iostream>
 #include <time.h>
-
 
 
 /*!
@@ -54,7 +52,6 @@ static float walkCD = 0;
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static GameObjInst* Boss;
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
@@ -64,44 +61,16 @@ static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* Key;
 static Inventory Backpack;
 static staticObjInst* Spike;
-static GameObj hpbar;
-
-static AEGfxTexture* spriteSheet;
-static AEGfxTexture* slashText;
-static AEGfxTexture* refText;
-static AEGfxTexture* darkRoom;
-static AEGfxVertexList* pMesh1;
-static AEGfxVertexList* pMesh2;
-static AEGfxVertexList* pMesh3;
 
 static AEVec2* Gates;
 static int gatesNum;
 static int levNum;
 static int chestNum;
-static int dark;
-static float darkTimer;
-
-static int levelclearedNum;
-
-static std::vector<int> stageList;
 
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
 
-static float playerHitTime;
 static staticObjInst* RefBox;
-
-static AEMtx33 hpbartransform;
-
-struct bosshp
-{
-	int maxhp;
-	int* currenthp;
-	f32 width;
-	f32 height;
-	float damagetaken;
-};
-bosshp boss;
 
 // ---------------------------------------------------------------------------
 
@@ -134,13 +103,9 @@ void GS_BossLevel_Load(void) {
 
 	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
-	
+	GameObj* Character;
+	Character = sGameObjList + sGameObjNum++;
 
-	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
-		*RefLine = 0, *Health = 0, *Enemy = 0, *Boss = 0, *Key = 0,
-		*Bullet = 0, *BossCircle = 0, *BossCircleAttack = 0;
-
-	//Mesh for Sprite Sheet
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / TEXTURE_MAXWIDTH, 16.0f / TEXTURE_MAXHEIGHT,
@@ -151,9 +116,41 @@ void GS_BossLevel_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / TEXTURE_MAXWIDTH, 0.0f);
 
-	pMesh1 = AEGfxMeshEnd();
-	
-	// Mesh for whole texture files
+	Character->pMesh = AEGfxMeshEnd();
+	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	Character->type = TYPE_CHARACTER;
+
+	GameObj* NPC;
+	NPC = sGameObjList + sGameObjNum++;
+	NPC->pMesh = Character->pMesh;
+	NPC->pTexture = Character->pTexture;
+	NPC->type = TYPE_NPCS;
+	NPC->refMesh = true;
+	NPC->refTexture = true;
+
+	GameObj* Item;
+	Item = sGameObjList + sGameObjNum++;
+	Item->pMesh = Character->pMesh;
+	Item->pTexture = Character->pTexture;
+	Item->type = TYPE_ITEMS;
+	Item->refMesh = true;
+	Item->refTexture = true;
+
+	GameObj* Map;
+	Map = sGameObjList + sGameObjNum++;
+	Map->pMesh = Character->pMesh;
+	Map->pTexture = Character->pTexture;
+	Map->type = TYPE_MAP;
+	Map->refMesh = true;
+	Map->refTexture = true;
+
+
+
+	//Enemy*  enemy;
+	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
+	//enemy->pMesh = Character->pMesh;
+	//enemy->pTexture = Character->pTexture;
+
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -164,51 +161,92 @@ void GS_BossLevel_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	pMesh2 = AEGfxMeshEnd();
+	GameObj* Slash;
+	Slash = sGameObjList + sGameObjNum++;
+	Slash->pMesh = AEGfxMeshEnd();
+	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
+	Slash->type = TYPE_SLASH;
 
-	//Load Textures
-	slashText = AEGfxTextureLoad("Assets/slash.png");
-	refText = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
-	spriteSheet = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
+	GameObj* RefLine;
+	RefLine = sGameObjList + sGameObjNum++;
+	RefLine->pMesh = Slash->pMesh;
+	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
+	RefLine->type = TYPE_REF;
+	RefLine->refMesh = true;
 
-	// Load mesh and texture into game objects
-	utilities::loadMeshNTexture(Character, pMesh1, spriteSheet, TYPE_CHARACTER);
-	utilities::loadMeshNTexture(Item, pMesh1, spriteSheet, TYPE_ITEMS);
-	utilities::loadMeshNTexture(Map, pMesh1, spriteSheet, TYPE_MAP);
-	utilities::loadMeshNTexture(Slash, pMesh2, slashText, TYPE_SLASH);
-	utilities::loadMeshNTexture(RefLine, pMesh2, slashText, TYPE_REF);
-	utilities::loadMeshNTexture(Health, pMesh1, spriteSheet, TYPE_HEALTH);
-	utilities::loadMeshNTexture(Enemy, pMesh1, spriteSheet, TYPE_ENEMY);
-	utilities::loadMeshNTexture(Key, pMesh1, spriteSheet, TYPE_KEY);
-	utilities::loadMeshNTexture(Bullet, pMesh1, spriteSheet, TYPE_BULLET);
-	utilities::loadMeshNTexture(Boss, pMesh1, spriteSheet, TYPE_BOSS);
-	utilities::loadMeshNTexture(BossCircle, pMesh1, spriteSheet, TYPE_BOSSCIRCLE);
-	utilities::loadMeshNTexture(BossCircleAttack, pMesh1, spriteSheet, TYPE_BOSSCIRCLEATTACK);
+	GameObj* Health;
+	Health = sGameObjList + sGameObjNum++;
+	Health->pMesh = Character->pMesh;
+	Health->pTexture = Character->pTexture;
+	Health->type = TYPE_HEALTH;
+	Health->refMesh = true;
+	Health->refTexture = true;
+
+	GameObj* Lever;
+	Lever = sGameObjList + sGameObjNum++;
+	Lever->pMesh = Character->pMesh;
+	Lever->pTexture = Character->pTexture;
+	Lever->type = TYPE_LEVERS;
+	Lever->refMesh = true;
+	Lever->refTexture = true;
+
+	GameObj* Enemy;
+	Enemy = sGameObjList + sGameObjNum++;
+	Enemy->pMesh = Character->pMesh;
+	Enemy->pTexture = Character->pTexture;
+	Enemy->type = TYPE_ENEMY;
+	Enemy->refMesh = true;
+	Enemy->refTexture = true;
 
 
-	AEGfxMeshStart();
-	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+	GameObj* Chest;
+	Chest = sGameObjList + sGameObjNum++;
+	Chest->pMesh = Character->pMesh;
+	Chest->pTexture = Character->pTexture;
+	Chest->type = TYPE_CHEST;
+	Chest->refMesh = true;
+	Chest->refTexture = true;
 
-	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
-	hpbar.pMesh = AEGfxMeshEnd();
+	GameObj* Key;
+	Key = sGameObjList + sGameObjNum++;
+	Key->pMesh = Character->pMesh;
+	Key->pTexture = Character->pTexture;
+	Key->type = TYPE_KEY;
+	Key->refMesh = true;
+	Key->refTexture = true;
 
-	AEGfxMeshStart();
+	GameObj* Spike;
+	Spike = sGameObjList + sGameObjNum++;
+	Spike->pMesh = Character->pMesh;
+	Spike->pTexture = Character->pTexture;
+	Spike->type = TYPE_SPIKE;
+	Spike->refMesh = true;
+	Spike->refTexture = true;
 
-	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
-		-80.0f, -45.f, 0xFFFFFF00, 0.0f, 1.0f,
-		80.0f, 45.f, 0xFF00FFFF, 1.0f, 0.0f);
+	GameObj* Mask;
+	Mask = sGameObjList + sGameObjNum++;
+	Mask->pMesh = Character->pMesh;
+	Mask->pTexture = Character->pTexture;
+	Mask->type = TYPE_MASK;
+	Mask->refMesh = true;
+	Mask->refTexture = true;
 
-	AEGfxTriAdd(-80.0f, -45.f, 0xFFFFFFFF, 0.0f, 1.0f,
-		-80.0f, 45.f, 0xFFFFFFFF, 0.0f, 0.0f,
-		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
-	pMesh3 = AEGfxMeshEnd();
-	darkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
+
+	GameObj* Tower;
+	Tower = sGameObjList + sGameObjNum++;
+	Tower->pMesh = Character->pMesh;
+	Tower->pTexture = Character->pTexture;
+	Tower->type = TYPE_TOWER;
+	Tower->refMesh = true;
+	Tower->refTexture = true;
+
+	GameObj* Bullet;
+	Bullet = sGameObjList + sGameObjNum++;
+	Bullet->pMesh = Character->pMesh;
+	Bullet->pTexture = Character->pTexture;
+	Bullet->type = TYPE_BULLET;
+	Bullet->refMesh = true;
+	Bullet->refTexture = true;
 
 	ParticleSystemLoad();
 }
@@ -221,9 +259,6 @@ void GS_BossLevel_Load(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Init(void) {
-	dark = 1;
-	darkTimer = 0;
-
 	AEVec2* pos = nullptr;
 
 	// =====================================
@@ -262,13 +297,6 @@ void GS_BossLevel_Init(void) {
 	//Init pathfinding nodes
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
-	//init Boss
-	AEVec2 BossPos = { 17,-10 }; // TXT
-	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
-	Boss->health = 3;
-	Boss->pathfindtime = 0.25f;
-	Boss->pathtimer = Boss->pathfindtime;
-
 	// Initialise camera pos
 	camX = 10, camY = -10;
 
@@ -276,36 +304,16 @@ void GS_BossLevel_Init(void) {
 	//	Initialize UI objects
 	// =====================================
 
+
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
+
 
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	boss.maxhp = 20;
-	boss.currenthp = &Boss->health;
-	boss.width = SPRITE_SCALE * 9 * *boss.currenthp/boss.maxhp;
-	boss.height = SPRITE_SCALE * 0.4;
-
 
 	ParticleSystemInit();
-
-	playerHitTime = 0;
-	stageList.clear();
-	levelclearedNum = 0;
-	if (levelCleared[0] == false) {
-		stageList.push_back(0);
-		levelclearedNum++;
-	}
-	if (levelCleared[1] == false) {
-		stageList.push_back(1);
-		levelclearedNum++;
-	}
-	if (levelCleared[2] == false) {
-		stageList.push_back(2);
-		levelclearedNum++;
-	}
-	
 }
 
 
@@ -317,15 +325,6 @@ void GS_BossLevel_Init(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Update(void) {
-	if (dark == 0) {
-		darkTimer += g_dt;
-	}
-
-	if (darkTimer > 3.0f) {
-		darkTimer = 0;
-		dark = 1;
-	}
-
 	// Normalising mouse to 0,0 at the center
 	s32 mouseIntX, mouseIntY;
 	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
@@ -337,12 +336,12 @@ void GS_BossLevel_Update(void) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
 
-	BossStateMachine(Boss);
+	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
-	Player->playerDamaged(playerHitTime);
+
 
 	// =====================================
 	// User Input
@@ -421,18 +420,6 @@ void GS_BossLevel_Update(void) {
 		gGameStateNext = GS_MAINMENU;
 	}
 
-	//simulating damage taken
-	
-	if (boss.currenthp > 0)
-	{
-		if (AEInputCheckTriggered(AEVK_Q))
-		{
-			*boss.currenthp -= 10.f;
-			boss.damagetaken = boss.maxhp - *boss.currenthp;
-			boss.width = SPRITE_SCALE * 9 * *boss.currenthp / boss.maxhp;
-		}
-	}
-	
 
 	// ======================================================
 	// update physics of all active game object instances
@@ -497,11 +484,19 @@ void GS_BossLevel_Update(void) {
 			if (pInst->pObject->type == TYPE_BULLET) {
 				pInst->velToPos(BULLET_SPEED);
 			}
-			if (pInst->pObject->type == TYPE_BOSS) {
-				pInst->velToPos(NPC_SPEED);
-			}
 		}
 	}
+
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// ====================
 	// check for collision
@@ -581,25 +576,16 @@ void GS_BossLevel_Update(void) {
 
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1 || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_BOSSCIRCLEATTACK)) {
+		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
 
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			pInst->spikeUpdate(); // Updates alpha of spikes
+		pInst->spikeUpdate(); // Updates alpha of spikes
 
-			if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
-				Player->deducthealth();
-				playerHitTime = DAMAGE_COODLDOWN_t;
-			}
-		}
-
-		if (pInst->pObject->type == TYPE_BOSSCIRCLEATTACK) {
-			if (Player->calculateDistance(*pInst) < 1.5f && playerHitTime == 0) {
-				playerHitTime = DAMAGE_COODLDOWN_t;
-				Player->deducthealth();
-			}
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
 
 	}
@@ -630,12 +616,6 @@ void GS_BossLevel_Update(void) {
 			}
 
 		}
-		if (pInst->pObject->type == TYPE_BOSSCIRCLE || pInst->pObject->type == TYPE_BOSSCIRCLEATTACK) {
-			pInst->timetracker += g_dt;
-			if (pInst->timetracker > 0.5f) {
-				staticObjInstDestroy(pInst);
-			}
-		}
 
 	}
 
@@ -658,20 +638,6 @@ void GS_BossLevel_Update(void) {
 			pInst->timetracker += g_dt;
 		}
 	}
-
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// =====================================
 	// calculate the matrix for all objects
@@ -700,23 +666,20 @@ void GS_BossLevel_Update(void) {
 		pInst->calculateTransMatrix();
 	}
 
-	//scale, rot, trans for health bar
-	AEMtx33 bar_scale, bar_trans, bar_rot;
-	AEMtx33Scale(&bar_scale, boss.width, boss.height);
-	AEMtx33Rot(&bar_rot, 0);
-	AEMtx33Trans(&bar_trans, camX* SPRITE_SCALE + 80.f - (boss.damagetaken * SPRITE_SCALE * 4 / boss.maxhp), camY * SPRITE_SCALE + 350.f);
-	AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
-	AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
-
 	// Camera position and UI items
+
 
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
+
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
+
+
 	//Player->dustParticles();
 
 	ParticleSystemUpdate();
-
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 }
 
 /******************************************************************************/
@@ -781,14 +744,6 @@ void GS_BossLevel_Draw(void) {
 			continue;
 		}
 
-		// for any transparent textures
-		if (pInst->pObject->type == TYPE_SLASH || pInst->pObject->type == TYPE_BOSSCIRCLE) {
-			AEGfxSetTransparency(1.0f - pInst->Alpha);
-		}
-		else {
-			AEGfxSetTransparency(1.0f);
-		}
-
 		// For any types using spritesheet
 		if (pInst->pObject->type != TYPE_SLASH)
 		{
@@ -799,7 +754,6 @@ void GS_BossLevel_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
@@ -835,43 +789,12 @@ void GS_BossLevel_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
-		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
-	if (dark == 0) {
-		AEGfxSetTransparency(1.0f);
-		AEGfxTextureSet(darkRoom, 0, 0);
-		// Create a scale matrix that scales by 100 x and y
-		AEMtx33 lscale = { 0 };
-		AEMtx33Scale(&lscale, 20, 20);
-		// Create a rotation matrix that rotates by 45 degrees
-		AEMtx33 lrotate = { 0, };
-
-		AEMtx33Rot(&lrotate, 0);
-
-		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33Trans(&ltranslate, Player->posCurr.x * SPRITE_SCALE, Player->posCurr.y* SPRITE_SCALE);
-		// Concat the matrices (TRS) 
-		AEMtx33 ltransform = { 0 };
-		AEMtx33Concat(&ltransform, &lrotate, &lscale);
-		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-		// Choose the transform to use 
-		AEGfxSetTransform(ltransform.m);
-		// Actually drawing the mesh
-		AEGfxMeshDraw(pMesh3, AE_GFX_MDM_TRIANGLES);
-	}
-
-	//drawing of health bar
-	AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-	AEGfxSetTintColor(0.7f, 0.7f, 0.7f, 0.0f);
-	AEGfxSetBlendMode(AE_GFX_BM_NONE);
-	AEGfxSetTransform(hpbartransform.m);
-	AEGfxMeshDraw(hpbar.pMesh, AE_GFX_MDM_TRIANGLES);
 
 	if (state == 1)
 	{
@@ -980,318 +903,11 @@ void GS_BossLevel_Unload(void) {
 			AEGfxTextureUnload((sGameObjList + i)->pTexture);
 	}
 
-	AEGfxMeshFree(pMesh1);
-	AEGfxMeshFree(pMesh2);
-	AEGfxMeshFree(pMesh3);
-	AEGfxMeshFree(hpbar.pMesh);
-	AEGfxTextureUnload(spriteSheet);
-	AEGfxTextureUnload(darkRoom);
-	AEGfxTextureUnload(slashText);
-	AEGfxTextureUnload(refText);
-
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
 
 
 	ParticleSystemUnload();
-}
-
-/******************************************************************
-function definition for boss finite state machine
-*******************************************************************/
-void BossStateMachine(GameObjInst* pInst)
-{
-	AEVec2 enemyPos1{ 7, -6.5 };
-	AEVec2 enemyPos2{ 17, -13.5 };
-	static AEVec2 playerPosition{ 0,0 };
-	static int stage = 0;
-	//states declared at GameObjs.h
-	switch (pInst->state)
-	{
-	case STATE_PATROL:
-		switch (pInst->innerState) { 
-		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF PATROL
-			std::cout << "entering state 0 " << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			
-			break;
-		case INNER_STATE_ON_UPDATE: // INNER STATE UPDATE OF PATROL
-			std::cout << "updating state 0" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->mobsPathFind(*Player);
-			if (pInst->calculateDistance(*Player) < 1.5f) { // If found player, attack player
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				pInst->stateFlag = STATE_BASIC;
-				break;
-			}
-
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0) {
-				//CHALLENGE ATTACK
-				// random between 0, 1 and 2
-				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = 0;
-				if (random == 0) {
-					pInst->stateFlag = STATE_MAZE_DARKEN;
-				}
-				else if (random == 1) {
-					pInst->stateFlag = STATE_SPAWN_BULLETS;
-				}
-				else if (random == 2) {
-					pInst->stateFlag = STATE_SPAWN_ENEMIES;
-				}
-				break;
-			}
-
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH*10) == 0) {
-				//AOE ATTACK
-				pInst->stateFlag = STATE_AOE;
-				pInst->innerState = INNER_STATE_ON_EXIT; 
-				
-				break;
-			}
-
-
-			break;
-
-		case INNER_STATE_ON_EXIT: // INNER STATE UPDATE OF PATROL
-			std::cout << "exiting state 0" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->state = pInst->stateFlag;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			
-			break;
-		} break;
-
-
-	case STATE_BASIC:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
-			pInst->velCurr = { 0,0 };
-			std::cout << "entering state 1" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			playerPosition = Player->posCurr;
-
-			break;
-		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
-			std::cout << "updating state 1" << std::endl;
-			pInst->timetracker += g_dt;
-
-			//stand still for 1 second
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 1.0f) {
-				pInst->timeCD = 0;
-				float angle = utilities::getAngle(pInst->posCurr.x, pInst->posCurr.y, playerPosition.x, playerPosition.y);
-				AEVec2 slashPosition = { pInst->posCurr.x -cos(angle) / 1.3f, pInst->posCurr.y -sin(angle) / 1.3f };
-				staticObjInst* bossSlash = staticObjInstCreate(TYPE_SLASH, 2, &slashPosition, PI + angle);
-				if (Player->calculateDistance(*bossSlash) < 1.0f) {
-					playerHitTime = DAMAGE_COODLDOWN_t;
-					Player->deducthealth();
-				}
-
-				//Run slash command
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-
-			}
-			
-
-
-			break;
-		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
-			std::cout << "exiting state 1" << std::endl;
-			pInst->timetracker += g_dt;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-
-			break;
-		}break;
-
-
-	case STATE_AOE:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
-			std::cout << "entering state 2" << std::endl;
-			playerPosition = Player->posCurr;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-			std::cout << "updating state 2" << std::endl;
-			//AOE Attack
-			pInst->timeCD += g_dt;
-			switch (stage) {
-			case 0:
-
-					staticObjInstCreate(TYPE_BOSSCIRCLE, 3, &playerPosition, 0);
-					//Draw Circle
-					pInst->timeCD = 0;
-					stage = 1;
-					break;
-			case 1:
-				if (pInst->timeCD > 1.0f) {
-					//Draw circle
-					staticObjInstCreate(TYPE_BOSSCIRCLE, 3, &playerPosition, 0);
-					pInst->timeCD = 0;
-					stage = 2;
-				} break;
-			case 2:
-				if (pInst->timeCD > 1.0f) {
-					//Draw circle
-					staticObjInstCreate(TYPE_BOSSCIRCLE, 3, &playerPosition, 0);
-					pInst->timeCD = 0;
-					stage = 3;
-				} break;
-			case 3:
-				if (pInst->timeCD > 3.0f) {
-					//Damage player
-					staticObjInstCreate(TYPE_BOSSCIRCLEATTACK, 3, &playerPosition, 0);
-					pInst->timeCD = 0;
-					stage = 0;
-					pInst->stateFlag = STATE_PATROL;
-					pInst->innerState = INNER_STATE_ON_EXIT;
-				}
-				break;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 2" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-
-			break;
-		} break;
-
-
-	case STATE_SPAWN_ENEMIES:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
-			std::cout << "entering state 3" << std::endl;
-			//stand still for 1 second
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-
-			std::cout << "updating state 3" << std::endl;
-			//Spawn enemies
-			// Stay still for awhile
-
-
-			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 2.0f) {
-				pInst->timeCD = 0;
-				GameObjInst* first = gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos1, nullptr, 0);
-				GameObjInst* second = gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos2, nullptr, 0);
-				first->health = 3;
-				first->pathfindtime = 0.25f;
-				first->pathtimer = first->pathfindtime;
-				second->health = 3;
-				second->pathfindtime = 0.25f;
-				second->pathtimer = second->pathfindtime;
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 3" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-			break;
-		} break;
-
-	case STATE_SPAWN_BULLETS:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
-			std::cout << "entering state 4" << std::endl;
-			//stand still for 1 second
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
-			pInst->timeCD += g_dt;
-			std::cout << "updating state 4" << std::endl;
-			//Spawn Bullets
-			AEVec2 dirVec = Player->posCurr - Boss->posCurr;
-			AEVec2 normDir;
-			AEVec2Normalize(&normDir, &dirVec);
-			switch (stage) {
-			case 0:
-				gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
-				stage = 1;
-				break;
-			case 1:
-				if (pInst->timeCD == 0.5f) {
-				gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
-				stage = 2;
-				pInst->timeCD = 0;
-				}
-				break;
-			case 2:
-				if (pInst->timeCD == 0.5f) {
-					gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
-					stage = 3;
-					pInst->timeCD = 0;
-				}
-				break;
-			case 3:
-				if (pInst->timeCD > 2.0f) {
-					pInst->timeCD = 0;
-					pInst->stateFlag = STATE_PATROL;
-					pInst->innerState = INNER_STATE_ON_EXIT;
-					stage = 0;
-				}
-				break;
-			}
-
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 4" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-			break;
-		}break;
-
-	case STATE_MAZE_DARKEN:
-		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
-			std::cout << "entering state 5" << std::endl;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
-
-			break;
-		case INNER_STATE_ON_UPDATE:
-
-			std::cout << "updating state 5" << std::endl;
-			dark = 0;
-			// Stay still for awhile
-			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 1.0f) {
-				pInst->timeCD = 0;
-				pInst->stateFlag = STATE_PATROL;
-				pInst->innerState = INNER_STATE_ON_EXIT;
-			}
-			break;
-		case INNER_STATE_ON_EXIT:
-			std::cout << "exiting state 5" << std::endl;
-			pInst->innerState = INNER_STATE_ON_ENTER;
-			pInst->state = pInst->stateFlag;
-			break;
-		} break;
-
-
-
-
-		/*this will be the last 4 states
-		 pinst->state = (srand(3,6));*/
-
-
-
-
-
-	}
 }
 
 // ---------------------------------------------------------------------------
