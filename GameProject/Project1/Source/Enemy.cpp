@@ -261,7 +261,7 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 	{
 		// perform pathfinding for this enemy
 		path.clear();
-		path = pathfind(posCurr.x, posCurr.y, target.posCurr.x, target.posCurr.y); //pathfind function
+		path = pathfind(posCurr.x, posCurr.y, target.posCurr.x, target.posCurr.y); //calling pathfind function
 		pathtimer = pathfindtime; // set timer back to default;
 		target_node = 0; // target node for enemy to find the next node
 		//is_at_end = false;

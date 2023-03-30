@@ -448,6 +448,7 @@ void GS_BossLevel_Update(void) {
 		if (Player->calculateDistance(*pEnemy) > 10)
 			continue;
 
+
 		pEnemy->mobsPathFind(*Player);
 	}
 
@@ -479,7 +480,7 @@ void GS_BossLevel_Update(void) {
 		if (pBoss->flag != FLAG_ACTIVE || pBoss->pObject->type != TYPE_BOSS)
 			continue;
 
-		BossStateMachine(pBoss, Player);
+		BossStateMachine(pBoss);
 	}
 
 	// ======================================================
@@ -940,37 +941,32 @@ void BossStateMachine(GameObjInst* pInst)
 	switch (pInst->state)
 	{
 	case STATE_PATROL:
-		switch (pInst->innerState) { 
+	{
+		switch (pInst->innerState)
+		{
 		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF PATROL
+		{
 			std::cout << "entering state 0 " << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
-
+			break;
+		}
 		case INNER_STATE_ON_UPDATE: // INNER STATE UPDATE OF PATROL
+		{
 			std::cout << "updating state 0" << std::endl;
 			pInst->timetracker += g_dt;
-			//pInst->mobsPathFind(*Player);
-			pInst->velCurr.x = 0.05 ;//
-			//pInst->velCurr.y = 0.05 ;//
-			//AEVec2Normalize(&pInst->velCurr, &pInst->velCurr);//normalise to unit vec 1
-			pInst->posCurr.x += (g_dt * NPC_SPEED); 
-			//pInst->posCurr.y += (g_dt * NPC_SPEED);
 
-			//pInst->velCurr.x = -0.05;//
-			pInst->velCurr.y = 0.05;//
-			//AEVec2Normalize(&pInst->velCurr, &pInst->velCurr);//normalise to unit vec 1
-			//pInst->posCurr.x += (g_dt * NPC_SPEED); //
-			pInst->posCurr.y += (g_dt * NPC_SPEED);
 
 			if (pInst->calculateDistance(*Player) > 1.0f) { // If found player, attack player
-			pInst->mobsPathFind(*Player);
-			if (pInst->calculateDistance(*Player) < 1.0f) { // If found player, attack player
+				//pathfind(pInst->posCurr.x, pInst->posCurr.y, Player->posCurr.x, Player->posCurr.y);
+				pInst->mobsPathFind(*Player);
 				pInst->innerState = INNER_STATE_ON_EXIT;
 				pInst->stateFlag = STATE_BASIC;
 				break;
 			}
 
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0) {
+			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(challengeATKREFRESH * 10) == 0)
+			{
 				//CHALLENGE ATTACK
 				// random between 0, 1 and 2
 				pInst->innerState = INNER_STATE_ON_EXIT;
@@ -987,30 +983,38 @@ void BossStateMachine(GameObjInst* pInst)
 				break;
 			}
 
-			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH*10) == 0) {
+			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH * 10) == 0) {
 				//AOE ATTACK
 				pInst->stateFlag = STATE_AOE;
-				pInst->innerState = INNER_STATE_ON_EXIT; 
-				
+				pInst->innerState = INNER_STATE_ON_EXIT;
+
 				break;
 			}
 
 
 			break;
-
+		}
 		case INNER_STATE_ON_EXIT: // INNER STATE UPDATE OF PATROL
+		{
 			std::cout << "exiting state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->state = pInst->stateFlag;
 			pInst->innerState = INNER_STATE_ON_ENTER;
-			
+
 			break;
-		} 
+		}
 
-
+		default:
+			break;
+		}
+		break;
+	}
 	case STATE_BASIC:
-		switch (pInst->innerState) {
+	{
+		switch (pInst->innerState)
+		{
 		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
+		{
 			std::cout << "entering state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			//stand still for 1 second
@@ -1022,7 +1026,9 @@ void BossStateMachine(GameObjInst* pInst)
 			}
 
 			break;
+		}
 		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
+		{
 			std::cout << "updating state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			//Slash towards player, draw object
@@ -1030,19 +1036,25 @@ void BossStateMachine(GameObjInst* pInst)
 			pInst->innerState = INNER_STATE_ON_EXIT;
 
 			break;
+		}
 		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
+		{
 			std::cout << "exiting state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 
 			break;
-		}break;
-
-
+		}
+		}
+		break;
+	}
 	case STATE_AOE:
-		switch (pInst->innerState) {
+	{
+		switch (pInst->innerState)
+		{
 		case INNER_STATE_ON_ENTER:
+		{
 			std::cout << "entering state 2" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
@@ -1053,25 +1065,33 @@ void BossStateMachine(GameObjInst* pInst)
 			}
 
 			break;
+		}
 		case INNER_STATE_ON_UPDATE:
+		{
 			std::cout << "updating state 2" << std::endl;
 			//AOE Attack
 			pInst->stateFlag = STATE_PATROL;
 			pInst->innerState = INNER_STATE_ON_EXIT;
 
 			break;
+		}
 		case INNER_STATE_ON_EXIT:
+		{
 			std::cout << "exiting state 2" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 
 			break;
-		} break;
-
-
+		}
+		}
+		break;
+	}
 	case STATE_SPAWN_ENEMIES:
-		switch (pInst->innerState) {
+	{
+		switch (pInst->innerState)
+		{
 		case INNER_STATE_ON_ENTER:
+		{
 			std::cout << "entering state 3" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
@@ -1081,8 +1101,9 @@ void BossStateMachine(GameObjInst* pInst)
 				pInst->timeCD = 0;
 			}
 			break;
+		}
 		case INNER_STATE_ON_UPDATE:
-
+		{
 			std::cout << "updating state 3" << std::endl;
 			//Spawn enemies
 
@@ -1094,16 +1115,23 @@ void BossStateMachine(GameObjInst* pInst)
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
 			break;
+		}
 		case INNER_STATE_ON_EXIT:
+		{
 			std::cout << "exiting state 3" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 			break;
-		} break;
-
+		}
+		}
+		break;
+	}
 	case STATE_SPAWN_BULLETS:
-		switch (pInst->innerState) {
+	{
+		switch (pInst->innerState)
+		{
 		case INNER_STATE_ON_ENTER:
+		{
 			std::cout << "entering state 4" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
@@ -1113,10 +1141,14 @@ void BossStateMachine(GameObjInst* pInst)
 				pInst->timeCD = 0;
 			}
 			break;
+		}
 		case INNER_STATE_ON_UPDATE:
+		{
 
 			std::cout << "updating state 4" << std::endl;
 			//Spawn Bullets
+
+
 
 			// Stay still for awhile
 			pInst->timeCD += g_dt;
@@ -1126,16 +1158,24 @@ void BossStateMachine(GameObjInst* pInst)
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
 			break;
+		}
 		case INNER_STATE_ON_EXIT:
+		{
 			std::cout << "exiting state 4" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 			break;
-		}break;
+		}
+		}
 
+		break;
+	}
 	case STATE_MAZE_DARKEN:
-		switch (pInst->innerState) {
+	{
+		switch (pInst->innerState)
+		{
 		case INNER_STATE_ON_ENTER:
+		{
 			std::cout << "entering state 5" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
@@ -1145,8 +1185,9 @@ void BossStateMachine(GameObjInst* pInst)
 				pInst->timeCD = 0;
 			}
 			break;
+		}
 		case INNER_STATE_ON_UPDATE:
-
+		{
 			std::cout << "updating state 5" << std::endl;
 			//Spawn darken
 
@@ -1158,23 +1199,22 @@ void BossStateMachine(GameObjInst* pInst)
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
 			break;
+		}
 		case INNER_STATE_ON_EXIT:
+		{
 			std::cout << "exiting state 5" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 			break;
-		} break;
+		}
+		}
+		break;
+	}
 
-
-
-
-		/*this will be the last 4 states
-		 pinst->state = (srand(3,6));*/
-
-
-
-
-
+	/*this will be the last 4 states
+	 pinst->state = (srand(3,6));*/
+	default:
+		break;
 	}
 }
 

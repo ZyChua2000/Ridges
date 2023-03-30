@@ -94,7 +94,7 @@ void GS_BossLevel_Unload(void);
 /******************************************************************
 function declaration for boss state machine
 *******************************************************************/
-void BossStateMachine(GameObjInst* pInst, GameObjInst* Player);
+void BossStateMachine(GameObjInst* pInst);
 
 // ---------------------------------------------------------------------------
 
