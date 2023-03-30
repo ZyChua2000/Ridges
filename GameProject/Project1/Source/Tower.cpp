@@ -27,7 +27,7 @@ static Node* nodes{};
 
 
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
-static int			CURRENT_MOBS = MAX_MOBS;
+static int					CURRENT_MOBS = MAX_MOBS;
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_KEYS;							// The total number of keys
@@ -119,7 +119,6 @@ void GS_Tower_Load(void) {
 	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
-	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
 		* RefLine = 0, * Health = 0, * Enemy = 0, * Boss = 0, * Key = 0,
@@ -153,23 +152,9 @@ void GS_Tower_Load(void) {
 
 	meshList.push_back(AEGfxMeshEnd());
 
-	// Mesh for hpbar - 2
-	AEGfxMeshStart();
-	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
-
-	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
-	meshList.push_back(AEGfxMeshEnd());
-
 	//Mesh Alias
 	AEGfxVertexList*& spriteMesh = meshList[0];
 	AEGfxVertexList*& fullSizeMesh = meshList[1];
-	AEGfxVertexList*& healthBarMesh = meshList[2];
 
 
 	//Load Textures

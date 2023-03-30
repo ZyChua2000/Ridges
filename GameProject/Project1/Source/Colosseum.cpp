@@ -74,7 +74,6 @@ static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static GameObjInst* enemy[2];
 static staticObjInst* RefBox;
 static staticObjInst* Chest[MAX_CHESTS];
 static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
@@ -84,6 +83,8 @@ static staticObjInst* StartScreenbj;
 static Inventory Backpack;
 static int chestnum;
 
+static std::vector<AEGfxTexture*> textureList;
+static std::vector<AEGfxVertexList*> meshList;
 
 float Timer = 0.f;
 static float internalTimer = 0.f;
@@ -137,9 +138,14 @@ void GS_Colosseum_Load(void) {
 
 	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
-	GameObj* Character;
-	Character = sGameObjList + sGameObjNum++;
 
+	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
+		* RefLine = 0, * Health = 0, * Enemy = 0, * Boss = 0, * Key = 0,
+		* Bullet = 0, * BossCircle = 0, * BossCircleAttack = 0,
+		* Lever = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
+		* Tower = 0, *Pause = 0, *Start = 0;
+
+	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / TEXTURE_MAXWIDTH, 16.0f / TEXTURE_MAXHEIGHT,
@@ -150,41 +156,9 @@ void GS_Colosseum_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / TEXTURE_MAXWIDTH, 0.0f);
 
-	Character->pMesh = AEGfxMeshEnd();
-	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
-	Character->type = TYPE_CHARACTER;
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* NPC;
-	NPC = sGameObjList + sGameObjNum++;
-	NPC->pMesh = Character->pMesh;
-	NPC->pTexture = Character->pTexture;
-	NPC->type = TYPE_NPCS;
-	NPC->refMesh = true;
-	NPC->refTexture = true;
-
-	GameObj* Item;
-	Item = sGameObjList + sGameObjNum++;
-	Item->pMesh = Character->pMesh;
-	Item->pTexture = Character->pTexture;
-	Item->type = TYPE_ITEMS;
-	Item->refMesh = true;
-	Item->refTexture = true;
-
-	GameObj* Map;
-	Map = sGameObjList + sGameObjNum++;
-	Map->pMesh = Character->pMesh;
-	Map->pTexture = Character->pTexture;
-	Map->type = TYPE_MAP;
-	Map->refMesh = true;
-	Map->refTexture = true;
-
-
-
-	//Enemy*  enemy;
-	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
-	//enemy->pMesh = Character->pMesh;
-	//enemy->pTexture = Character->pTexture;
-
+	// Mesh for whole texture files - 1
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -195,78 +169,45 @@ void GS_Colosseum_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	GameObj* Slash;
-	Slash = sGameObjList + sGameObjNum++;
-	Slash->pMesh = AEGfxMeshEnd();
-	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
-	Slash->type = TYPE_SLASH;
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* RefLine;
-	RefLine = sGameObjList + sGameObjNum++;
-	RefLine->pMesh = Slash->pMesh;
-	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
-	RefLine->type = TYPE_REF;
-	RefLine->refMesh = true;
+	//Mesh Alias
+	AEGfxVertexList*& spriteMesh = meshList[0];
+	AEGfxVertexList*& fullSizeMesh = meshList[1];
 
-	GameObj* Health;
-	Health = sGameObjList + sGameObjNum++;
-	Health->pMesh = Character->pMesh;
-	Health->pTexture = Character->pTexture;
-	Health->type = TYPE_HEALTH;
-	Health->refMesh = true;
-	Health->refTexture = true;
 
-	GameObj* Lever;
-	Lever = sGameObjList + sGameObjNum++;
-	Lever->pMesh = Character->pMesh;
-	Lever->pTexture = Character->pTexture;
-	Lever->type = TYPE_LEVERS;
-	Lever->refMesh = true;
-	Lever->refTexture = true;
+	//Load Textures
+	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
+	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 3
+	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 3
 
-	GameObj* Enemy;
-	Enemy = sGameObjList + sGameObjNum++;
-	Enemy->pMesh = Character->pMesh;
-	Enemy->pTexture = Character->pTexture;
-	Enemy->type = TYPE_ENEMY;
-	Enemy->refMesh = true;
-	Enemy->refTexture = true;
+	//Texture Alias
+	AEGfxTexture*& slashTex = textureList[0];
+	AEGfxTexture*& refBox = textureList[1];
+	AEGfxTexture*& spriteSheet = textureList[2];
+	AEGfxTexture*& PauseTex = textureList[3];
+	AEGfxTexture*& startTex = textureList[4];
 
-	GameObj* Chest;
-	Chest = sGameObjList + sGameObjNum++;
-	Chest->pMesh = Character->pMesh;
-	Chest->pTexture = Character->pTexture;
-	Chest->type = TYPE_CHEST;
-	Chest->refMesh = true;
-	Chest->refTexture = true;
 
-	GameObj* Key;
-	Key = sGameObjList + sGameObjNum++;
-	Key->pMesh = Character->pMesh;
-	Key->pTexture = Character->pTexture;
-	Key->type = TYPE_KEY;
-	Key->refMesh = true;
-	Key->refTexture = true;
-
-	PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
-	PauseObj->pObject = sGameObjList + sGameObjNum++;
-	PauseObj->pObject->pMesh = Slash->pMesh;
-	PauseObj->pObject->pTexture = AEGfxTextureLoad("Assets/PauseScreen.png");
-	PauseObj->pObject->type = TYPE_PAUSE;
-	PauseObj->pObject->refMesh = true;
-	PauseObj->pObject->refTexture = true;
-	//AEMtx33Identity(&PauseObj->transform);
-	AEMtx33Scale(&PauseObj->transform, 1600, 900);
-
-	StartScreenbj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
-	StartScreenbj->pObject = sGameObjList + sGameObjNum++;
-	StartScreenbj->pObject->pMesh = Slash->pMesh;
-	StartScreenbj->pObject->pTexture = AEGfxTextureLoad("Assets/ColloStart.png");
-	StartScreenbj->pObject->type = TYPE_PAUSE;
-	StartScreenbj->pObject->refMesh = true;
-	StartScreenbj->pObject->refTexture = true;
-	//AEMtx33Identity(&PauseObj->transform);
-	AEMtx33Scale(&PauseObj->transform, 1600, 900);
+	// Load mesh and texture into game objects
+	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
+	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
+	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
+	utilities::loadMeshNTexture(Slash, fullSizeMesh, slashTex, TYPE_SLASH);
+	utilities::loadMeshNTexture(RefLine, fullSizeMesh, refBox, TYPE_REF);
+	utilities::loadMeshNTexture(Health, spriteMesh, spriteSheet, TYPE_HEALTH);
+	utilities::loadMeshNTexture(Enemy, spriteMesh, spriteSheet, TYPE_ENEMY);
+	utilities::loadMeshNTexture(Key, spriteMesh, spriteSheet, TYPE_KEY);
+	utilities::loadMeshNTexture(Bullet, spriteMesh, spriteSheet, TYPE_BULLET);
+	utilities::loadMeshNTexture(Lever, spriteMesh, spriteSheet, TYPE_LEVERS);
+	utilities::loadMeshNTexture(Chest, spriteMesh, spriteSheet, TYPE_CHEST);
+	utilities::loadMeshNTexture(Spike, spriteMesh, spriteSheet, TYPE_SPIKE);
+	utilities::loadMeshNTexture(Spike_nonfade, spriteMesh, spriteSheet, TYPE_SPIKE_NONFADE);
+	utilities::loadMeshNTexture(Tower, spriteMesh, spriteSheet, TYPE_TOWER);
+	utilities::loadMeshNTexture(Pause, fullSizeMesh, PauseTex, TYPE_PAUSE);
+	utilities::loadMeshNTexture(Start, fullSizeMesh, startTex, TYPE_START);
 
 	ParticleSystemLoad();
 }
@@ -279,6 +220,10 @@ void GS_Colosseum_Load(void) {
 */
 /******************************************************************************/
 void GS_Colosseum_Init(void) {
+
+	PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
+	StartScreenbj = staticObjInstCreate(TYPE_START, 2, nullptr, 0);
+
 	AEVec2* pos = nullptr;
 
 	// =====================================
@@ -1067,12 +1012,12 @@ void GS_Colosseum_Free(void) {
 */
 /******************************************************************************/
 void GS_Colosseum_Unload(void) {
-	// free all mesh data (shapes) of each object using "AEGfxTriFree"
-	for (unsigned int i = 0; i < sGameObjNum; i++) {
-		if ((sGameObjList + i)->refMesh == false)
-			AEGfxMeshFree((sGameObjList + i)->pMesh);
-		if ((sGameObjList + i)->refTexture == false)
-			AEGfxTextureUnload((sGameObjList + i)->pTexture);
+	for (AEGfxVertexList* Mesh : meshList) {
+		AEGfxMeshFree(Mesh);
+	}
+
+	for (AEGfxTexture* texture : textureList) {
+		AEGfxTextureUnload(texture);
 	}
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE

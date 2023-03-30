@@ -67,10 +67,8 @@ static staticObjInst* MenuObj[3];										// Pointer to each enemy object insta
 static staticObjInst* NumObj[3];
 static Inventory Backpack;
 
-AEGfxTexture* DarkRoom;
-AEGfxVertexList* DarkMesh = 0;
-AEGfxVertexList* MapMesh = 0;
-AEGfxVertexList* MapChar = 0;
+static std::vector<AEGfxTexture*> textureList;
+static std::vector<AEGfxVertexList*> meshList;
 
 static int dark = 0;
 float spiketimer = 0.f;
@@ -133,11 +131,13 @@ void GS_Maze_Load(void) {
 	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
-	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
+	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
+		* RefLine = 0, * Health = 0, * Enemy = 0, * Boss = 0, * Key = 0,
+		* Bullet = 0, * BossCircle = 0, * BossCircleAttack = 0,
+		* Lever = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
+		* Tower = 0;
 
-	GameObj* Character;
-	Character = sGameObjList + sGameObjNum++;
-
+	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / TEXTURE_MAXWIDTH, 16.0f / TEXTURE_MAXHEIGHT,
@@ -148,34 +148,9 @@ void GS_Maze_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / TEXTURE_MAXWIDTH, 0.0f);
 
-	Character->pMesh = AEGfxMeshEnd();
-	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
-	Character->type = TYPE_CHARACTER;
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* NPC;
-	NPC = sGameObjList + sGameObjNum++;
-	NPC->pMesh = Character->pMesh;
-	NPC->pTexture = Character->pTexture;
-	NPC->type = TYPE_NPCS;
-	NPC->refMesh = true;
-	NPC->refTexture = true;
-
-	GameObj* Item;
-	Item = sGameObjList + sGameObjNum++;
-	Item->pMesh = Character->pMesh;
-	Item->pTexture = Character->pTexture;
-	Item->type = TYPE_ITEMS;
-	Item->refMesh = true;
-	Item->refTexture = true;
-
-	GameObj* Map;
-	Map = sGameObjList + sGameObjNum++;
-	Map->pMesh = Character->pMesh;
-	Map->pTexture = Character->pTexture;
-	Map->type = TYPE_MAP;
-	Map->refMesh = true;
-	Map->refTexture = true;
-
+	// Mesh for whole texture files - 1
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -186,68 +161,9 @@ void GS_Maze_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	GameObj* Slash;
-	Slash = sGameObjList + sGameObjNum++;
-	Slash->pMesh = AEGfxMeshEnd();
-	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
-	Slash->type = TYPE_SLASH;
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* RefLine;
-	RefLine = sGameObjList + sGameObjNum++;
-	RefLine->pMesh = Slash->pMesh;
-	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
-	RefLine->type = TYPE_REF;
-	RefLine->refMesh = true;
-
-	GameObj* Health;
-	Health = sGameObjList + sGameObjNum++;
-	Health->pMesh = Character->pMesh;
-	Health->pTexture = Character->pTexture;
-	Health->type = TYPE_HEALTH;
-	Health->refMesh = true;
-	Health->refTexture = true;
-
-	GameObj* Lever;
-	Lever = sGameObjList + sGameObjNum++;
-	Lever->pMesh = Character->pMesh;
-	Lever->pTexture = Character->pTexture;
-	Lever->type = TYPE_LEVERS;
-	Lever->refMesh = true;
-	Lever->refTexture = true;
-
-	GameObj* Enemy;
-	Enemy = sGameObjList + sGameObjNum++;
-	Enemy->pMesh = Character->pMesh;
-	Enemy->pTexture = Character->pTexture;
-	Enemy->type = TYPE_ENEMY;
-	Enemy->refMesh = true;
-	Enemy->refTexture = true;
-
-	GameObj* Chest;
-	Chest = sGameObjList + sGameObjNum++;
-	Chest->pMesh = Character->pMesh;
-	Chest->pTexture = Character->pTexture;
-	Chest->type = TYPE_CHEST;
-	Chest->refMesh = true;
-	Chest->refTexture = true;
-
-	GameObj* Key;
-	Key = sGameObjList + sGameObjNum++;
-	Key->pMesh = Character->pMesh;
-	Key->pTexture = Character->pTexture;
-	Key->type = TYPE_KEY;
-	Key->refMesh = true;
-	Key->refTexture = true;
-
-	GameObj* Spike;
-	Spike = sGameObjList + sGameObjNum++;
-	Spike->pMesh = Character->pMesh;
-	Spike->pTexture = Character->pTexture;
-	Spike->type = TYPE_SPIKE;
-	Spike->refMesh = true;
-	Spike->refTexture = true;
-
-
+	// Mesh for Dark Room - 2
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(80.0f, -45.f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -257,24 +173,9 @@ void GS_Maze_Load(void) {
 	AEGfxTriAdd(-80.0f, -45.f, 0xFFFFFFFF, 0.0f, 1.0f,
 		-80.0f, 45.f, 0xFFFFFFFF, 0.0f, 0.0f,
 		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
-	DarkMesh = AEGfxMeshEnd();
-	DarkRoom = AEGfxTextureLoad("Assets/Darkroom.png");
+	meshList.push_back(AEGfxMeshEnd());
 
-	///////MAPMESH////////////
-	AEGfxMeshStart();
-
-	AEGfxTriAdd(-60.f, 35.f, 0xd0d4c700, 0.0f, 0.0f,  //120 by 70 scale 10
-		-60.f, -35.f, 0xd0d4c700, 0.0f, 1.0f,
-		60.f, 35.f, 0xd0d4c700, 1.0f, 0.0f);
-
-	AEGfxTriAdd(60.f, -35.f, 0xd0d4c700, 1.0f, 1.0f,
-		-60.f, -35.f, 0xd0d4c700, 0.0f, 1.0f,
-		60.f, 35.f, 0xd0d4c700, 1.0f, 0.0f);
-
-	MapMesh = AEGfxMeshEnd();
-
-
-	
+	// Mesh for mapchar - 3
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(-2.f, 2.f, 0xFFFF0000, 0.0f, 0.0f,
@@ -285,7 +186,35 @@ void GS_Maze_Load(void) {
 		-2.f, -2.f, 0xFFFF0000, 0.0f, 1.0f,
 		2.f, 2.f, 0xFFFF0000, 1.0f, 0.0f);
 
-	MapChar = AEGfxMeshEnd();
+	meshList.push_back(AEGfxMeshEnd());
+
+	//Mesh Alias
+	AEGfxVertexList*& spriteMesh = meshList[0];
+	AEGfxVertexList*& fullSizeMesh = meshList[1];
+
+
+	//Load Textures
+	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
+	textureList.push_back(AEGfxTextureLoad("Assets/Darkroom.png")); // 3
+
+	//Texture Alias
+	AEGfxTexture*& slashTex = textureList[0];
+	AEGfxTexture*& refBox = textureList[1];
+	AEGfxTexture*& spriteSheet = textureList[2];
+
+
+	// Load mesh and texture into game objects
+	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
+	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
+	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
+	utilities::loadMeshNTexture(Slash, fullSizeMesh, slashTex, TYPE_SLASH);
+	utilities::loadMeshNTexture(RefLine, fullSizeMesh, refBox, TYPE_REF);
+	utilities::loadMeshNTexture(Health, spriteMesh, spriteSheet, TYPE_HEALTH);
+	utilities::loadMeshNTexture(Key, spriteMesh, spriteSheet, TYPE_KEY);
+	utilities::loadMeshNTexture(Chest, spriteMesh, spriteSheet, TYPE_CHEST);
+	utilities::loadMeshNTexture(Spike, spriteMesh, spriteSheet, TYPE_SPIKE);
 
 	 MazeBG = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Warped.mp3");
 	 MazeBGG = AEAudioCreateGroup();
@@ -792,7 +721,7 @@ void GS_Maze_Draw(void) {
 
 	if (dark == 0) {
 		AEGfxSetTransparency(1.0f);
-		AEGfxTextureSet(DarkRoom, 0, 0);
+		AEGfxTextureSet(textureList[3], 0, 0);
 		// Create a scale matrix that scales by 100 x and y
 		AEMtx33 lscale = { 0 };
 		AEMtx33Scale(&lscale, 20, 20);
@@ -811,7 +740,7 @@ void GS_Maze_Draw(void) {
 		// Choose the transform to use 
 		AEGfxSetTransform(ltransform.m);
 		// Actually drawing the mesh
-		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
+		AEGfxMeshDraw(meshList[2], AE_GFX_MDM_TRIANGLES);
 	}
 
 	
@@ -897,7 +826,7 @@ void GS_Maze_Draw(void) {
 		AEMtx33 ltranslate = { 0 };
 		AEMtx33 ltransform = { 0 };
 
-		if (MapChar)
+		if (meshList[3])
 		{
 
 
@@ -925,7 +854,7 @@ void GS_Maze_Draw(void) {
 				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
 				AEGfxSetTransform(ltransform.m);
 
-				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
+				AEGfxMeshDraw(meshList[3], AE_GFX_MDM_TRIANGLES);
 
 				//count++;
 			}
@@ -1045,18 +974,13 @@ void GS_Maze_Free(void) {
 /******************************************************************************/
 void GS_Maze_Unload(void) {
 	// free all mesh data (shapes) of each object using "AEGfxTriFree"
-	for (unsigned int i = 0; i < sGameObjNum; i++) {
-		if ((sGameObjList + i)->refMesh == false)
-			AEGfxMeshFree((sGameObjList + i)->pMesh);
-		if ((sGameObjList + i)->refTexture == false)
-			AEGfxTextureUnload((sGameObjList + i)->pTexture);
+	for (AEGfxVertexList* Mesh : meshList) {
+		AEGfxMeshFree(Mesh);
 	}
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
-	AEGfxMeshFree(DarkMesh);
-	AEGfxTextureUnload(DarkRoom);
-	AEGfxMeshFree(MapMesh);
-	AEGfxMeshFree(MapChar);
+	for (AEGfxTexture* texture : textureList) {
+		AEGfxTextureUnload(texture);
+	}
 
 	AEGfxSetCamPosition(0, 0);
 }
