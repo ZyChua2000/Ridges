@@ -89,23 +89,3 @@ void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
 		backPack.Potion--;
 	}
 }
-
-void GameObjInst::playerDamaged(float damageCD) {
-	if (damageCD == 0) {
-		damagetint = { 1,1,1 };
-		damagebuffer = 0;
-	}
-	else {
-		damagebuffer += g_dt;
-		if (damagetint.blue == 0 && damagebuffer > 0.1f) {
-			damagetint.blue = 1;
-			damagetint.green = 1;
-			damagebuffer = 0;
-		}
-		else if (damagetint.blue == 1 && damagebuffer > 0.1f) {
-			damagetint.blue = 0;
-			damagetint.green = 0;
-			damagebuffer = 0;
-		}
-	}
-}
