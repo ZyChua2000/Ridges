@@ -210,6 +210,7 @@ enum TYPE
 	TYPE_BOSS,
 
 
+
 	TYPE_NUM
 };
 

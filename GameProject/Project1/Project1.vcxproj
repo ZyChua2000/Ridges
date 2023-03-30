@@ -156,6 +156,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HelpScreen.cpp" />
     <ClCompile Include="Source\AEVecOverloads.cpp" />
     <ClCompile Include="Source\BossLevel.cpp" />
     <ClCompile Include="Source\collision.cpp" />
@@ -195,6 +196,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClInclude Include="Header\Tower.h" />
     <ClInclude Include="Header\Utilities.h" />
     <ClInclude Include="Header\World.h" />
+    <ClInclude Include="HelpScreen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
