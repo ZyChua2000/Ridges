@@ -126,7 +126,7 @@ void GameStateMgrUpdate()
 		GameStateDraw = GS_SplashScreen_Draw;
 		GameStateFree = GS_SplashScreen_Free;
 		GameStateUnload = GS_SplashScreen_Unload;
-		break;
+
 	case GS_HELP:
 		GameStateLoad = GS_HelpScreen_Load;
 		GameStateInit = GS_HelpScreen_Init;

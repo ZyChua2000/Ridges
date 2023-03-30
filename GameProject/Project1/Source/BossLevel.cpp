@@ -12,11 +12,9 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 #include "Main.h"
-#include <vector>
 #include <fstream>
 #include <iostream>
 #include <time.h>
-
 
 
 /*!
@@ -76,10 +74,6 @@ static AEVec2* Gates;
 static int gatesNum;
 static int levNum;
 static int chestNum;
-
-static int levelclearedNum;
-
-static std::vector<int> stageList;
 
 static float spikedmgtimer = 0.f;
 static float internalTimer = 0.f;
@@ -246,9 +240,6 @@ void GS_BossLevel_Init(void) {
 	//init Boss
 	AEVec2 BossPos = { 17,-10 }; // TXT
 	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
-	Boss->health = 3;
-	Boss->pathfindtime = 0.25f;
-	Boss->pathtimer = Boss->pathfindtime;
 
 	// Initialise camera pos
 	camX = 10, camY = -10;
@@ -272,21 +263,6 @@ void GS_BossLevel_Init(void) {
 	ParticleSystemInit();
 
 	playerHitTime = 0;
-	stageList.clear();
-	levelclearedNum = 0;
-	if (levelCleared[0] == false) {
-		stageList.push_back(0);
-		levelclearedNum++;
-	}
-	if (levelCleared[1] == false) {
-		stageList.push_back(1);
-		levelclearedNum++;
-	}
-	if (levelCleared[2] == false) {
-		stageList.push_back(2);
-		levelclearedNum++;
-	}
-	
 }
 
 
@@ -481,9 +457,6 @@ void GS_BossLevel_Update(void) {
 			if (pInst->pObject->type == TYPE_BULLET) {
 				pInst->velToPos(BULLET_SPEED);
 			}
-			if (pInst->pObject->type == TYPE_BOSS) {
-				pInst->velToPos(NPC_SPEED);
-			}
 		}
 	}
 
@@ -565,25 +538,16 @@ void GS_BossLevel_Update(void) {
 
 	for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != 1 || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_BOSSCIRCLEATTACK)) {
+		if (pInst->flag != 1 || pInst->pObject->type != TYPE_SPIKE) {
 			continue;
 		}
 
-		if (pInst->pObject->type == TYPE_SPIKE) {
-			pInst->spikeUpdate(); // Updates alpha of spikes
+		pInst->spikeUpdate(); // Updates alpha of spikes
 
-			if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
+		if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
-				Player->deducthealth();
-				playerHitTime = DAMAGE_COODLDOWN_t;
-			}
-		}
-
-		if (pInst->pObject->type == TYPE_BOSSCIRCLEATTACK) {
-			if (Player->calculateDistance(*pInst) < 1.5f && playerHitTime == 0) {
-				playerHitTime = DAMAGE_COODLDOWN_t;
-				Player->deducthealth();
-			}
+			Player->deducthealth();
+			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
 
 	}
@@ -763,14 +727,6 @@ void GS_BossLevel_Draw(void) {
 		}
 		if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 			continue;
-		}
-
-		// for any transparent textures
-		if (pInst->pObject->type == TYPE_SLASH || pInst->pObject->type == TYPE_BOSSCIRCLE) {
-			AEGfxSetTransparency(1.0f - pInst->Alpha);
-		}
-		else {
-			AEGfxSetTransparency(1.0f);
 		}
 
 		// For any types using spritesheet
@@ -960,8 +916,6 @@ void BossStateMachine(GameObjInst* pInst)
 {
 	AEVec2 velDown = { 0,1 };
 	AEVec2 velRight = { 0,1 };
-	AEVec2 enemyPos1{ 7, -6.5 };
-	AEVec2 enemyPos2{ 17, -13.5 };
 	static AEVec2 playerPosition{ 0,0 };
 	static int stage = 0;
 	//states declared at GameObjs.h
@@ -1038,7 +992,7 @@ void BossStateMachine(GameObjInst* pInst)
 		switch (pInst->innerState)
 		{
 		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
-			pInst->velCurr = { 0,0 };
+		{
 			std::cout << "entering state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
@@ -1090,7 +1044,7 @@ void BossStateMachine(GameObjInst* pInst)
 		switch (pInst->innerState)
 		{
 		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
+		{
 			std::cout << "entering state 2" << std::endl;
 			playerPosition = Player->posCurr;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
@@ -1126,7 +1080,12 @@ void BossStateMachine(GameObjInst* pInst)
 			case 3:
 				if (pInst->timeCD > 3.0f) {
 					//Damage player
-					staticObjInstCreate(TYPE_BOSSCIRCLEATTACK, 3, &playerPosition, 0);
+					staticObjInst* bossAttack = staticObjInstCreate(TYPE_BOSSCIRCLEATTACK, 3, &playerPosition, 0);
+					if (Player->calculateDistance(*bossAttack) < 1.5f) {
+						playerHitTime = DAMAGE_COODLDOWN_t;
+						Player->deducthealth();
+					}
+
 					pInst->timeCD = 0;
 					stage = 0;
 					pInst->stateFlag = STATE_PATROL;
@@ -1152,7 +1111,7 @@ void BossStateMachine(GameObjInst* pInst)
 		switch (pInst->innerState)
 		{
 		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
+		{
 			std::cout << "entering state 3" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
@@ -1167,12 +1126,11 @@ void BossStateMachine(GameObjInst* pInst)
 		{
 			std::cout << "updating state 3" << std::endl;
 			//Spawn enemies
+
 			// Stay still for awhile
 			pInst->timeCD += g_dt;
 			if (pInst->timeCD > 2.0f) {
 				pInst->timeCD = 0;
-				gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos1, nullptr, 0);
-				gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos2, nullptr, 0);
 				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
@@ -1193,7 +1151,7 @@ void BossStateMachine(GameObjInst* pInst)
 		switch (pInst->innerState)
 		{
 		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
+		{
 			std::cout << "entering state 4" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
@@ -1237,7 +1195,7 @@ void BossStateMachine(GameObjInst* pInst)
 		switch (pInst->innerState)
 		{
 		case INNER_STATE_ON_ENTER:
-			pInst->velCurr = { 0,0 };
+		{
 			std::cout << "entering state 5" << std::endl;
 			//stand still for 1 second
 			pInst->timeCD += g_dt;

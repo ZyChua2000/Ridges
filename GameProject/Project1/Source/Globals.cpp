@@ -68,7 +68,6 @@ const AEVec2		TEXTURE_NUMBERS[10] = { {2,12},{5,11},{6,11},
 											{1,12} };
 const AEVec2		TEXTURE_FLOOR = { 0,4 };
 const AEVec2		TEXTURE_FENCE = { 5,6 };
-const AEVec2		TEXTURE_BOSSCIRCLE = {6,12};
 
 const AEVec2		TEXTURE_PLAYER = { 1,8 };
 const float			TOWER_REFRESH = 2.f;			// Rate at which tower shoot bullets
