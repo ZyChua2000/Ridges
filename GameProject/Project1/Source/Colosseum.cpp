@@ -140,10 +140,9 @@ void GS_Colosseum_Load(void) {
 
 
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
-		* RefLine = 0, * Health = 0, * Enemy = 0, * Boss = 0, * Key = 0,
-		* Bullet = 0, * BossCircle = 0, * BossCircleAttack = 0,
-		* Lever = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
-		* Tower = 0, *Pause = 0, *Start = 0;
+		* RefLine = 0, * Health = 0, * Enemy = 0, * Key = 0,
+		* Bullet = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
+		* Pause = 0, *Start = 0;
 
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
@@ -201,11 +200,9 @@ void GS_Colosseum_Load(void) {
 	utilities::loadMeshNTexture(Enemy, spriteMesh, spriteSheet, TYPE_ENEMY);
 	utilities::loadMeshNTexture(Key, spriteMesh, spriteSheet, TYPE_KEY);
 	utilities::loadMeshNTexture(Bullet, spriteMesh, spriteSheet, TYPE_BULLET);
-	utilities::loadMeshNTexture(Lever, spriteMesh, spriteSheet, TYPE_LEVERS);
 	utilities::loadMeshNTexture(Chest, spriteMesh, spriteSheet, TYPE_CHEST);
 	utilities::loadMeshNTexture(Spike, spriteMesh, spriteSheet, TYPE_SPIKE);
 	utilities::loadMeshNTexture(Spike_nonfade, spriteMesh, spriteSheet, TYPE_SPIKE_NONFADE);
-	utilities::loadMeshNTexture(Tower, spriteMesh, spriteSheet, TYPE_TOWER);
 	utilities::loadMeshNTexture(Pause, fullSizeMesh, PauseTex, TYPE_PAUSE);
 	utilities::loadMeshNTexture(Start, fullSizeMesh, startTex, TYPE_START);
 

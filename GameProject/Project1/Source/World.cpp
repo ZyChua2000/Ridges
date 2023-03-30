@@ -138,10 +138,9 @@ void GS_World_Load(void) {
 	Player = nullptr;
 
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
-		* RefLine = 0, * Health = 0, * Enemy = 0, * Boss = 0, * Key = 0,
-		* Bullet = 0, * BossCircle = 0, * BossCircleAttack = 0,
-		* Lever = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
-		* Tower = 0;
+		* RefLine = 0, * Health = 0, * Enemy = 0,  * Key = 0,
+		* Bullet = 0, * Lever = 0, * Chest = 0, * Spike = 0, 
+		* Spike_nonfade = 0, * Tower = 0;
 
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
