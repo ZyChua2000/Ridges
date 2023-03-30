@@ -62,12 +62,6 @@ static staticObjInst* NumObj[3];
 static Inventory Backpack;
 static GameObj hpbar;
 
-
-static AEGfxTexture* darkRoom;
-static AEGfxVertexList* pMesh1;
-static AEGfxVertexList* pMesh2;
-static AEGfxVertexList* pMesh3;
-
 static int dark;
 static float darkTimer;
 
@@ -176,25 +170,39 @@ void GS_BossLevel_Load(void) {
 		80.0f, 45.f, 0xFFFFFFFF, 1.0f, 0.0f);
 	meshList.push_back(AEGfxMeshEnd());
 
+	//Mesh Alias
+	AEGfxVertexList*& spriteMesh = meshList[0];
+	AEGfxVertexList*& fullSizeMesh = meshList[1];
+	AEGfxVertexList*& healthBarMesh = meshList[2];
+	AEGfxVertexList*& darkRoomMesh = meshList[3];
+
+
 	//Load Textures
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
 	textureList.push_back(AEGfxTextureLoad("Assets/Darkroom.png")); // 3
 
+	//Texture Alias
+	AEGfxTexture*& slashTex = textureList[0];
+	AEGfxTexture*& refBox = textureList[1];
+	AEGfxTexture*& spriteSheet = textureList[2];
+	AEGfxTexture*& darkRoom = textureList[3];
+	
+	
 	// Load mesh and texture into game objects
-	utilities::loadMeshNTexture(Character, meshList[0], textureList[2], TYPE_CHARACTER);
-	utilities::loadMeshNTexture(Item, meshList[0], textureList[2], TYPE_ITEMS);
-	utilities::loadMeshNTexture(Map, meshList[0], textureList[2], TYPE_MAP);
-	utilities::loadMeshNTexture(Slash, meshList[1], textureList[0], TYPE_SLASH);
-	utilities::loadMeshNTexture(RefLine, meshList[1], textureList[1], TYPE_REF);
-	utilities::loadMeshNTexture(Health, meshList[0], textureList[2], TYPE_HEALTH);
-	utilities::loadMeshNTexture(Enemy, meshList[0], textureList[2], TYPE_ENEMY);
-	utilities::loadMeshNTexture(Key, meshList[0], textureList[2], TYPE_KEY);
-	utilities::loadMeshNTexture(Bullet, meshList[0], textureList[2], TYPE_BULLET);
-	utilities::loadMeshNTexture(Boss, meshList[0], textureList[2], TYPE_BOSS);
-	utilities::loadMeshNTexture(BossCircle, meshList[0], textureList[2], TYPE_BOSSCIRCLE);
-	utilities::loadMeshNTexture(BossCircleAttack, meshList[0], textureList[2], TYPE_BOSSCIRCLEATTACK);
+	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
+	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
+	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
+	utilities::loadMeshNTexture(Slash, fullSizeMesh, slashTex, TYPE_SLASH);
+	utilities::loadMeshNTexture(RefLine, fullSizeMesh, refBox, TYPE_REF);
+	utilities::loadMeshNTexture(Health, spriteMesh, spriteSheet, TYPE_HEALTH);
+	utilities::loadMeshNTexture(Enemy, spriteMesh, spriteSheet, TYPE_ENEMY);
+	utilities::loadMeshNTexture(Key, spriteMesh, spriteSheet, TYPE_KEY);
+	utilities::loadMeshNTexture(Bullet, spriteMesh, spriteSheet, TYPE_BULLET);
+	utilities::loadMeshNTexture(Boss, spriteMesh, spriteSheet, TYPE_BOSS);
+	utilities::loadMeshNTexture(BossCircle, spriteMesh, spriteSheet, TYPE_BOSSCIRCLE);
+	utilities::loadMeshNTexture(BossCircleAttack, spriteMesh, spriteSheet, TYPE_BOSSCIRCLEATTACK);
 
 	
 

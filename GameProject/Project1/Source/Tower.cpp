@@ -75,11 +75,12 @@ static staticObjInst* Health[3];										// Pointer to the player health statc 
 static staticObjInst* Levers[3];										// Pointer to each enemy object instance
 static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
 static staticObjInst* NumObj[3];
-static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Key;
+
 static Inventory Backpack;
-static staticObjInst* Spike;
 static staticObjInst* RefBox;
+
+static std::vector<AEGfxTexture*> textureList;
+static std::vector<AEGfxVertexList*> meshList;
 
 static AEVec2* Gates;
 static int gatesNum;
@@ -90,17 +91,6 @@ static const float timingFIRST = 0.0f;
 static const float timingSECOND = 0.6f;
 static const float timingTHIRD = 1.2f;
 static const float timingFOURTH = 1.8f;
-
-
-
-// ---------------------------------------------------------------------------
-
-/******************************************************************************/
-
-
-int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-	float scaleX, float scaleY);
-
 
 /******************************************************************************/
 /*!
@@ -131,9 +121,13 @@ void GS_Tower_Load(void) {
 
 	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
-	GameObj* Character;
-	Character = sGameObjList + sGameObjNum++;
+	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
+		* RefLine = 0, * Health = 0, * Enemy = 0, * Boss = 0, * Key = 0,
+		* Bullet = 0, * BossCircle = 0, * BossCircleAttack = 0,
+		* Lever = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
+		* Tower = 0;
 
+	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 16.0f / TEXTURE_MAXWIDTH, 16.0f / TEXTURE_MAXHEIGHT,
@@ -144,41 +138,9 @@ void GS_Tower_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 16.0f / TEXTURE_MAXWIDTH, 0.0f);
 
-	Character->pMesh = AEGfxMeshEnd();
-	Character->pTexture = AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png");
-	Character->type = TYPE_CHARACTER;
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* NPC;
-	NPC = sGameObjList + sGameObjNum++;
-	NPC->pMesh = Character->pMesh;
-	NPC->pTexture = Character->pTexture;
-	NPC->type = TYPE_NPCS;
-	NPC->refMesh = true;
-	NPC->refTexture = true;
-
-	GameObj* Item;
-	Item = sGameObjList + sGameObjNum++;
-	Item->pMesh = Character->pMesh;
-	Item->pTexture = Character->pTexture;
-	Item->type = TYPE_ITEMS;
-	Item->refMesh = true;
-	Item->refTexture = true;
-
-	GameObj* Map;
-	Map = sGameObjList + sGameObjNum++;
-	Map->pMesh = Character->pMesh;
-	Map->pTexture = Character->pTexture;
-	Map->type = TYPE_MAP;
-	Map->refMesh = true;
-	Map->refTexture = true;
-
-
-
-	//Enemy*  enemy;
-	//enemy = static_pointer_cast<Ene*>(sGameObjList + sGameObjNum++);
-	//enemy->pMesh = Character->pMesh;
-	//enemy->pTexture = Character->pTexture;
-
+	// Mesh for whole texture files - 1
 	AEGfxMeshStart();
 
 	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
@@ -189,100 +151,53 @@ void GS_Tower_Load(void) {
 		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
 		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-	GameObj* Slash;
-	Slash = sGameObjList + sGameObjNum++;
-	Slash->pMesh = AEGfxMeshEnd();
-	Slash->pTexture = AEGfxTextureLoad("Assets/slash.png");
-	Slash->type = TYPE_SLASH;
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* RefLine;
-	RefLine = sGameObjList + sGameObjNum++;
-	RefLine->pMesh = Slash->pMesh;
-	RefLine->pTexture = AEGfxTextureLoad("Assets/Tilemap/RefBox.png");
-	RefLine->type = TYPE_REF;
-	RefLine->refMesh = true;
+	// Mesh for hpbar - 2
+	AEGfxMeshStart();
+	AEGfxTriAdd(
+		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
+		0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
+		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
 
-	GameObj* Health;
-	Health = sGameObjList + sGameObjNum++;
-	Health->pMesh = Character->pMesh;
-	Health->pTexture = Character->pTexture;
-	Health->type = TYPE_HEALTH;
-	Health->refMesh = true;
-	Health->refTexture = true;
+	AEGfxTriAdd(
+		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
+		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+	meshList.push_back(AEGfxMeshEnd());
 
-	GameObj* Lever;
-	Lever = sGameObjList + sGameObjNum++;
-	Lever->pMesh = Character->pMesh;
-	Lever->pTexture = Character->pTexture;
-	Lever->type = TYPE_LEVERS;
-	Lever->refMesh = true;
-	Lever->refTexture = true;
-
-	GameObj* Enemy;
-	Enemy = sGameObjList + sGameObjNum++;
-	Enemy->pMesh = Character->pMesh;
-	Enemy->pTexture = Character->pTexture;
-	Enemy->type = TYPE_ENEMY;
-	Enemy->refMesh = true;
-	Enemy->refTexture = true;
-
-	GameObj* Chest;
-	Chest = sGameObjList + sGameObjNum++;
-	Chest->pMesh = Character->pMesh;
-	Chest->pTexture = Character->pTexture;
-	Chest->type = TYPE_CHEST;
-	Chest->refMesh = true;
-	Chest->refTexture = true;
-
-	GameObj* Key;
-	Key = sGameObjList + sGameObjNum++;
-	Key->pMesh = Character->pMesh;
-	Key->pTexture = Character->pTexture;
-	Key->type = TYPE_KEY;
-	Key->refMesh = true;
-	Key->refTexture = true;
-
-	GameObj* Spike;
-	Spike = sGameObjList + sGameObjNum++;
-	Spike->pMesh = Character->pMesh;
-	Spike->pTexture = Character->pTexture;
-	Spike->type = TYPE_SPIKE;
-	Spike->refMesh = true;
-	Spike->refTexture = true;
+	//Mesh Alias
+	AEGfxVertexList*& spriteMesh = meshList[0];
+	AEGfxVertexList*& fullSizeMesh = meshList[1];
+	AEGfxVertexList*& healthBarMesh = meshList[2];
 
 
-	GameObj* Spike_nonfade;
-	Spike_nonfade = sGameObjList + sGameObjNum++;
-	Spike_nonfade->pMesh = Character->pMesh;
-	Spike_nonfade->pTexture = Character->pTexture;
-	Spike_nonfade->type = TYPE_SPIKE_NONFADE;
-	Spike_nonfade->refMesh = true;
-	Spike_nonfade->refTexture = true;
+	//Load Textures
+	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
+	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
 
-	GameObj* Mask;
-	Mask = sGameObjList + sGameObjNum++;
-	Mask->pMesh = Character->pMesh;
-	Mask->pTexture = Character->pTexture;
-	Mask->type = TYPE_MASK;
-	Mask->refMesh = true;
-	Mask->refTexture = true;
+	//Texture Alias
+	AEGfxTexture*& slashTex = textureList[0];
+	AEGfxTexture*& refBox = textureList[1];
+	AEGfxTexture*& spriteSheet = textureList[2];
 
 
-	GameObj* Tower;
-	Tower = sGameObjList + sGameObjNum++;
-	Tower->pMesh = Character->pMesh;
-	Tower->pTexture = Character->pTexture;
-	Tower->type = TYPE_TOWER;
-	Tower->refMesh = true;
-	Tower->refTexture = true;
-
-	GameObj* Bullet;
-	Bullet = sGameObjList + sGameObjNum++;
-	Bullet->pMesh = Character->pMesh;
-	Bullet->pTexture = Character->pTexture;
-	Bullet->type = TYPE_BULLET;
-	Bullet->refMesh = true;
-	Bullet->refTexture = true; 
+	// Load mesh and texture into game objects
+	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
+	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
+	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
+	utilities::loadMeshNTexture(Slash, fullSizeMesh, slashTex, TYPE_SLASH);
+	utilities::loadMeshNTexture(RefLine, fullSizeMesh, refBox, TYPE_REF);
+	utilities::loadMeshNTexture(Health, spriteMesh, spriteSheet, TYPE_HEALTH);
+	utilities::loadMeshNTexture(Enemy, spriteMesh, spriteSheet, TYPE_ENEMY);
+	utilities::loadMeshNTexture(Key, spriteMesh, spriteSheet, TYPE_KEY);
+	utilities::loadMeshNTexture(Bullet, spriteMesh, spriteSheet, TYPE_BULLET);
+	utilities::loadMeshNTexture(Lever, spriteMesh, spriteSheet, TYPE_LEVERS);
+	utilities::loadMeshNTexture(Chest, spriteMesh, spriteSheet, TYPE_CHEST);
+	utilities::loadMeshNTexture(Spike, spriteMesh, spriteSheet, TYPE_SPIKE);
+	utilities::loadMeshNTexture(Spike_nonfade, spriteMesh, spriteSheet, TYPE_SPIKE_NONFADE);
+	utilities::loadMeshNTexture(Tower, spriteMesh, spriteSheet, TYPE_TOWER);
 	
 }
 
@@ -519,18 +434,6 @@ void GS_Tower_Update(void) {
 				Levers[lev]->tilt45();
 				//Remove gates: Change texture & Binary map
 				utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
-				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
-			}
-		}
-		
-
-		for (int i = 0; i < chestNum; i++)
-		{
-			//Interaction with Chest
-			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
-			{
-				//change texture of chest
-				Chest[i]->chest2Potion();
 				AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
 			}
 		}
@@ -1097,11 +1000,12 @@ void GS_Tower_Free(void) {
 /******************************************************************************/
 void GS_Tower_Unload(void) {
 	// free all mesh data (shapes) of each object using "AEGfxTriFree"
-	for (unsigned int i = 0; i < sGameObjNum; i++) {
-		if ((sGameObjList + i)->refMesh == false)
-			AEGfxMeshFree((sGameObjList + i)->pMesh);
-		if ((sGameObjList + i)->refTexture == false)
-			AEGfxTextureUnload((sGameObjList + i)->pTexture);
+	for (AEGfxVertexList* Mesh : meshList) {
+		AEGfxMeshFree(Mesh);
+	}
+
+	for (AEGfxTexture* texture : textureList) {
+		AEGfxTextureUnload(texture);
 	}
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
