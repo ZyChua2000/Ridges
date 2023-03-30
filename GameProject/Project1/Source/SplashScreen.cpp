@@ -12,16 +12,18 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 #include "Main.h"
-#include <iostream>
-#include "Globals.h"
+
 
 
 // ---------------------------------------------------------------------------
-static int debugstate = 0;
-float timer = 0;
-float tint = 0;
-AEGfxVertexList* pMesh = 0;
-AEGfxTexture* splashscreen;
+static float timer = 0;
+static float tint = 0;
+
+static float fadeDuration = 2.0f;;
+static float endTime = 5.f;
+static float fadeoutStart = endTime - fadeDuration;
+static AEGfxVertexList* pMesh = 0;
+static AEGfxTexture* splashscreen;
 /******************************************************************************/
 /*!
 	"Load" function of this state
@@ -33,17 +35,18 @@ AEGfxTexture* splashscreen;
 void GS_SplashScreen_Load(void)
 {
 	AEGfxMeshStart();
-	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
 
-	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+	AEGfxTriAdd(0.5f, -0.5f, 0xFFFF00FF, 1.0f, 1.0f,
+		-0.5f, -0.5f, 0xFFFFFF00, 0.0f, 1.0f,
+		0.5f, 0.5f, 0xFF00FFFF, 1.0f, 0.0f);
+
+	AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+		-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 	pMesh = AEGfxMeshEnd();
 
+	splashscreen = AEGfxTextureLoad("Assets/MainMenu/digipen.png");
+	
 	
 }
 
@@ -56,8 +59,7 @@ void GS_SplashScreen_Load(void)
 /******************************************************************************/
 void GS_SplashScreen_Init(void)
 {
-	AEGfxTexture* splashscreen = AEGfxTextureLoad("Assets/MainMenu/digipen.png");
-	//AEGfxTextureSet(splashscreen, 1, 1);
+	
 }
 
 
@@ -71,8 +73,19 @@ void GS_SplashScreen_Init(void)
 void GS_SplashScreen_Update(void)
 {
 	timer += g_dt;
-	tint += g_dt;
-	if(timer > 2.f)
+
+	if (timer < fadeDuration) {
+		tint = timer / fadeDuration;
+	}
+	else {
+		tint = 1;
+	}
+	if (timer > fadeoutStart) // Fade time
+	{
+		tint = endTime/2 - timer/ fadeDuration;
+	}
+
+	if(timer > endTime) // End time
 	{
 		gGameStateNext = GS_MAINMENU;
 		return;
@@ -89,38 +102,19 @@ void GS_SplashScreen_Update(void)
 /******************************************************************************/
 void GS_SplashScreen_Draw(void)
 {
-	AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, tint);
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-	AEGfxSetTransparency(0.5f);
+	AEGfxSetTransparency(tint);
 	AEGfxTextureSet(splashscreen, 0, 0);
-	AEMtx33 scale, rot, trans, transform;
-	AEMtx33Scale(&scale, 5, 5);
-	AEMtx33Rot(&rot, 0);
-	AEMtx33Trans(&trans, 0, 0);
-	AEMtx33Concat(&transform, &rot, &scale);
-	AEMtx33Concat(&transform, &trans, &transform);
+	AEMtx33 scale, transform;
+	AEMtx33Scale(&scale, 1600, 900);
+	AEMtx33Rot(&transform, 0);
+	AEMtx33Concat(&transform, &transform, &scale);
 	AEGfxSetTransform(transform.m);
 	AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
 
-	//Exit/////////////////////////////////////////
 
-	
-	if (debugstate == 1)
-	{
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-		char debug[20] = "Debug Screen";
-
-		char mouse_xy_buffer[50] = " "; // buffer
-		AEGfxPrint(1, debug, -0.99f, 0.90f, 1.5f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position X: %.2f", mouseX);
-		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.76f, 1.0f, 1.0f, 1.0f, 1.0f);
-		sprintf_s(mouse_xy_buffer, "Mouse Position Y: %.2f", mouseY);
-		AEGfxPrint(1, mouse_xy_buffer, -0.99f, 0.71f, 1.0f, 1.0f, 1.0f, 1.0f);
-	}
-	
 }
 
 /******************************************************************************/
@@ -131,8 +125,7 @@ void GS_SplashScreen_Draw(void)
 /******************************************************************************/
 void GS_SplashScreen_Free(void)
 {
-	AEGfxMeshFree(pMesh);
-	//AEGfxTextureUnload(splashscreen);
+
 }
 
 /******************************************************************************/
@@ -145,6 +138,7 @@ void GS_SplashScreen_Free(void)
 void GS_SplashScreen_Unload(void)
 {
 
-	
+	AEGfxMeshFree(pMesh);
+	AEGfxTextureUnload(splashscreen);
 	
 }
