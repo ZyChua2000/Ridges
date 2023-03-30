@@ -25,7 +25,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static saveData				data;
 static Node* nodes{};
 
-
+bool pause = 0;
 //static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
@@ -321,430 +321,442 @@ void GS_Colosseum_Init(void) {
 
 void GS_Colosseum_Update(void) {
 
-	// Normalising mouse to 0,0 at the center
-	s32 mouseIntX, mouseIntY;
-	AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
-	mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
-	mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-	float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
-	if (mouseY + camY > Player->posCurr.y) {
-		angleMousetoPlayer = -angleMousetoPlayer;
+	if (AEInputCheckTriggered(AEVK_P)) {
+		pause = !pause;
 	}
-
-	static float playerHitTime = 0;
-	//Time-related variables
-	utilities::decreaseTime(slashCD);
-	utilities::decreaseTime(walkCD);
-	utilities::decreaseTime(playerHitTime);
+		if (pause == 1) {
 
 
-	// =====================================
-	// User Input
-	// =====================================
-	//Debugging mode
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		state ^= 1;
-	}
-	//Map editor mode
-	if (AEInputCheckTriggered(AEVK_9)) {
-		mapeditor ^= 1;
-	}
+			// Normalising mouse to 0,0 at the center
+			s32 mouseIntX, mouseIntY;
+			AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
+			mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
+			mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
+
+			float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+			if (mouseY + camY > Player->posCurr.y) {
+				angleMousetoPlayer = -angleMousetoPlayer;
+			}
+
+			static float playerHitTime = 0;
+			//Time-related variables
+			utilities::decreaseTime(slashCD);
+			utilities::decreaseTime(walkCD);
+			utilities::decreaseTime(playerHitTime);
 
 
-	Player->playerStand();
 
-	if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
-		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
-		Player->playerWalk(walkCD);
-	}
 
-	//reducing heath for debugging
-	if (AEInputCheckTriggered(AEVK_MINUS))
-	{
-		Player->deducthealth();
-		switch (Player->health)
-		{
-		case 0:
-			Health[2]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 1:
-			Health[1]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 2:
-			Health[0]->TextureMap = TEXTURE_DEADHEART;
-		}
-	}
+			// =====================================
+			// User Input
+			// =====================================
+			//Debugging mode
+			if (AEInputCheckTriggered(AEVK_F3)) {
+				state ^= 1;
+			}
+			//Map editor mode
+			if (AEInputCheckTriggered(AEVK_9)) {
+				mapeditor ^= 1;
+			}
 
-	if (AEInputCheckTriggered(AEVK_E)) {
 
-		for (int i = 0; i < chestnum; i++)
-		{
-			//Interaction with Chest
-			if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+			Player->playerStand();
+
+			if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
+				|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
+				Player->playerWalk(walkCD);
+			}
+
+			//reducing heath for debugging
+			if (AEInputCheckTriggered(AEVK_MINUS))
 			{
-				//change texture of chest
-				Chest[i]->chest2Potion();
-				spawned = false;
-				waves = 1;
-			}
-		}
-	}
-
-
-	if (CURRENT_MOBS == 0) {
-		switch (waves) {
-		case 1:
-			waves = 2;
-			break;
-		case 2:
-			waves = 3;
-			break;
-		case 3:
-			//move to next level
-			utilities::completeLevel(colosseum, Player, Backpack);
-			waves = 4;
-			break;
-		default:
-			break;
-		}
-		spawned = false;
-	}
-
-
-
-	if (waves == 1 && !spawned) {
-		//Initialise enemy in level
-		AEVec2* pos = nullptr;
-		int num;
-		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave1.txt");
-		for (int i = 0; i < CURRENT_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
-		}
-		utilities::unloadObjs(pos);
-		spawned = true;
-		//	waves = 15;
-	}
-
-	if (waves == 2 && !spawned) {
-		//Initialise enemy in level
-		AEVec2* pos = nullptr;
-		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave2.txt");
-		for (int i = 0; i < CURRENT_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
-		}
-		utilities::unloadObjs(pos);
-		spawned = true;
-		//	waves = 17;
-	}
-
-	if (waves == 3 && !spawned) {
-		//Initialise enemy in level
-		AEVec2* pos = nullptr;
-		int num;
-		utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave3.txt");
-		for (int i = 0; i < CURRENT_MOBS; i++) {
-			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
-		}
-		utilities::unloadObjs(pos);
-		spawned = true;
-		//	waves = 99;
-	}
-
-	//if pickup potion then add player health
-	if (AEInputCheckTriggered(AEVK_R))
-	{
-		Player->drinkPotion(Health, Backpack);
-	}
-
-	if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-		SLASH_ACTIVATE = true;
-		slashCD = SLASH_COOLDOWN_t;
-		walkCD = WALK_COOLDOWN_t;
-		Player->playerStand();
-	}
-
-	if (SLASH_ACTIVATE == true) {
-		Player->playerSlashCreate(angleMousetoPlayer);
-		SLASH_ACTIVATE = false;
-	}
-
-	if (mapeditor == 1) {
-		mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-		utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-	}
-	else {
-		mapEditorObj->scale = 0;
-	}
-
-	//Map editor printing
-	if (AEInputCheckTriggered(AEVK_8)) {
-		utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
-
-		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
-	}
-
-	if (AEInputCheckTriggered(AEVK_M)) {
-		gGameStateNext = GS_MAINMENU;
-	}
-
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-		{
-			continue;
-		}
-		//Interaction with items
-		if (Player->calculateDistance(*pInst) < 0.5f)
-		{
-			Backpack.itemPickUp(pInst);
-		}
-	}
-
-
-	// ======================================================
-	// update physics of all active game object instances
-	//  -- Get the AABB bounding rectangle of every active instance:
-	//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-	//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-
-
-		// Pathfinding for Enemy AI
-	for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
-	{
-		GameObjInst* pEnemy = sGameObjInstList + j;
-
-
-		// skip non-active object
-		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
-			continue;
-
-		if (Player->calculateDistance(*pEnemy) > 10)
-			continue;
-
-		pEnemy->mobsPathFind(*Player);
-	}
-
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-		pInst->calculateBB();
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-		if (pInst->pObject->type != TYPE_SLASH) {
-			continue;
-		}
-		pInst->calculateBB();
-	}
-
-
-	// ======================================================
-	//	-- Positions of the instances are updated here with the already computed velocity (above)col
-	// ======================================================
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
-		{
-			if (pInst->pObject->type == TYPE_CHARACTER) {
-				pInst->velToPos(PLAYER_SPEED);
-			}
-			//invert movement for binary map
-
-			if (pInst->pObject->type == TYPE_ENEMY) {
-				pInst->velToPos(NPC_SPEED);
-			}
-		}
-	}
-
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
-	// ====================
-	// check for collision
-	// ====================
-
-	//if player receive damage from collision or from mob, player decrease health
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-
-		if (pInst->pObject->type == TYPE_ENEMY) {
-
-			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-				&& playerHitTime == 0)
-			{
-				if (Player->health > 0)
+				Player->deducthealth();
+				switch (Player->health)
 				{
-					Player->deducthealth();
-
-					//Hit cooldown
-					playerHitTime = DAMAGE_COODLDOWN_t;
-
-					//knockback
-					Player->playerKnockback(*pInst);
-
+				case 0:
+					Health[2]->TextureMap = TEXTURE_DEADHEART;
+					break;
+				case 1:
+					Health[1]->TextureMap = TEXTURE_DEADHEART;
+					break;
+				case 2:
+					Health[0]->TextureMap = TEXTURE_DEADHEART;
 				}
 			}
 
-			for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
-				staticObjInst* jInst = sStaticObjInstList + j;
-				if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+			if (AEInputCheckTriggered(AEVK_E)) {
+
+				for (int i = 0; i < chestnum; i++)
+				{
+					//Interaction with Chest
+					if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+					{
+						//change texture of chest
+						Chest[i]->chest2Potion();
+						spawned = false;
+						waves = 1;
+					}
+				}
+			}
+
+
+			if (CURRENT_MOBS == 0) {
+				switch (waves) {
+				case 1:
+					waves = 2;
+					break;
+				case 2:
+					waves = 3;
+					break;
+				case 3:
+					//move to next level
+					utilities::completeLevel(colosseum, Player, Backpack);
+					waves = 4;
+					break;
+				default:
+					break;
+				}
+				spawned = false;
+			}
+
+
+
+			if (waves == 1 && !spawned) {
+				//Initialise enemy in level
+				AEVec2* pos = nullptr;
+				int num;
+				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave1.txt");
+				for (int i = 0; i < CURRENT_MOBS; i++) {
+					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
+					enemy->health = 3;
+					enemy->pathfindtime = 0.25f;
+					enemy->pathtimer = enemy->pathfindtime;
+				}
+				utilities::unloadObjs(pos);
+				spawned = true;
+				//	waves = 15;
+			}
+
+			if (waves == 2 && !spawned) {
+				//Initialise enemy in level
+				AEVec2* pos = nullptr;
+				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave2.txt");
+				for (int i = 0; i < CURRENT_MOBS; i++) {
+					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
+					enemy->health = 3;
+					enemy->pathfindtime = 0.25f;
+					enemy->pathtimer = enemy->pathfindtime;
+				}
+				utilities::unloadObjs(pos);
+				spawned = true;
+				//	waves = 17;
+			}
+
+			if (waves == 3 && !spawned) {
+				//Initialise enemy in level
+				AEVec2* pos = nullptr;
+				int num;
+				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave3.txt");
+				for (int i = 0; i < CURRENT_MOBS; i++) {
+					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
+					enemy->health = 3;
+					enemy->pathfindtime = 0.25f;
+					enemy->pathtimer = enemy->pathfindtime;
+				}
+				utilities::unloadObjs(pos);
+				spawned = true;
+				//	waves = 99;
+			}
+
+			//if pickup potion then add player health
+			if (AEInputCheckTriggered(AEVK_R))
+			{
+				Player->drinkPotion(Health, Backpack);
+			}
+
+			if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
+				SLASH_ACTIVATE = true;
+				slashCD = SLASH_COOLDOWN_t;
+				walkCD = WALK_COOLDOWN_t;
+				Player->playerStand();
+			}
+
+			if (SLASH_ACTIVATE == true) {
+				Player->playerSlashCreate(angleMousetoPlayer);
+				SLASH_ACTIVATE = false;
+			}
+
+			if (mapeditor == 1) {
+				mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+				utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
+			}
+			else {
+				mapEditorObj->scale = 0;
+			}
+
+			//Map editor printing
+			if (AEInputCheckTriggered(AEVK_8)) {
+				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
+
+				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
+			}
+
+			if (AEInputCheckTriggered(AEVK_M)) {
+				gGameStateNext = GS_MAINMENU;
+			}
+
+
+			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+			{
+				staticObjInst* pInst = sStaticObjInstList + i;
+				if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
+				{
 					continue;
 				}
-				if (pInst->calculateDistance(*jInst) < 0.9f
-					&& jInst->Alpha == 0) {
-					pInst->deducthealth(Player->damage);
-					// Knockback
-					pInst->mobKnockback(*jInst);
+				//Interaction with items
+				if (Player->calculateDistance(*pInst) < 0.5f)
+				{
+					Backpack.itemPickUp(pInst);
 				}
 			}
-		}
 
 
-		if (Player->health == 0) {
-			gGameStateNext = GS_DEATHSCREEN;
-		}
+			// ======================================================
+			// update physics of all active game object instances
+			//  -- Get the AABB bounding rectangle of every active instance:
+			//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+			//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 
-		switch (Player->health)
-		{
-		case 0:
-			Health[2]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 1:
-			Health[1]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 2:
-			Health[0]->TextureMap = TEXTURE_DEADHEART;
-		}
-	}
 
-	int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
-
-	snapCollision(*Player, flag);
-
-	// ===================================
-	// update active game object instances
-	// Example:
-	//		-- Removing effects after certain time
-	//		-- Removing dead objects
-	// ===================================
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-
-		if (pInst->pObject->type == TYPE_SLASH) {
-			pInst->playerSlashUpdate();
-		}
-	}
-
-	for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE) {
-			continue;
-		}
-
-		if (pInst->pObject->type == TYPE_ENEMY)
-		{
-			if (pInst->health == 0)
+				// Pathfinding for Enemy AI
+			for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 			{
-				pInst->mobsKilled();
-				CURRENT_MOBS -= 1;
+				GameObjInst* pEnemy = sGameObjInstList + j;
+
+
+				// skip non-active object
+				if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
+					continue;
+
+				if (Player->calculateDistance(*pEnemy) > 10)
+					continue;
+
+				pEnemy->mobsPathFind(*Player);
 			}
-		}
-
-		if (pInst->pObject->type == TYPE_CHARACTER) {
-			pInst->timetracker += g_dt;
-		}
-	}
-
-	// =====================================
-	// calculate the matrix for all objects
-	// =====================================
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	{
-		GameObjInst* pInst = sGameObjInstList + i;
-
-		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		pInst->calculateTransMatrix();
-	}
-
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
 
 
-		// skip non-active object
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		pInst->calculateTransMatrix();
-	}
-
-	// Camera position and UI items
-
-
-	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
-	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
-
-
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-
-	//BUG NOT WORKING
-	Player->dustParticles();
-
-	for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-	{
-		GameObjInst* pInst = sGameObjInstList + i;
-		if (pInst->pObject && pInst->pObject->type == TYPE_ENEMY) {
-
-			if (pInst->flag == 1) {
-				pInst->dustParticles();
+			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+				GameObjInst* pInst = sGameObjInstList + i;
+				if (pInst->flag != FLAG_ACTIVE) {
+					continue;
+				}
+				pInst->calculateBB();
 			}
+
+			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+				staticObjInst* pInst = sStaticObjInstList + i;
+				if (pInst->flag != FLAG_ACTIVE) {
+					continue;
+				}
+				if (pInst->pObject->type != TYPE_SLASH) {
+					continue;
+				}
+				pInst->calculateBB();
+			}
+
+
+			// ======================================================
+			//	-- Positions of the instances are updated here with the already computed velocity (above)col
+			// ======================================================
+
+			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+				GameObjInst* pInst = sGameObjInstList + i;
+				if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
+				{
+					if (pInst->pObject->type == TYPE_CHARACTER) {
+						pInst->velToPos(PLAYER_SPEED);
+					}
+					//invert movement for binary map
+
+					if (pInst->pObject->type == TYPE_ENEMY) {
+						pInst->velToPos(NPC_SPEED);
+					}
+				}
+			}
+
+			MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+			NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+			MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+			NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+			//player health following viewport
+			Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+			Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+			Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+
+			// ====================
+			// check for collision
+			// ====================
+
+			//if player receive damage from collision or from mob, player decrease health
+			for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+				GameObjInst* pInst = sGameObjInstList + i;
+				if (pInst->flag != FLAG_ACTIVE) {
+					continue;
+				}
+
+				if (pInst->pObject->type == TYPE_ENEMY) {
+
+					if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+						&& playerHitTime == 0)
+					{
+						if (Player->health > 0)
+						{
+							Player->deducthealth();
+
+							//Hit cooldown
+							playerHitTime = DAMAGE_COODLDOWN_t;
+
+							//knockback
+							Player->playerKnockback(*pInst);
+
+						}
+					}
+
+					for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+						staticObjInst* jInst = sStaticObjInstList + j;
+						if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+							continue;
+						}
+						if (pInst->calculateDistance(*jInst) < 0.9f
+							&& jInst->Alpha == 0) {
+							pInst->deducthealth(Player->damage);
+							// Knockback
+							pInst->mobKnockback(*jInst);
+						}
+					}
+				}
+
+
+				if (Player->health == 0) {
+					gGameStateNext = GS_DEATHSCREEN;
+				}
+
+				switch (Player->health)
+				{
+				case 0:
+					Health[2]->TextureMap = TEXTURE_DEADHEART;
+					break;
+				case 1:
+					Health[1]->TextureMap = TEXTURE_DEADHEART;
+					break;
+				case 2:
+					Health[0]->TextureMap = TEXTURE_DEADHEART;
+				}
+			}
+
+			int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+
+			snapCollision(*Player, flag);
+
+			// ===================================
+			// update active game object instances
+			// Example:
+			//		-- Removing effects after certain time
+			//		-- Removing dead objects
+			// ===================================
+			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+			{
+				staticObjInst* pInst = sStaticObjInstList + i;
+				if (pInst->flag != FLAG_ACTIVE) {
+					continue;
+				}
+
+				if (pInst->pObject->type == TYPE_SLASH) {
+					pInst->playerSlashUpdate();
+				}
+			}
+
+			for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+				GameObjInst* pInst = sGameObjInstList + i;
+				if (pInst->flag != FLAG_ACTIVE) {
+					continue;
+				}
+
+				if (pInst->pObject->type == TYPE_ENEMY)
+				{
+					if (pInst->health == 0)
+					{
+						pInst->mobsKilled();
+						CURRENT_MOBS -= 1;
+					}
+				}
+
+				if (pInst->pObject->type == TYPE_CHARACTER) {
+					pInst->timetracker += g_dt;
+				}
+			}
+
+			// =====================================
+			// calculate the matrix for all objects
+			// =====================================
+
+			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+			{
+				GameObjInst* pInst = sGameObjInstList + i;
+
+				// skip non-active object
+				if ((pInst->flag & FLAG_ACTIVE) == 0)
+					continue;
+
+				pInst->calculateTransMatrix();
+			}
+
+			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+			{
+				staticObjInst* pInst = sStaticObjInstList + i;
+
+
+				// skip non-active object
+				if ((pInst->flag & FLAG_ACTIVE) == 0)
+					continue;
+
+				pInst->calculateTransMatrix();
+			}
+
+			// Camera position and UI items
+
+
+			NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
+			NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
+
+
+			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+
+			//BUG NOT WORKING
+			Player->dustParticles();
+
+			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+			{
+				GameObjInst* pInst = sGameObjInstList + i;
+				if (pInst->pObject && pInst->pObject->type == TYPE_ENEMY) {
+
+					if (pInst->flag == 1) {
+						pInst->dustParticles();
+					}
+				}
+			}
+
+
+			ParticleSystemUpdate();
+			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
 		}
-	}
-
-
-	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+	
 
 }
 

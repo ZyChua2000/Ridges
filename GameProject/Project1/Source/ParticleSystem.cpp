@@ -33,7 +33,7 @@ float internalTimer = 0;
 enum TYPE_PARTICLE
 {
 	TYPE_DEFAULT = 0,
-	TYPE_ENEMY = 1
+	//TYPE_ENEMY = 1
 };
 
 /******************************************************************************/

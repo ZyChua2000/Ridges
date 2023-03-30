@@ -30,6 +30,8 @@ double	 g_appTime;
 int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_line, int show)
 {
 
+	
+
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	UNREFERENCED_PARAMETER(prevInstanceH);
 	UNREFERENCED_PARAMETER(command_line);
@@ -75,8 +77,8 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 
 			AEInputUpdate();
 
-			GameStateUpdate();
-
+			GameStateUpdate(); 
+			
 			GameStateDraw();
 
 			AESysFrameEnd();
