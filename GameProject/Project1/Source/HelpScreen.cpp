@@ -22,19 +22,19 @@ static int debugstate = 0;
 
 enum TYPE_BUTTON
 {
-	TYPE_BACK1=0,
+	TYPE_BACK1 = 0,
 	TYPE_BACK2,
 	TYPE_BACK3,
 	TYPE_BACK4,
 	TYPE_BACK5,
 	TYPE_BACK6,
-	
 
 
 
-	
+
+
 };
-struct MenuObj
+struct HelpObj
 {
 	unsigned long type;
 	AEGfxVertexList* pMesh;
@@ -43,27 +43,27 @@ struct MenuObj
 	bool refTexture;
 };
 
-struct MenuObjInst
+struct HelpObjInst
 {
-	MenuObj* pObject;
-	unsigned long flag =0;
+	HelpObj* pObject;
+	unsigned long flag = 0;
 	float scale;
 	AEVec2 posCurr;
 	float	dirCurr;
 	AEMtx33				transform;
 };
 
-static const unsigned int	MENU_OBJ_NUM_MAX = 8;
-static const unsigned int	MENU_OBJ_INST_NUM_MAX = 32;
+static const unsigned int	Help_OBJ_NUM_MAX = 8;
+static const unsigned int	Help_OBJ_INST_NUM_MAX = 32;
 
 
-static MenuObj				sMenuObjList[MENU_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sMenuObjNum;
-static MenuObjInst			sMenuObjInstList[MENU_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sMenuObjInstNum;
+static HelpObj				sHelpObjList[Help_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
+static unsigned long		sHelpObjNum;
+static HelpObjInst			sHelpObjInstList[Help_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
+static unsigned long		sHelpObjInstNum;
 
-static MenuObjInst* mBack;
-static AEGfxTexture* animationBG[6];
+static HelpObjInst* mBack;
+static AEGfxTexture* CycleBG[3];
 
 //MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 static float animated = 1;
@@ -73,10 +73,10 @@ static float animated = 1;
 
 static const float BackSize = 10;
 
-MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
-void menuObjInstDestroy(MenuObjInst* pInst);
-AEAudio BackgroundMusic;
-AEAudioGroup Group1;
+static int cycle = 0;
+HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+void HelpObjInstDestroy(HelpObjInst* pInst);
+
 
 /******************************************************************************/
 /*!
@@ -86,19 +86,18 @@ AEAudioGroup Group1;
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
-void GS_MainMenu_Load(void) {
+void GS_HelpScreen_Load(void) {
 
-	sMenuObjNum = 0;
+	sHelpObjNum = 0;
 
-	animationBG[0] = AEGfxTextureLoad("Assets/MainMenu/Mainback1.png");
-	animationBG[1] = AEGfxTextureLoad("Assets/MainMenu/Mainback2.png");
-	animationBG[2] = AEGfxTextureLoad("Assets/MainMenu/Mainback3.png");
-	animationBG[3] = AEGfxTextureLoad("Assets/MainMenu/Mainback4.png");
-	animationBG[4] = AEGfxTextureLoad("Assets/MainMenu/Mainback5.png");
-	animationBG[5] = AEGfxTextureLoad("Assets/MainMenu/Mainback6.png");
+	CycleBG[0] = AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png");
+	CycleBG[1] = AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png");
+	CycleBG[2] = AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png");
+	
 
-	MenuObj* Background_1;
-	Background_1= sMenuObjList + sMenuObjNum++;
+
+	HelpObj* Background_1;
+	Background_1 = sHelpObjList + sHelpObjNum++;
 	AEGfxMeshStart();
 	AEGfxTriAdd(-80.f, 45.f, 0x00FF00, 0.f, 0.f,
 		-80.f, -45.f, 0x00FF00, 0.0f, 1.0f,
@@ -110,12 +109,10 @@ void GS_MainMenu_Load(void) {
 	Background_1->pMesh = AEGfxMeshEnd();
 
 	Background_1->type = TYPE_BACK1;
-	Background_1->pTexture = animationBG[0];
+	Background_1->pTexture = CycleBG[0];
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
-	BackgroundMusic = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Flags.mp3");
-	Group1 = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -125,15 +122,14 @@ void GS_MainMenu_Load(void) {
 	be called once at the start of the level.
 */
 /******************************************************************************/
-void GS_MainMenu_Init(void) {
+void GS_HelpScreen_Init(void) {
 	AEGfxSetBackgroundColor(0, 0, 0);
-	
+
 	AEVec2 Backpos;
 	AEVec2Set(&Backpos, 0, 0);
 
-		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
-		
-		AEAudioPlay(BackgroundMusic, Group1, 1, 1, 1);
+	mBack = HelpObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
+
 }
 
 
@@ -144,87 +140,65 @@ void GS_MainMenu_Init(void) {
 	the game loop runs for the Main Menu state.
 */
 /******************************************************************************/
-void GS_MainMenu_Update(void) {
-	
-	animated += g_dt;
-	
-	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
+void GS_HelpScreen_Update(void) {
 
-	
-		
-	
-	
+	if (AEInputCheckTriggered(AEVK_RIGHT))
+	{
+		cycle++;
+
+	}
+	if (cycle >= 3)
+	{
+		cycle = 0;
+		gGameStateNext=gGameStatePrev;
+	}
+	mBack->pObject->pTexture = CycleBG[cycle];
+
+
 	if (AEInputCheckTriggered(AEVK_3)) {
-		AEAudioStopGroup(Group1);
 		gGameStateNext = GS_MAZE;
-		return;
 	}
 
 	if (AEInputCheckTriggered(AEVK_4)) {
-		AEAudioStopGroup(Group1);
 		gGameStateNext = GS_COLOSSEUM;
-		return;
-	}
-
-	if (AEInputCheckTriggered(AEVK_5)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_TOWER;
-		return;
-	}
-
-
-	if (AEInputCheckTriggered(AEVK_6)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_BOSSLEVEL;
-		return;
-	}
-	if (AEInputCheckTriggered(AEVK_H)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_HELP;
-		return;
 	}
 
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
-	mouseX = float (mX);
-	mouseY = float (mY);
+	mouseX = float(mX);
+	mouseY = float(mY);
 
 	//pPlay = nullptr;
-	
+
 	if (AEInputCheckTriggered(AEVK_F3)) {
 		debugstate ^= 1;
 
 	}
-	
-	
-		if (AEInputCheckReleased(AEVK_LBUTTON)) {
-			
-			
-			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-			{
-				loadState = 0;
-				AEAudioStopGroup(Group1);
-				gGameStateNext = GS_WORLD;
-				return;
-				
 
-			}
+	if (AEInputCheckReleased(AEVK_LBUTTON)) {
 
-			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-			{
-				gGameStateNext = GS_QUIT;
-					return;
-			}
-			//gGameStateNext = GS_WORLD;
+
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+		{
+
+			gGameStateNext = GS_MAINMENU;
+			return;
 		}
-	
-		
-			
+
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+		{
+			gGameStateNext = GS_QUIT;
+			return;
+		}
+		//gGameStateNext = GS_WORLD;
+	}
 
 
-	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
+
+
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		MenuObjInst* pInst = sMenuObjInstList + i;
+		HelpObjInst* pInst = sHelpObjInstList + i;
 		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
 
 
@@ -243,12 +217,12 @@ void GS_MainMenu_Update(void) {
 		// Concatenate the 3 matrix in the correct order in the object instance's "transform" matrix
 		AEMtx33Concat(&pInst->transform, &trans, &rot);
 		AEMtx33Concat(&pInst->transform, &pInst->transform, &scale);
-	
 
-		
+
+
 	}
 
-	
+
 }
 
 /******************************************************************************/
@@ -258,45 +232,45 @@ void GS_MainMenu_Update(void) {
 	during game loop.
 */
 /******************************************************************************/
-void GS_MainMenu_Draw(void) {
-	
-	
+void GS_HelpScreen_Draw(void) {
+
+
 
 
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//AEGfxTextureSet(NULL, 0, 0);
 
 	AEGfxSetTransparency(1.0f);
 
-	
-	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
+
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		MenuObjInst* pInst = sMenuObjInstList + i;
-		
+		HelpObjInst* pInst = sHelpObjInstList + i;
+
 
 		// skip non-active object
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 
-		
+
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		AEGfxSetTransform(pInst->transform.m);
-		
+
 		// Actually drawing the mesh
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-		
-		
-	}
-	
 
-	
+
+	}
+
+
+
 
 	//Exit/////////////////////////////////////////
 
-	
+
 	if (debugstate == 1)
 	{
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -312,7 +286,7 @@ void GS_MainMenu_Draw(void) {
 
 
 	}
-	
+
 }
 
 /******************************************************************************/
@@ -321,15 +295,15 @@ void GS_MainMenu_Draw(void) {
 	This function frees all the instances created for the Main Menu level.
 */
 /******************************************************************************/
-void GS_MainMenu_Free(void) {
-	
-	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
+void GS_HelpScreen_Free(void) {
+
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		MenuObjInst* pInst = sMenuObjInstList + i;
-		if(pInst)
-		menuObjInstDestroy(pInst);
+		HelpObjInst* pInst = sHelpObjInstList + i;
+		if (pInst)
+			HelpObjInstDestroy(pInst);
 	}
-	
+
 }
 
 /******************************************************************************/
@@ -339,16 +313,16 @@ void GS_MainMenu_Free(void) {
 	Main Menu level.
 */
 /******************************************************************************/
-void GS_MainMenu_Unload(void) {
+void GS_HelpScreen_Unload(void) {
 
-	
-	for (unsigned int i = 0; i < sMenuObjNum; i++) {
-		if ((sMenuObjList + i)->refMesh == false)
-			AEGfxMeshFree((sMenuObjList + i)->pMesh);
+
+	for (unsigned int i = 0; i < sHelpObjNum; i++) {
+		if ((sHelpObjList + i)->refMesh == false)
+			AEGfxMeshFree((sHelpObjList + i)->pMesh);
 	}
 
-	for (int i = 0; i < 6; i++) {
-		AEGfxTextureUnload(animationBG[i]);
+	for (int i = 0; i < 3; i++) {
+		AEGfxTextureUnload(CycleBG[i]);
 	}
 }
 
@@ -358,7 +332,7 @@ void GS_MainMenu_Unload(void) {
 
 */
 /******************************************************************************/
-MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos,float dir)
+HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
 	AEVec2Zero(&zero);
@@ -366,21 +340,21 @@ MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos,flo
 	//AE_ASSERT_PARM(type < sMenuObjNum);
 
 	// loop through the object instance list to find a non-used object instance
-	for (unsigned long i = 0; i < MENU_OBJ_INST_NUM_MAX; i++)
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		MenuObjInst* pInst = sMenuObjInstList + i;
+		HelpObjInst* pInst = sHelpObjInstList + i;
 
 		// check if current instance is not used
 		if (pInst->flag == 0)
 		{
 			// it is not used => use it to create the new instance
-			pInst->pObject = sMenuObjList + type;
+			pInst->pObject = sHelpObjList + type;
 			pInst->flag = FLAG_ACTIVE;
 			pInst->scale = scale;
 			pInst->posCurr = pPos ? *pPos : zero;
 			pInst->dirCurr = dir;
 
-			
+
 
 			// return the newly created instance
 			return pInst;
@@ -397,16 +371,14 @@ MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos,flo
 */
 /******************************************************************************/
 
-void menuObjInstDestroy(MenuObjInst* pInst)
+void HelpObjInstDestroy(HelpObjInst* pInst)
 {
 	// if instance is destroyed before, just return
 	if (pInst->flag == 0)
 		return;
 
-	
-	sMenuObjInstNum--; //Decrement the number of game object instance
+
+	sHelpObjInstNum--; //Decrement the number of game object instance
 	// zero out the flag
 	pInst->flag = 0;
 }
-
-
