@@ -45,6 +45,7 @@ extern double	g_appTime;
 #include "staticObjs.h"
 #include "SplashScreen.h"
 
+#include "HelpScreen.h"
 
 #endif
 
