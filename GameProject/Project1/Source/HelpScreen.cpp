@@ -34,7 +34,7 @@ enum TYPE_BUTTON
 
 
 };
-struct DEATHObj
+struct HelpObj
 {
 	unsigned long type;
 	AEGfxVertexList* pMesh;
@@ -43,9 +43,9 @@ struct DEATHObj
 	bool refTexture;
 };
 
-struct DEATHObjInst
+struct HelpObjInst
 {
-	DEATHObj* pObject;
+	HelpObj* pObject;
 	unsigned long flag = 0;
 	float scale;
 	AEVec2 posCurr;
@@ -53,17 +53,17 @@ struct DEATHObjInst
 	AEMtx33				transform;
 };
 
-static const unsigned int	DEATH_OBJ_NUM_MAX = 8;
-static const unsigned int	DEATH_OBJ_INST_NUM_MAX = 32;
+static const unsigned int	Help_OBJ_NUM_MAX = 8;
+static const unsigned int	Help_OBJ_INST_NUM_MAX = 32;
 
 
-static DEATHObj				sDEATHObjList[DEATH_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sDEATHObjNum;
-static DEATHObjInst			sDEATHObjInstList[DEATH_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sDEATHObjInstNum;
+static HelpObj				sHelpObjList[Help_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
+static unsigned long		sHelpObjNum;
+static HelpObjInst			sHelpObjInstList[Help_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
+static unsigned long		sHelpObjInstNum;
 
-static DEATHObjInst* mBack;
-static AEGfxTexture* animationBG[4];
+static HelpObjInst* mBack;
+static AEGfxTexture* CycleBG[3];
 
 //MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
 static float animated = 1;
@@ -73,9 +73,9 @@ static float animated = 1;
 
 static const float BackSize = 10;
 
-
-DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
-void DEATHObjInstDestroy(DEATHObjInst* pInst);
+static int cycle = 0;
+HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+void HelpObjInstDestroy(HelpObjInst* pInst);
 
 
 /******************************************************************************/
@@ -86,18 +86,18 @@ void DEATHObjInstDestroy(DEATHObjInst* pInst);
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
-void GS_DeathScreen_Load(void) {
+void GS_HelpScreen_Load(void) {
 
-	sDEATHObjNum = 0;
-	
-	animationBG[0] = AEGfxTextureLoad("Assets/MainMenu/Deathback1.png");
-	animationBG[1] = AEGfxTextureLoad("Assets/MainMenu/Deathback2.png");
-	animationBG[2] = AEGfxTextureLoad("Assets/MainMenu/Deathback3.png");
-	animationBG[3] = AEGfxTextureLoad("Assets/MainMenu/Deathback4.png");
+	sHelpObjNum = 0;
+
+	CycleBG[0] = AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png");
+	CycleBG[1] = AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png");
+	CycleBG[2] = AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png");
 	
 
-	DEATHObj* Background_1;
-	Background_1 = sDEATHObjList + sDEATHObjNum++;
+
+	HelpObj* Background_1;
+	Background_1 = sHelpObjList + sHelpObjNum++;
 	AEGfxMeshStart();
 	AEGfxTriAdd(-80.f, 45.f, 0x00FF00, 0.f, 0.f,
 		-80.f, -45.f, 0x00FF00, 0.0f, 1.0f,
@@ -109,7 +109,7 @@ void GS_DeathScreen_Load(void) {
 	Background_1->pMesh = AEGfxMeshEnd();
 
 	Background_1->type = TYPE_BACK1;
-	Background_1->pTexture = animationBG[0];
+	Background_1->pTexture = CycleBG[0];
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
@@ -122,13 +122,13 @@ void GS_DeathScreen_Load(void) {
 	be called once at the start of the level.
 */
 /******************************************************************************/
-void GS_DeathScreen_Init(void) {
+void GS_HelpScreen_Init(void) {
 	AEGfxSetBackgroundColor(0, 0, 0);
 
 	AEVec2 Backpos;
 	AEVec2Set(&Backpos, 0, 0);
 
-	mBack = DEATHObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
+	mBack = HelpObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
 
 }
 
@@ -140,12 +140,19 @@ void GS_DeathScreen_Init(void) {
 	the game loop runs for the Main Menu state.
 */
 /******************************************************************************/
-void GS_DeathScreen_Update(void) {
-	
-	animated += g_dt;
-	
-	
-	mBack->pObject->pTexture = animationBG[(int)(animated * 10) % 4];
+void GS_HelpScreen_Update(void) {
+
+	if (AEInputCheckTriggered(AEVK_RIGHT))
+	{
+		cycle++;
+
+	}
+	if (cycle >= 3)
+	{
+		cycle = 0;
+		gGameStateNext=gGameStatePrev;
+	}
+	mBack->pObject->pTexture = CycleBG[cycle];
 
 
 	if (AEInputCheckTriggered(AEVK_3)) {
@@ -154,11 +161,6 @@ void GS_DeathScreen_Update(void) {
 
 	if (AEInputCheckTriggered(AEVK_4)) {
 		gGameStateNext = GS_COLOSSEUM;
-	}
-
-	if (AEInputCheckTriggered(AEVK_H)) {
-		gGameStateNext = GS_HELP;
-		return;
 	}
 
 	s32 mX, mY;
@@ -172,31 +174,31 @@ void GS_DeathScreen_Update(void) {
 		debugstate ^= 1;
 
 	}
-	
-		if (AEInputCheckReleased(AEVK_LBUTTON)) {
-			
 
-			if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-			{
-				
-				gGameStateNext = GS_MAINMENU;
-				return;
-			}
+	if (AEInputCheckReleased(AEVK_LBUTTON)) {
 
-			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-			{
-				gGameStateNext = GS_QUIT;
-				return;
-			}
-			//gGameStateNext = GS_WORLD;
+
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+		{
+
+			gGameStateNext = GS_MAINMENU;
+			return;
 		}
-	
+
+		if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+		{
+			gGameStateNext = GS_QUIT;
+			return;
+		}
+		//gGameStateNext = GS_WORLD;
+	}
 
 
 
-	for (unsigned long i = 0; i < DEATH_OBJ_INST_NUM_MAX; i++)
+
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		DEATHObjInst* pInst = sDEATHObjInstList + i;
+		HelpObjInst* pInst = sHelpObjInstList + i;
 		AEMtx33		 trans = { 0 }, rot = { 0 }, scale = { 0 };
 
 
@@ -230,7 +232,7 @@ void GS_DeathScreen_Update(void) {
 	during game loop.
 */
 /******************************************************************************/
-void GS_DeathScreen_Draw(void) {
+void GS_HelpScreen_Draw(void) {
 
 
 
@@ -243,9 +245,9 @@ void GS_DeathScreen_Draw(void) {
 	AEGfxSetTransparency(1.0f);
 
 
-	for (unsigned long i = 0; i < DEATH_OBJ_INST_NUM_MAX; i++)
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		DEATHObjInst* pInst = sDEATHObjInstList + i;
+		HelpObjInst* pInst = sHelpObjInstList + i;
 
 
 		// skip non-active object
@@ -293,13 +295,13 @@ void GS_DeathScreen_Draw(void) {
 	This function frees all the instances created for the Main Menu level.
 */
 /******************************************************************************/
-void GS_DeathScreen_Free(void) {
+void GS_HelpScreen_Free(void) {
 
-	for (unsigned long i = 0; i < DEATH_OBJ_INST_NUM_MAX; i++)
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		DEATHObjInst* pInst = sDEATHObjInstList + i;
+		HelpObjInst* pInst = sHelpObjInstList + i;
 		if (pInst)
-			DEATHObjInstDestroy(pInst);
+			HelpObjInstDestroy(pInst);
 	}
 
 }
@@ -311,16 +313,16 @@ void GS_DeathScreen_Free(void) {
 	Main Menu level.
 */
 /******************************************************************************/
-void GS_DeathScreen_Unload(void) {
+void GS_HelpScreen_Unload(void) {
 
 
-	for (unsigned int i = 0; i < sDEATHObjNum; i++) {
-		if ((sDEATHObjList + i)->refMesh == false)
-			AEGfxMeshFree((sDEATHObjList + i)->pMesh);
+	for (unsigned int i = 0; i < sHelpObjNum; i++) {
+		if ((sHelpObjList + i)->refMesh == false)
+			AEGfxMeshFree((sHelpObjList + i)->pMesh);
 	}
 
-	for (int i = 0; i < 4; i++) {
-		AEGfxTextureUnload(animationBG[i]);
+	for (int i = 0; i < 3; i++) {
+		AEGfxTextureUnload(CycleBG[i]);
 	}
 }
 
@@ -330,7 +332,7 @@ void GS_DeathScreen_Unload(void) {
 
 */
 /******************************************************************************/
-DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
+HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
 	AEVec2Zero(&zero);
@@ -338,15 +340,15 @@ DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, 
 	//AE_ASSERT_PARM(type < sMenuObjNum);
 
 	// loop through the object instance list to find a non-used object instance
-	for (unsigned long i = 0; i < DEATH_OBJ_INST_NUM_MAX; i++)
+	for (unsigned long i = 0; i < Help_OBJ_INST_NUM_MAX; i++)
 	{
-		DEATHObjInst* pInst = sDEATHObjInstList + i;
+		HelpObjInst* pInst = sHelpObjInstList + i;
 
 		// check if current instance is not used
 		if (pInst->flag == 0)
 		{
 			// it is not used => use it to create the new instance
-			pInst->pObject = sDEATHObjList + type;
+			pInst->pObject = sHelpObjList + type;
 			pInst->flag = FLAG_ACTIVE;
 			pInst->scale = scale;
 			pInst->posCurr = pPos ? *pPos : zero;
@@ -369,14 +371,14 @@ DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, 
 */
 /******************************************************************************/
 
-void DEATHObjInstDestroy(DEATHObjInst* pInst)
+void HelpObjInstDestroy(HelpObjInst* pInst)
 {
 	// if instance is destroyed before, just return
 	if (pInst->flag == 0)
 		return;
 
 
-	sDEATHObjInstNum--; //Decrement the number of game object instance
+	sHelpObjInstNum--; //Decrement the number of game object instance
 	// zero out the flag
 	pInst->flag = 0;
 }

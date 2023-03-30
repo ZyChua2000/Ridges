@@ -142,5 +142,7 @@ namespace utilities {
 	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory Backpack);
 
 	bool inRange(GameObjInst* Player, const AEVec2 min, const AEVec2 max);
+
+	void loadMeshNTexture(GameObj*& Obj, AEGfxVertexList* Mesh, AEGfxTexture* Texture, int type);
 }
 

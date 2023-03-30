@@ -42,7 +42,7 @@ const float			BULLET_SPEED = 4.5f;			// Speed of the bullet
 
 const float			SLASH_COOLDOWN_t = 0.5f;		// Time for slash to cooldown
 const float			WALK_COOLDOWN_t = 0.2f;			// Time for walk to be stopped after slash
-const float			DAMAGE_COODLDOWN_t = 0.5f;		// Time for damage invulenrability to reset
+const float			DAMAGE_COODLDOWN_t = 1.5f;		// Time for damage invulenrability to reset
 const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
@@ -54,6 +54,7 @@ const AEVec2		TEXTURE_POTION = { 6,9 };
 const AEVec2		TEXTURE_TOWER = { 2,6 };
 const AEVec2		TEXTURE_BULLET = { 5,12 };
 const AEVec2		TEXTURE_ENEMY = { 0,9 };
+const AEVec2		TEXTURE_BOSS = { 3,9 };
 const AEVec2		TEXTURE_SPIKE = { 5,3 };
 const AEVec2		TEXTURE_UNOPENEDCHEST = { 5,7 };
 const AEVec2		TEXTURE_OPENEDCHEST = { 8,7 };
@@ -67,8 +68,29 @@ const AEVec2		TEXTURE_NUMBERS[10] = { {2,12},{5,11},{6,11},
 											{1,12} };
 const AEVec2		TEXTURE_FLOOR = { 0,4 };
 const AEVec2		TEXTURE_FENCE = { 5,6 };
+const AEVec2		TEXTURE_BOSSCIRCLE = {6,12};
 
 const AEVec2		TEXTURE_PLAYER = { 1,8 };
 const float			TOWER_REFRESH = 2.f;			// Rate at which tower shoot bullets
 
-boolean				levelCleared[4] = { false };
+bool				levelCleared[4] = { false };
+
+bool damageFlag = 0;
+
+AEAudio HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+AEAudio HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+AEAudio Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+AEAudio BulletShot = AEAudioLoadMusic("Assets/Music/SCI-FI-LASER_GEN-HDF-20725.wav");
+
+
+
+AEAudio Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");;
+AEAudioGroup MovementGroup = AEAudioCreateGroup();
+AEAudioGroup BulletGroup = AEAudioCreateGroup();
+AEAudioGroup InteractGroup = AEAudioCreateGroup();
+AEAudioGroup Damage = AEAudioCreateGroup();
+
+
+
+
+

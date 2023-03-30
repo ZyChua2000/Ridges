@@ -93,6 +93,10 @@ static float minimaptime = 0;
 
 static float slashCD = 0;
 static float walkCD = 0;
+static float playerHitTime = 0;
+
+AEAudio MazeBG;
+AEAudioGroup MazeBGG;
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -283,7 +287,8 @@ void GS_Maze_Load(void) {
 
 	MapChar = AEGfxMeshEnd();
 
-
+	 MazeBG = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Warped.mp3");
+	 MazeBGG = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -323,11 +328,6 @@ void GS_Maze_Init(void) {
 	ifs >> Backpack.Potion; //set to player number of current key
 	ifs.close();
 
-	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
-		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
-	}
-
 	utilities::loadObjs(pos, num, "mazeSpikes.txt");
 	for (int i = 0; i < num; i++)
 	{
@@ -348,9 +348,16 @@ void GS_Maze_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
+	//Initialise player health.
+	for (int i = 0; i < 3; i++) {
+		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
+	}
 
 	ParticleSystemInit();
 
+	playerHitTime = 0;
+
+	AEAudioPlay(MazeBG, MazeBGG, 0.1, 1, 1);
 	
 }
 
@@ -375,12 +382,11 @@ void GS_Maze_Update(void) {
 	if (mouseY + camY > Player->posCurr.y) {
 		angleMousetoPlayer = -angleMousetoPlayer;
 	}
-
-	static float playerHitTime = 0;
 	//Time-related variables
 	utilities::decreaseTime(slashCD);
 	utilities::decreaseTime(walkCD);
 	utilities::decreaseTime(playerHitTime);
+	Player->playerDamaged(playerHitTime);
 
 	// =====================================
 	// User Input
@@ -434,6 +440,10 @@ void GS_Maze_Update(void) {
 		|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 		Player->playerWalk(walkCD);
 	}
+	else {
+		Player->TextureMap = TEXTURE_PLAYER;
+		AEAudioStopGroup(MovementGroup);
+	}
 
 	if(Player->velCurr.x != 0 || Player->velCurr.y !=0 )
 	{
@@ -476,8 +486,8 @@ void GS_Maze_Update(void) {
 	}
 
 	/////////////////////////////////////////// MINIMAP///////////////////////////
-	int playerx = Player->posCurr.x;
-	int playery = Player->posCurr.y;
+	int playerx = static_cast<int>(Player->posCurr.x);
+	int playery = static_cast<int>(Player->posCurr.y);
 			MiniMapObjInstList[playerx][playery] = mapEditorObj->TextureMap;
 		
 	
@@ -541,17 +551,6 @@ void GS_Maze_Update(void) {
 		}
 	}
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
-
 
 	// ====================
 	// check for collision
@@ -572,14 +571,18 @@ void GS_Maze_Update(void) {
 		pInst->spikeUpdate(); // Updates alpha of spikes
 
 		if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
-
+			
+			
+			
 			Player->deducthealth();
+			
 			playerHitTime = DAMAGE_COODLDOWN_t;
 		}
 		if (Player->health == 0) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
 
+		
 		switch (Player->health)
 		{
 		case 0:
@@ -593,6 +596,8 @@ void GS_Maze_Update(void) {
 		}
 
 	}
+	
+	
 
 	// ===================================
 	// update active game object instances
@@ -624,8 +629,23 @@ void GS_Maze_Update(void) {
 
 
 	if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
+		AEAudioStopGroup(MazeBGG);
 		utilities::completeLevel(maze, Player, Backpack);
 	}
+
+	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
+	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
+	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
+
+	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
+	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
+
+	//player health following viewport
+	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
+	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
+	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 	// =====================================
 	// calculate the matrix for all objects
@@ -658,11 +678,8 @@ void GS_Maze_Update(void) {
 	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
 	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
-
-	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-
 	ParticleSystemUpdate();
-	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
 	//ShittyCollisionMap((float)(Player->posCurr.x), (float)(Player->posCurr.y));
 	//===================MINIMAP Position Update=================//
 	if (flag & COLLISION_TOP || flag & COLLISION_BOTTOM || flag & COLLISION_LEFT || flag & COLLISION_RIGHT)
@@ -671,9 +688,9 @@ void GS_Maze_Update(void) {
 		posy = posy;
 	}
 	else {
-		posx += Player->velCurr.x;
+		posx += static_cast<int>(Player->velCurr.x);
 
-		posy += Player->velCurr.y;
+		posy += static_cast<int>(Player->velCurr.y);
 
 		
 	}
@@ -778,7 +795,7 @@ void GS_Maze_Draw(void) {
 		AEGfxTextureSet(DarkRoom, 0, 0);
 		// Create a scale matrix that scales by 100 x and y
 		AEMtx33 lscale = { 0 };
-		AEMtx33Scale(&lscale, 10, 10);
+		AEMtx33Scale(&lscale, 20, 20);
 		// Create a rotation matrix that rotates by 45 degrees
 		AEMtx33 lrotate = { 0, };
 
@@ -797,47 +814,7 @@ void GS_Maze_Draw(void) {
 		AEGfxMeshDraw(DarkMesh, AE_GFX_MDM_TRIANGLES);
 	}
 
-	if (minimap == 1)
-	{
-		AEMtx33 lscale = { 0 };
-		AEMtx33 lrotate = { 0, };
-		AEMtx33 ltranslate = { 0 };
-		AEMtx33 ltransform = { 0 };
-
-		if (MapChar)
-		{
-
-
-			//if (posx != prevX || posy != prevY)
-			//{
-			//currX = (camX * SPRITE_SCALE) + posx / 10;
-
-
-
-			// Create a rotation matrix that rotates by 45 degrees
-			for (unsigned long i = 0; i < 3000; i++)
-			{
-				AEMtx33Scale(&lscale, 3, 3);
-				AEMtx33Rot(&lrotate, 0);
-
-				AEMtx33Concat(&ltransform, &lrotate, &lscale);
-				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-
-				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
-
-				AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
-				// Concat the matrices (TRS) 
-
-				// Actually drawing the mesh
-				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
-				AEGfxSetTransform(ltransform.m);
-
-				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
-
-				//count++;
-			}
-		}
-	}
+	
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
 	// Spawn Static entities excluding spikes
@@ -906,10 +883,53 @@ void GS_Maze_Draw(void) {
 		else {
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 		}
+		AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 		// Set the current object instance's transform matrix using "AEGfxSetTransform"
 		AEGfxSetTransform(pInst->transform.m);
 		// Draw the shape used by the current object instance using "AEGfxMeshDraw"
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+	}
+	if (minimap == 1)
+	{
+		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+		AEMtx33 lscale = { 0 };
+		AEMtx33 lrotate = { 0, };
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33 ltransform = { 0 };
+
+		if (MapChar)
+		{
+
+
+			//if (posx != prevX || posy != prevY)
+			//{
+			//currX = (camX * SPRITE_SCALE) + posx / 10;
+
+
+
+			// Create a rotation matrix that rotates by 45 degrees
+			for (unsigned long i = 0; i < 3000; i++)
+			{
+				AEMtx33Scale(&lscale, 3, 3);
+				AEMtx33Rot(&lrotate, 0);
+
+				AEMtx33Concat(&ltransform, &lrotate, &lscale);
+				// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+
+				//AEMtx33Trans(&ltranslate, (camX * SPRITE_SCALE) + posx / 10, (camY * SPRITE_SCALE) + posy / 10);
+
+				AEMtx33Trans(&ltranslate, mappingarrx[i], mappingarry[i]);
+				// Concat the matrices (TRS) 
+
+				// Actually drawing the mesh
+				AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+				AEGfxSetTransform(ltransform.m);
+
+				AEGfxMeshDraw(MapChar, AE_GFX_MDM_TRIANGLES);
+
+				//count++;
+			}
+		}
 	}
 	
 	if (minimap == 0)
@@ -921,7 +941,7 @@ void GS_Maze_Draw(void) {
 	char pathtimerdisplay[50];
 	if (10 - pathingcdtime == 10)
 	{
-		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.f", 0);
+		sprintf_s(pathtimerdisplay, "Pathing Cooldown: %.d", 0);
 		AEGfxPrint(1, pathtimerdisplay, 0.60f, 0.65f, 1.5f, 1.0f, 1.0f, 1.0f);
 	}
 	else
