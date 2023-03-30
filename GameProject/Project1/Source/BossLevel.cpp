@@ -423,7 +423,7 @@ void GS_BossLevel_Update(void) {
 
 	//simulating damage taken
 	
-	if (boss.currenthp > 0)
+	if (*boss.currenthp > 0)
 	{
 		if (AEInputCheckTriggered(AEVK_Q))
 		{

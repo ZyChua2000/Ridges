@@ -28,7 +28,6 @@ extern double	g_appTime;
 #include "GameStateList.h"
 #include "GSM.h"
 #include "Mainmenu.h"
-#include "BossLevel.h"
 #include "World.h"
 #include "GameObjs.h"
 #include "Utilities.h"
@@ -45,6 +44,7 @@ extern double	g_appTime;
 #include "staticObjs.h"
 #include "SplashScreen.h"
 
+#include "BossLevel.h"
 #include "HelpScreen.h"
 
 #endif

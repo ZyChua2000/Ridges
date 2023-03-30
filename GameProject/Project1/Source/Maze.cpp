@@ -442,7 +442,7 @@ void GS_Maze_Update(void) {
 	}
 	else {
 		Player->TextureMap = TEXTURE_PLAYER;
-		AEAudioStopGroup(MovementGroup);
+		//AEAudioStopGroup(MovementGroup);
 	}
 
 	if(Player->velCurr.x != 0 || Player->velCurr.y !=0 )
