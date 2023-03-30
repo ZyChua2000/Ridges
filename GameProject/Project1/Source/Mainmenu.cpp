@@ -73,6 +73,8 @@ static float animated = 1;
 
 static const float BackSize = 10;
 static bool credit = false;
+AEGfxVertexList* CreditMesh;
+AEGfxTexture* Credit_Img;
 
 MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void menuObjInstDestroy(MenuObjInst* pInst);
@@ -115,8 +117,23 @@ void GS_MainMenu_Load(void) {
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
+
+
+
+	
+	AEGfxMeshStart();
+	AEGfxTriAdd(-800.f, 450.f, 0x00FF00, 0.f, 0.f,
+		-800.f, -450.f, 0x00FF00, 0.0f, 1.0f,
+		800.f, 450.f, 0x00FF00, 1.f, 0.0f);
+
+	AEGfxTriAdd(800.f, -450.f, 0x00FF00, 1.0f, 1.0f,
+		-800.f, -450.f, 0x00FF00, 0.0f, 1.f,
+		800.f, 450.f, 0x00FF00, 1.f, 0.0f);
+	CreditMesh = AEGfxMeshEnd();
+
 	BackgroundMusic = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Flags.mp3");
 	Group1 = AEAudioCreateGroup();
+	Credit_Img = AEGfxTextureLoad("Assets/Credits.png");
 }
 
 /******************************************************************************/
@@ -185,6 +202,11 @@ void GS_MainMenu_Update(void) {
 		return;
 	}
 
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+		credit = false;
+		
+	}
+
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float (mX);
@@ -217,10 +239,10 @@ void GS_MainMenu_Update(void) {
 					return;
 			}
 
-			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+			if (utilities::rectbuttonClicked_AlignCtr(155.f, 820.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
-				gGameStateNext = GS_QUIT;
-				return;
+				credit = true;
+				
 			}
 			//gGameStateNext = GS_WORLD;
 		}
@@ -296,6 +318,29 @@ void GS_MainMenu_Draw(void) {
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		
 		
+	}
+	if (credit == true)
+	{
+		AEGfxTextureSet(Credit_Img, 0, 0);
+		// Create a scale matrix that scales by 100 x and y
+		AEMtx33 lscale = { 0 };
+		AEMtx33Scale(&lscale, 1, 1);
+		// Create a rotation matrix that rotates by 45 degrees
+		AEMtx33 lrotate = { 0, };
+
+		AEMtx33Rot(&lrotate, 0);
+
+		// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
+		AEMtx33 ltranslate = { 0 };
+		AEMtx33Trans(&ltranslate, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+		// Concat the matrices (TRS) 
+		AEMtx33 ltransform = { 0 };
+		AEMtx33Concat(&ltransform, &lrotate, &lscale);
+		AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+		// Choose the transform to use 
+		AEGfxSetTransform(ltransform.m);
+		// Actually drawing the mesh
+		AEGfxMeshDraw(CreditMesh, AE_GFX_MDM_TRIANGLES);
 	}
 	
 
