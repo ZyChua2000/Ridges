@@ -151,7 +151,7 @@ void GS_MainMenu_Init(void) {
 
 		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
 		
-		AEAudioPlay(BackgroundMusic, Group1, 1, 1, 1);
+		AEAudioPlay(BackgroundMusic, Group1, 0.1, 1, 1);
 }
 
 
