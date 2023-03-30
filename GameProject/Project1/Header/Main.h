@@ -44,7 +44,7 @@ extern double	g_appTime;
 #include "mapFunctions.h"
 #include "staticObjs.h"
 #include "SplashScreen.h"
-
+#include "WinScreen.h"
 #include "HelpScreen.h"
 
 #endif

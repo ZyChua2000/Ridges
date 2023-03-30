@@ -175,6 +175,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClCompile Include="Source\SplashScreen.cpp" />
     <ClCompile Include="Source\Tower.cpp" />
     <ClCompile Include="Source\Utilities.cpp" />
+    <ClCompile Include="Source\WinScreen.cpp" />
     <ClCompile Include="Source\World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +199,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine_V3.08\lib\fmod.dll" "$(OutDir)" /s /r /y
     <ClInclude Include="Header\staticObjs.h" />
     <ClInclude Include="Header\Tower.h" />
     <ClInclude Include="Header\Utilities.h" />
+    <ClInclude Include="Header\WinScreen.h" />
     <ClInclude Include="Header\World.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

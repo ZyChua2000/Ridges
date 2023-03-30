@@ -33,6 +33,7 @@ enum
 	GS_DEATHSCREEN,
 	GS_SPLASHSCREEN,
 	GS_HELP,
+	GS_WIN,
 	
 	// special game state.
 	GS_RESTART,
