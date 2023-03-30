@@ -45,7 +45,7 @@ bool loadState;
 static AEVec2 WarpPts[8]{ {102, -34.5f}, {104, -33.5f},
 						  {109, -34.5f}, {111, -33.5f},
 						  {121, -28.5f}, {122, -25.5f},
-						  {0,0} ,{0,0} };
+						  {106, -20.f}, {108, -19.f} };
 
 // -----------------------------------------------------------------------------
 
@@ -247,8 +247,8 @@ void GS_World_Init(void) {
 	// =====================================
 	if (loadState == false) {
 		//Initialise Player
-		AEVec2 PlayerPos = { 12,-8 };
-		//AEVec2 PlayerPos = { 106,-22 };
+		//AEVec2 PlayerPos = { 12,-8 };
+		AEVec2 PlayerPos = { 106, -25 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 		Backpack.Potion = 0;
@@ -1014,6 +1014,11 @@ void GS_World_Draw(void) {
 	}
 	if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
 		gGameStateNext = GS_MAZE;
+		Player->posCurr = { 106, -22 };
+		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+	}
+	if (utilities::inRange(Player, WarpPts[6], WarpPts[7])) {
+		gGameStateNext = GS_BOSSLEVEL;
 		Player->posCurr = { 106, -22 };
 		saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 	}

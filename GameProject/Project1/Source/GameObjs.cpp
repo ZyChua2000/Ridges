@@ -349,7 +349,10 @@ void staticObjInst::tilt45() {
 void Inventory::itemPickUp(staticObjInst* item) {
 	switch (item->pObject->type) {
 	case TYPE_ITEMS:
-		Potion++;
+		if (Potion < 9)
+		{
+			Potion++;
+		}
 		break;
 	case TYPE_KEY:
 		Key++;
