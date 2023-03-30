@@ -212,6 +212,7 @@ enum TYPE
 	TYPE_BOSSCIRCLEATTACK,
 
 
+
 	TYPE_NUM
 };
 

@@ -31,6 +31,7 @@ enum
 	GS_COLOSSEUM,
 	GS_TOWER,
 	GS_DEATHSCREEN,
+	GS_HELP,
 	
 	// special game state.
 	GS_RESTART,
