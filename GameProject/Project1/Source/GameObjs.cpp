@@ -303,10 +303,11 @@ staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos
 				pInst->TextureMap = TEXTURE_SPIKE;
 				break;
 			case TYPE_BOSSCIRCLE:
-				pInst->TextureMap = TEXTURE_BULLET;
+				pInst->TextureMap = TEXTURE_BOSSCIRCLE;
+				pInst->Alpha = 0.5f;
 				break;
 			case TYPE_BOSSCIRCLEATTACK:
-				pInst->TextureMap = TEXTURE_BULLET;
+				pInst->TextureMap = TEXTURE_BOSSCIRCLE;
 				break;
 			default:
 				pInst->TextureMap = { 0,0 };
