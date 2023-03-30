@@ -72,6 +72,7 @@ static float animated = 1;
 
 
 static const float BackSize = 10;
+static bool credit = false;
 
 MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void menuObjInstDestroy(MenuObjInst* pInst);
@@ -214,6 +215,12 @@ void GS_MainMenu_Update(void) {
 			{
 				gGameStateNext = GS_QUIT;
 					return;
+			}
+
+			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+			{
+				gGameStateNext = GS_QUIT;
+				return;
 			}
 			//gGameStateNext = GS_WORLD;
 		}
