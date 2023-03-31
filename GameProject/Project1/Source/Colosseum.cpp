@@ -120,8 +120,6 @@ void GS_Colosseum_Load(void) {
 
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
-	meshList.clear();
-	textureList.clear();
 	// No game objects (shapes) at this point
 	sGameObjNum = 0;
 
@@ -976,6 +974,9 @@ void GS_Colosseum_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
+
+	meshList.clear();
+	textureList.clear();
 
 	ParticleSystemUnload();
 }

@@ -122,8 +122,6 @@ void GS_World_Load(void) {
 	
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
-	textureList.clear();
-	meshList.clear();
 	// No game objects (shapes) at this point
 	sGameObjNum = 0;
 
@@ -1044,8 +1042,10 @@ void GS_World_Unload(void) {
 		AEGfxTextureUnload(texture);
 	}
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
+
+	meshList.clear();
+	textureList.clear();
 
 
 	ParticleSystemUnload();

@@ -279,7 +279,6 @@ void GS_BossLevel_Init(void) {
 
 	ParticleSystemInit();
 
-	stageList.clear();
 	for (int i = 0; i < Backpack.Key; i++) {
 		if (levelCleared[i] == false) {
 			stageList.push_back(i);
@@ -927,7 +926,9 @@ void GS_BossLevel_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
-
+	meshList.clear();
+	textureList.clear();
+	stageList.clear();
 
 	ParticleSystemUnload();
 }

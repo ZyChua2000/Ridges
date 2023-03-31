@@ -962,6 +962,9 @@ void GS_Tower_Unload(void) {
 		AEGfxTextureUnload(texture);
 	}
 
+	meshList.clear();
+	textureList.clear();
+
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
 }

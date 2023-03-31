@@ -942,6 +942,9 @@ void GS_Maze_Unload(void) {
 		AEGfxTextureUnload(texture);
 	}
 
+	meshList.clear();
+	textureList.clear();
+
 	AEGfxSetCamPosition(0, 0);
 }
 
