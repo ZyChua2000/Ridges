@@ -1,11 +1,11 @@
 #pragma once
 /******************************************************************************/
 /*!
-\file		Maze.h
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
-\date   	February 21, 2023
-\brief		This header file contains the functions for the level of Maze.
+\file		Tower.h
+\author 	Liu Chengrong
+\par    	email: chengrong.liu\@digipen.edu
+\date   	March 31, 2023
+\brief		This header file contains the functions for the level of Tower.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

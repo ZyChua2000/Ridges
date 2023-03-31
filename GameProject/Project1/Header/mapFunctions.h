@@ -1,6 +1,20 @@
 #pragma once
 #include "main.h"
 
+/******************************************************************************/
+/*!
+\file		mapFunctions.h
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	February 02, 2023
+\brief		This header file contains the declarations for map relateed functions
+
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
+
 namespace utilities {
 	/*!***********************************************************************
 	\brief
