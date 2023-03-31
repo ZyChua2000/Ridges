@@ -62,7 +62,8 @@ static AEGfxTexture* WinanimationBG[6];
 static int cycle = 0;
 WinObjInst* WinObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void WinObjInstDestroy(WinObjInst* pInst);
-
+AEAudio WinBGM;
+AEAudioGroup WinGroup;
 
 /******************************************************************************/
 /*!
@@ -102,6 +103,9 @@ void GS_WinScreen_Load(void) {
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
+
+	WinBGM = AEAudioLoadMusic("Assets/Music/SUPERSTRUCTURE - Corporate MSCCRP2_01.wav");
+	WinGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -118,7 +122,7 @@ void GS_WinScreen_Init(void) {
 	AEVec2Set(&Backpos, 0, 0);
 
 	mBack = WinObjInstCreate(TYPE_BACK1, 1, &Backpos, 0.0f);
-
+	AEAudioPlay(WinBGM, WinGroup, 0.3f, 1, 1);
 }
 
 
@@ -137,10 +141,12 @@ void GS_WinScreen_Update(void) {
 	mBack->pObject->pTexture = WinanimationBG[(int)(animated * 10) % 6];
 
 	if (AEInputCheckTriggered(AEVK_3)) {
+		AEAudioStopGroup(WinGroup);
 		gGameStateNext = GS_MAZE;
 	}
 
 	if (AEInputCheckTriggered(AEVK_4)) {
+		AEAudioStopGroup(WinGroup);
 		gGameStateNext = GS_COLOSSEUM;
 	}
 
@@ -156,6 +162,7 @@ void GS_WinScreen_Update(void) {
 
 	}
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+		AEAudioStopGroup(WinGroup);
 		gGameStateNext = GS_MAINMENU;
 	}
 
