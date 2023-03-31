@@ -215,6 +215,8 @@ void GS_BossLevel_Load(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Init(void) {
+	srand(static_cast<unsigned int>(time(NULL))); //Random seed
+
 	dark = notActivated;
 	darkTimer = 0; // Reset dark timer
 	playerHitTime = 0; // Reset hit cooldown
