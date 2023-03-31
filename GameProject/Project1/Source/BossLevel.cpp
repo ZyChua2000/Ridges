@@ -375,6 +375,20 @@ void GS_BossLevel_Update(void) {
 		gGameStateNext = GS_MAINMENU;
 	}
 
+	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+	{
+		staticObjInst* pInst = sStaticObjInstList + i;
+		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
+		{
+			continue;
+		}
+		//Interaction with items
+		if (Player->calculateDistance(*pInst) < pickUpRange)
+		{
+			Backpack.itemPickUp(pInst);
+		}
+	}
+
 	// ======================================================
 	// update physics of all active game object instances
 	//  -- Get the AABB bounding rectangle of every active instance:
@@ -498,6 +512,9 @@ void GS_BossLevel_Update(void) {
 					if (pInst->calculateDistance(*jInst) < slashRange
 						&& jInst->Alpha == 0) {
 						pInst->deducthealth(Player->damage);
+						if (pInst->health <= 0) {
+							gGameStateNext = GS_WIN; // Win condition
+						}
 					}
 				}
 			}
@@ -562,7 +579,7 @@ void GS_BossLevel_Update(void) {
 
 	if (darkTimer > darkRoom_duration) {
 		darkTimer = 0;
-		dark = 1;
+		dark = notActivated;
 	}
 
 	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)

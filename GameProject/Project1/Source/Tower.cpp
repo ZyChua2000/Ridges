@@ -471,7 +471,7 @@ void GS_Tower_Update(void) {
 			continue;
 		}
 		//Interaction with items
-		if (Player->calculateDistance(*pInst) < 0.5f)
+		if (Player->calculateDistance(*pInst) < pickUpRange)
 		{
 			Backpack.itemPickUp(pInst);
 		}

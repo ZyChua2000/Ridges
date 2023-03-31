@@ -426,20 +426,6 @@ void GS_Maze_Update(void) {
 		utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
 	}
 
-	for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-	{
-		staticObjInst* pInst = sStaticObjInstList + i;
-		if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-		{
-			continue;
-		}
-		//Interaction with items
-		if (Player->calculateDistance(*pInst) < 0.5f)
-		{
-			Backpack.itemPickUp(pInst);
-		}
-	}
-
 	// ======================================================
 	// update physics of all active game object instances
 	//  -- Get the AABB bounding rectangle of every active instance:

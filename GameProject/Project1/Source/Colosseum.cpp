@@ -347,22 +347,6 @@ void GS_Colosseum_Update(void) {
 				Player->playerWalk(walkCD);
 			}
 
-			//reducing heath for debugging
-			if (AEInputCheckTriggered(AEVK_MINUS))
-			{
-				Player->deducthealth();
-				switch (Player->health)
-				{
-				case 0:
-					Health[2]->TextureMap = TEXTURE_DEADHEART;
-					break;
-				case 1:
-					Health[1]->TextureMap = TEXTURE_DEADHEART;
-					break;
-				case 2:
-					Health[0]->TextureMap = TEXTURE_DEADHEART;
-				}
-			}
 
 			if (AEInputCheckTriggered(AEVK_E)) {
 
@@ -482,7 +466,7 @@ void GS_Colosseum_Update(void) {
 					continue;
 				}
 				//Interaction with items
-				if (Player->calculateDistance(*pInst) < 0.5f)
+				if (Player->calculateDistance(*pInst) < pickUpRange)
 				{
 					Backpack.itemPickUp(pInst);
 				}
@@ -552,16 +536,6 @@ void GS_Colosseum_Update(void) {
 				}
 			}
 
-			MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-			NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-			MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-			NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-			//player health following viewport
-			Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-			Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-			Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
 
 			// ====================
 			// check for collision

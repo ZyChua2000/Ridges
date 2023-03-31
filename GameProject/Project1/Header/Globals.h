@@ -60,6 +60,7 @@ extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
 extern const int			MAX_PLAYER_HEALTH;
 extern const float			slashRange;
 extern const float			enemySightRange;
+extern const float			pickUpRange;
 
 extern const float			TOWER_REFRESH;			// Rate at which tower shoot bullets
 

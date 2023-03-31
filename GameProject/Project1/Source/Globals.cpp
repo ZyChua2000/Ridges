@@ -49,6 +49,7 @@ const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
 const int			MAX_PLAYER_HEALTH = 3;
 const float			slashRange = 0.9f;
 const float			enemySightRange = 10.f;
+const float			pickUpRange = 0.5f;
 
 const float			aoeREFRESH = 5.0f;
 const float			challengeATKREFRESH = 10.f;
