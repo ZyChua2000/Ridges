@@ -485,7 +485,7 @@ void GS_Maze_Update(void) {
 
 
 
-	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, binaryMap);
 
 	snapCollision(*Player, flag);
 

@@ -26,7 +26,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static saveData				data;
 static Node* nodes{};
 
-bool pause = 0;
+bool pause;
 //static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
@@ -48,7 +48,7 @@ static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 static float slashCD = 0;
 static float walkCD = 0;
 
-bool levelstart = 0;
+bool levelstart;
 
 
 // -----------------------------------------------------------------------------
@@ -120,6 +120,8 @@ void GS_Colosseum_Load(void) {
 
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
+	meshList.clear();
+	textureList.clear();
 	// No game objects (shapes) at this point
 	sGameObjNum = 0;
 
@@ -135,8 +137,6 @@ void GS_Colosseum_Load(void) {
 
 	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
-
-	//IN CREATING GAME OBJECTS, MUST DO IN SAME ORDER AS ENUM
 
 
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
@@ -180,7 +180,7 @@ void GS_Colosseum_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
 	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 3
-	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 3
+	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 4
 
 	//Texture Alias
 	AEGfxTexture*& slashTex = textureList[0];
@@ -217,9 +217,8 @@ void GS_Colosseum_Load(void) {
 */
 /******************************************************************************/
 void GS_Colosseum_Init(void) {
-
-	PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
-	StartScreenbj = staticObjInstCreate(TYPE_START, 2, nullptr, 0);
+	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
+	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
 
 	AEVec2* pos = nullptr;
 
@@ -283,6 +282,7 @@ void GS_Colosseum_Init(void) {
 	//PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
 
 	levelstart = 1;
+	pause = 0;
 
 	ParticleSystemInit();
 
@@ -404,17 +404,12 @@ void GS_Colosseum_Update(void) {
 			if (waves == 1 && !spawned) {
 				//Initialise enemy in level
 				AEVec2* pos = nullptr;
-				int num;
 				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave1.txt");
 				for (int i = 0; i < CURRENT_MOBS; i++) {
 					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-					enemy->health = 3;
-					enemy->pathfindtime = 0.25f;
-					enemy->pathtimer = enemy->pathfindtime;
 				}
 				utilities::unloadObjs(pos);
 				spawned = true;
-				//	waves = 15;
 			}
 
 			if (waves == 2 && !spawned) {
@@ -423,29 +418,20 @@ void GS_Colosseum_Update(void) {
 				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave2.txt");
 				for (int i = 0; i < CURRENT_MOBS; i++) {
 					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-					enemy->health = 3;
-					enemy->pathfindtime = 0.25f;
-					enemy->pathtimer = enemy->pathfindtime;
 				}
 				utilities::unloadObjs(pos);
 				spawned = true;
-				//	waves = 17;
 			}
 
 			if (waves == 3 && !spawned) {
 				//Initialise enemy in level
 				AEVec2* pos = nullptr;
-				int num;
 				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave3.txt");
 				for (int i = 0; i < CURRENT_MOBS; i++) {
 					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-					enemy->health = 3;
-					enemy->pathfindtime = 0.25f;
-					enemy->pathtimer = enemy->pathfindtime;
 				}
 				utilities::unloadObjs(pos);
 				spawned = true;
-				//	waves = 99;
 			}
 
 			//if pickup potion then add player health
@@ -520,7 +506,7 @@ void GS_Colosseum_Update(void) {
 				if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
 					continue;
 
-				if (Player->calculateDistance(*pEnemy) > 10)
+				if (Player->calculateDistance(*pEnemy) > enemySightRange)
 					continue;
 
 				pEnemy->mobsPathFind(*Player);
@@ -611,7 +597,7 @@ void GS_Colosseum_Update(void) {
 						if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 							continue;
 						}
-						if (pInst->calculateDistance(*jInst) < 0.9f
+						if (pInst->calculateDistance(*jInst) < slashRange
 							&& jInst->Alpha == 0) {
 							pInst->deducthealth(Player->damage);
 							// Knockback
@@ -638,7 +624,7 @@ void GS_Colosseum_Update(void) {
 				}
 			}
 
-			int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+			int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y,binaryMap);
 
 			snapCollision(*Player, flag);
 
@@ -732,10 +718,10 @@ void GS_Colosseum_Update(void) {
 
 
 			ParticleSystemUpdate();
-			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+			
 
 		}
-	
+		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
 
 }
 
@@ -752,6 +738,8 @@ void GS_Colosseum_Draw(void) {
 
 		if (levelstart)
 		{
+			AEMtx33 rot, scale, trans;
+
 			staticObjInst* pInst = StartScreenbj;
 			// Tell the engine to get ready to draw something with texture. 
 			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -762,8 +750,12 @@ void GS_Colosseum_Draw(void) {
 
 			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
 
-			pInst->transform.m[0][0] = 1600;
-			pInst->transform.m[1][1] = 900;
+			AEMtx33Rot(&rot, 0);
+			AEMtx33Trans(&trans, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+			AEMtx33Scale(&scale,  1600, 900);
+			AEMtx33Concat(&pInst->transform, &rot, &scale);
+			AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
 			AEGfxSetTransform(pInst->transform.m);

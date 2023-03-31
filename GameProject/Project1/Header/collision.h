@@ -1,3 +1,4 @@
+#pragma once
 /******************************************************************************/
 /*!
 \file		collision.h
@@ -22,9 +23,10 @@ extern float			    g_dt;
 bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	const AABB& aabb2, const AEVec2& vel2); //AABB STRUCT FOR PLAYER, AEVEC2 VELOCITY OF PLAYER,AABB STRUCT FOR OBJECT, AEVEC2 VELOCITY OF OBJECT
 
-int CheckInstanceBinaryMapCollision(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[124][42]);
+int CheckInstanceBinaryMapCollision(float PosX, float PosY, int binaryMap[124][42], float scaleX = 1.0f, float scaleY = 1.0f);
 
-int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[28][29]);
+
+int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, int binaryMap[28][29], float scaleX = 1.0f, float scaleY = 1.0f);
 
 
 

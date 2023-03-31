@@ -495,7 +495,7 @@ void GS_Tower_Update(void) {
 		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
 			continue;
 
-		if (Player->calculateDistance(*pEnemy) > 10)
+		if (Player->calculateDistance(*pEnemy) > enemySightRange)
 			continue;
 
 		pEnemy->mobsPathFind(*Player);
@@ -583,7 +583,7 @@ void GS_Tower_Update(void) {
 					continue;
 				}
 
-				if (pInst->calculateDistance(*jInst) < 0.9f
+				if (pInst->calculateDistance(*jInst) < slashRange
 					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
@@ -593,7 +593,7 @@ void GS_Tower_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_BULLET) {
-			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
+			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				
 				Player->deducthealth();
@@ -622,7 +622,7 @@ void GS_Tower_Update(void) {
 		}
 	}
 
-	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, binaryMap);
 
 	snapCollision(*Player, flag);
 

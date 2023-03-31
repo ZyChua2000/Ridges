@@ -46,6 +46,9 @@ const float			DAMAGE_COODLDOWN_t = 1.5f;		// Time for damage invulenrability to 
 const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
+const int			MAX_PLAYER_HEALTH = 3;
+const float			slashRange = 0.9f;
+const float			enemySightRange = 10.f;
 
 const float			aoeREFRESH = 5.0f;
 const float			challengeATKREFRESH = 10.f;

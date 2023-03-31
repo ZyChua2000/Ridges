@@ -21,6 +21,14 @@ enum {
 	Activated
 };
 
+struct bosshp
+{
+	int maxhp;
+	int* currenthp;
+	f32 width;
+	f32 height;
+	float damagetaken;
+};
 
 struct saveData {
 	int playerHealth = 0;
@@ -137,12 +145,14 @@ namespace utilities {
 
 	void unlockGate(int gateNum, AEVec2* MapObjInstList, int* binaryMap, AEVec2 Gates[], int MAP_CELL_HEIGHT);
 
-	void updatePlayerUI(staticObjInst Health[], staticObjInst Key[], staticObjInst Potion[], Inventory Backpack, int playerHealth); 
+	void updatePlayerUI(staticObjInst* Health[3], staticObjInst* MenuObj[3], staticObjInst* NumObj[3], const Inventory& Backpack, const int& playerHealth, const float& camX, const float& camY);
 
-	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory Backpack);
+	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory& Backpack);
 
 	bool inRange(GameObjInst* Player, const AEVec2 min, const AEVec2 max);
 
 	void loadMeshNTexture(GameObj*& Obj, AEGfxVertexList* Mesh, AEGfxTexture* Texture, int type);
+
+	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform);
 }
 

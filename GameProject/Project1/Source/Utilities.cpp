@@ -85,23 +85,45 @@ namespace utilities {
 		}
 	}
 
-	void updatePlayerUI(staticObjInst* Health[3], staticObjInst* Key, staticObjInst* Potion, Inventory Backpack, int playerHealth) {
+	void updatePlayerUI(staticObjInst* Health[3], staticObjInst* MenuObj[3], staticObjInst* NumObj[3], const Inventory& Backpack, const int& playerHealth, const float& camX, const float& camY) {
+
+		MenuObj[0]->posCurr = { camX - 9.0f, camY + 5.0f };
+		NumObj[0]->posCurr = { camX - 8.0f, camY + 5.0f };
+
+		MenuObj[1]->posCurr = { camX - 6.0f, camY + 5.0f };
+		NumObj[1]->posCurr = { camX - 5.0f, camY + 5.0f };
+
+		//player health following viewport
+		Health[0]->posCurr = { camX + 7.0f , camY + 5.0f };
+		Health[1]->posCurr = { camX + 8.0f , camY + 5.0f };
+		Health[2]->posCurr = { camX + 9.0f , camY + 5.0f };
+
 		switch (playerHealth)
 		{
 		case 0:
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
+			Health[1]->TextureMap = TEXTURE_DEADHEART;
 			Health[2]->TextureMap = TEXTURE_DEADHEART;
 			break;
 		case 1:
+			Health[0]->TextureMap = TEXTURE_DEADHEART;
 			Health[1]->TextureMap = TEXTURE_DEADHEART;
+			Health[2]->TextureMap = TEXTURE_FULLHEART;
 			break;
 		case 2:
 			Health[0]->TextureMap = TEXTURE_DEADHEART;
+			Health[1]->TextureMap = TEXTURE_FULLHEART;
+			Health[2]->TextureMap = TEXTURE_FULLHEART;
+			break;
 		}
+		NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
+		NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 	}
 
-	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory Backpack) {
+	void completeLevel(int levelCompleted, GameObjInst* Player, Inventory& Backpack) {
 		levelCleared[levelCompleted] = true;
 		gGameStateNext = GS_WORLD;
+		Backpack.Key++;
 		loadState = true;
 		// save data
 
@@ -149,5 +171,18 @@ namespace utilities {
 		Obj ->pMesh = Mesh;
 		Obj ->pTexture = Texture;
 		Obj ->type = type;
+	}
+
+	void bossBarTransMatrix(bosshp& boss, AEMtx33 &hpbartransform) {
+		boss.damagetaken = boss.maxhp - *boss.currenthp;
+		boss.width = SPRITE_SCALE * 9 * *boss.currenthp / boss.maxhp;
+
+		//scale, rot, trans for health bar
+		AEMtx33 bar_scale, bar_trans, bar_rot;
+		AEMtx33Scale(&bar_scale, boss.width, boss.height);
+		AEMtx33Rot(&bar_rot, 0);
+		AEMtx33Trans(&bar_trans, camX * SPRITE_SCALE + 80.f - (boss.damagetaken * SPRITE_SCALE * 4 / boss.maxhp), camY * SPRITE_SCALE + 350.f);
+		AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
+		AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
 	}
 }

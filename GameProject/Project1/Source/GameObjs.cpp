@@ -204,12 +204,19 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				break;
 			case TYPE_ENEMY:
 				pInst->TextureMap = TEXTURE_ENEMY;
+				pInst->health = 3;
+				pInst->pathfindtime = 0.25f;
+				pInst->pathtimer = pInst->pathfindtime;
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
 				break;
 			case TYPE_BOSS:
 				pInst->TextureMap = TEXTURE_BOSS;
+				pInst->health = 140;
+				pInst->pathfindtime = 0.25f;
+				pInst->pathtimer = pInst->pathfindtime;
+				pInst->timetracker = 1;
 				break;
 			default:
 				pInst->TextureMap = { 0,0 };

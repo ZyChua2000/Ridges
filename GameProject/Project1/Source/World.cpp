@@ -42,8 +42,8 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 
 bool loadState;
 
-static AEVec2 WarpPts[8]{ {102, -34.5f}, {104, -33.5f},
-						  {109, -34.5f}, {111, -33.5f},
+static const AEVec2 WarpPts[8]{ {102, -34.5f}, {104, -33.5f},
+							{109, -34.5f}, {111, -33.5f},
 						  {121, -28.5f}, {122, -25.5f},
 						  {106, -20.f}, {108, -19.f} };
 
@@ -119,8 +119,11 @@ static std::vector<AEGfxVertexList*> meshList;
 */
 /******************************************************************************/
 void GS_World_Load(void) {
+	
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
+	textureList.clear();
+	meshList.clear();
 	// No game objects (shapes) at this point
 	sGameObjNum = 0;
 
@@ -272,9 +275,6 @@ void GS_World_Init(void) {
 		MAX_MOBS = CURRENT_MOBS;
 		for (int i = 0; i < CURRENT_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
 		}
 		utilities::unloadObjs(pos);
 
@@ -557,7 +557,7 @@ void GS_World_Update(void) {
 		if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
 			continue;
 
-		if (Player->calculateDistance(*pEnemy) > 10)
+		if (Player->calculateDistance(*pEnemy) > enemySightRange)
 			continue;
 
 		pEnemy->mobsPathFind(*Player);
@@ -644,7 +644,7 @@ void GS_World_Update(void) {
 					continue;
 				}
 
-				if (pInst->calculateDistance(*jInst) < 0.9f
+				if (pInst->calculateDistance(*jInst) < slashRange
 					&& jInst->Alpha == 0) {
 					pInst->deducthealth(Player->damage);
 					// Knockback
@@ -654,7 +654,7 @@ void GS_World_Update(void) {
 		}
 
 		if (pInst->pObject->type == TYPE_BULLET) {
-			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, pInst->scale, pInst->scale, binaryMap);
+			int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
 			if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 				Player->deducthealth();
 				
@@ -684,7 +684,7 @@ void GS_World_Update(void) {
 	}
 	
 
-	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, 1.0f, 1.0f, binaryMap);
+	int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, binaryMap);
 
 	snapCollision(*Player, flag);
 	

@@ -57,6 +57,9 @@ extern const float			DAMAGE_COODLDOWN_t;		// Time for damage invulenrability to 
 extern const float			SPIKE_TRANSITION_t;		// Time for spike to fade in/out
 extern const float			SPIKE_DEATH_t;			// Duration for spike to be non-existent
 extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
+extern const int			MAX_PLAYER_HEALTH;
+extern const float			slashRange;
+extern const float			enemySightRange;
 
 extern const float			TOWER_REFRESH;			// Rate at which tower shoot bullets
 
