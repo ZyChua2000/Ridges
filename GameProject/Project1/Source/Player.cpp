@@ -16,19 +16,19 @@ void GameObjInst::playerWalk(float walkCD)
 	AEVec2 velNull = { 0,0 };
 	//Audio
 	if (AEInputCheckTriggered(AEVK_W) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)){
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	if (AEInputCheckTriggered(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	if (AEInputCheckTriggered(AEVK_S) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_D)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	if (AEInputCheckTriggered(AEVK_D) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_W)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	//Velocity
@@ -82,7 +82,7 @@ void GameObjInst::playerSlashCreate(float angle) {
 	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
 	slashObj->timetracker = 0;
 	slashObj->Alpha = 0;
-	AEAudioPlay(HeroSlash, Damage, 1, 1, 0);
+	AEAudioPlay(HeroSlash, Damage, 0.3, 1, 0);
 }
 
 void GameObjInst::playerStand() {
