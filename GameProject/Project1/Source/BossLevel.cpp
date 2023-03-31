@@ -306,7 +306,8 @@ void GS_BossLevel_Init(void) {
 
 	ParticleSystemInit();
 
-	for (int i = 0; i < Backpack.Key; i++) {
+
+	for (int i = 0; i < 3; i++) {
 		if (levelCleared[i] == false) {
 			stageList.push_back(i);
 		}
@@ -1090,17 +1091,19 @@ void BossStateMachine(GameObjInst* pInst)
 				//CHALLENGE ATTACK
 				// random between 0, 1 and 2
 				pInst->innerState = INNER_STATE_ON_EXIT;
-				int random = stageList[rand()%Backpack.Key];
-				if (random == 0) {
-					pInst->stateFlag = STATE_MAZE_DARKEN;
+				if (Backpack.Key != 0) {
+					int random = stageList[rand() % 3-Backpack.Key];
+					if (random == 0) {
+						pInst->stateFlag = STATE_MAZE_DARKEN;
+					}
+					else if (random == 1) {
+						pInst->stateFlag = STATE_SPAWN_BULLETS;
+					}
+					else if (random == 2) {
+						pInst->stateFlag = STATE_SPAWN_ENEMIES;
+					}
+					break;
 				}
-				else if (random == 1) {
-					pInst->stateFlag = STATE_SPAWN_BULLETS;
-				}
-				else if (random == 2) {
-					pInst->stateFlag = STATE_SPAWN_ENEMIES;
-				}
-				break;
 			}
 
 			if (static_cast<int>(pInst->timetracker * 10) % static_cast<int>(aoeREFRESH*10) == 0) {
