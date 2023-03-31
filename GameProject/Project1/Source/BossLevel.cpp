@@ -89,6 +89,9 @@ static AEMtx33 hpbartransform;
 
 static bosshp boss;
 
+static AEAudio BossBGM;
+static AEAudioGroup BossGroup;
+
 // ---------------------------------------------------------------------------
 
 /******************************************************************************/
@@ -221,6 +224,9 @@ void GS_BossLevel_Load(void) {
 	
 
 	ParticleSystemLoad();
+
+	BossBGM = AEAudioLoadMusic("Assets/Music/DEEP WATERS - DanceTechno MSCDNT2_57.wav");
+	BossGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -308,6 +314,8 @@ void GS_BossLevel_Init(void) {
 	levelstart = 1;
 	pause = 0;
 	cycle = 0;
+
+	AEAudioPlay(BossBGM, BossGroup, 0.2f, 1, 1);
 }
 
 
@@ -329,6 +337,7 @@ void GS_BossLevel_Update(void) {
 			cycle = 1;
 		}
 		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
+			AEAudioStopGroup(BossGroup);
 			cycle++;
 		}
 		if (cycle == 4) {
@@ -340,11 +349,13 @@ void GS_BossLevel_Update(void) {
 			if (AEInputCheckReleased(AEVK_LBUTTON)) {
 				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 				{
+					AEAudioStopGroup(BossGroup);
 					pause = 1;
 				}
 
 				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 				{
+					AEAudioStopGroup(BossGroup);
 					gGameStateNext = GS_MAINMENU;
 				}
 			}
@@ -428,6 +439,7 @@ void GS_BossLevel_Update(void) {
 		}
 
 		if (AEInputCheckTriggered(AEVK_M)) {
+			AEAudioStopGroup(BossGroup);
 			gGameStateNext = GS_MAINMENU;
 		}
 
@@ -569,6 +581,7 @@ void GS_BossLevel_Update(void) {
 							&& jInst->Alpha == 0) {
 							pInst->deducthealth(Player->damage);
 							if (pInst->health <= 0) {
+								AEAudioStopGroup(BossGroup);
 								gGameStateNext = GS_WIN; // Win condition
 							}
 						}
