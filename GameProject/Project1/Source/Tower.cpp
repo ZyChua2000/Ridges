@@ -81,17 +81,10 @@ static staticObjInst* StartScreenbj;
 static Inventory Backpack;
 static staticObjInst* RefBox;
 
-static std::vector<AEGfxTexture*> textureList;
-static std::vector<AEGfxVertexList*> meshList;
-
-static bool pause;
-static bool levelstart;
-
 static AEVec2* Gates;
 static int gatesNum;
 static int levNum;
 static int chestNum;
-static int cycle;
 
 static const float timingFIRST = 0.0f;
 static const float timingSECOND = 0.6f;

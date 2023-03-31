@@ -42,14 +42,10 @@ static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 static unsigned int			state = 0;							// Debugging state
 static unsigned int			mapeditor = 0;						// Map edtior state
 
-static						AEVec2 binaryPlayerPos;				// Position on Binary Map
-
 
 static float slashCD = 0;
 static float walkCD = 0;
 
-static bool pause;
-static bool levelstart;
 
 
 // -----------------------------------------------------------------------------
@@ -83,10 +79,7 @@ static staticObjInst* PauseObj;
 static staticObjInst* StartScreenbj;
 static Inventory Backpack;
 static int chestnum;
-static int cycle = 0;
 
-static std::vector<AEGfxTexture*> textureList;
-static std::vector<AEGfxVertexList*> meshList;
 
 float Timer = 0.f;
 static float internalTimer = 0.f;

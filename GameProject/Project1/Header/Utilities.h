@@ -232,4 +232,14 @@ namespace utilities {
 	*************************************************************************/
 	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform);
 
+	/*!***********************************************************************
+	\brief
+		This function moves the texture in pause obj to the corresponding help
+		screen
+	\param[in] PauseObj
+		The pause screen object
+	\param[in] textureID
+		ID number of texture in texturelist for pause
+	*************************************************************************/
+	void moveHelpScreen(staticObjInst& PauseObj, int textureID);
 }

@@ -44,6 +44,9 @@ extern unsigned long		FontListNum;								// The number of used fonts
 
 extern const unsigned long FLAG_ACTIVE;			// For whether object instance is active
 
+extern std::vector<AEGfxTexture*> textureList;							// Dynamic List of textures
+extern std::vector<AEGfxVertexList*> meshList;							// Dynamic list of meshes
+
 /******************************************************************************/
 /*!
 	Cell related globals
@@ -164,4 +167,7 @@ enum levelCleared  {
 	colosseum,
 };
 
+extern bool pause;										// Bool of pause state
+extern bool levelstart;									// Bool of level instruction state
+extern int cycle;
 #endif

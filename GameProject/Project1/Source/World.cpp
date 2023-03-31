@@ -31,13 +31,12 @@ static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
 
-// All the warp points to enter other levels
-static const AEVec2 WarpPts[8]{ {102, -34.5f}, {104, -33.5f},
-							{109, -34.5f}, {111, -33.5f},
-						  {121, -28.5f}, {122, -25.5f},
-						  {106, -20.f}, {108, -19.f} };
 
-static const AEVec2 SavedPoint{ 106, -22 }; //Location to load to after completing other challenges
+static const AEVec2 playerStartPoint = { 12,-8 };				// Starting coordinate of new game player
+static const AEVec2 SavedPoint{ 106, -22 };						// Location to load to after completing other challenges
+static const int directionInstructionX = 93;					// X coordinate limit to display direction instructions
+
+
 
 // -----------------------------------------------------------------------------
 
@@ -83,11 +82,8 @@ static int chestNum;									// Dynamic number of Chests
 bool loadState;											// Variable for new game vs returning from another level
 static unsigned int	state = 0;							// Debugging state
 static unsigned int	mapeditor = 0;						// Map edtior state
-static bool pause;										// Bool of pause state
-static bool levelstart;									// Bool of level instruction state
 static bool directionShown;								// Bool of Mid-level instruction state
 static bool directionDraw;								// Bool of Mid-level instruction drawing
-static int cycle;										// Tracker for help page
 
 // Time Variables
 static float playerHitTime = 0;							// Stores time left for player's invulnerability upon attacking
@@ -97,10 +93,9 @@ static float walkCD = 0;								// Stores time left before player can move after
 static Inventory Backpack;								// Inventory of Character
 static saveData	data;									// Save data container
 
-static std::vector<AEGfxTexture*> textureList;			// Dynamic list of textures
-static std::vector<AEGfxVertexList*> meshList;			// Dynamic list of meshes
 
- 
+// All the warp points to enter other levels
+static AEVec2* WarpPts;									// Dynamic array of warp points
 
 
 // ---------------------------------------------------------------------------
@@ -117,7 +112,6 @@ static std::vector<AEGfxVertexList*> meshList;			// Dynamic list of meshes
 */
 /******************************************************************************/
 void GS_World_Load(void) {
-	
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
 
@@ -239,6 +233,8 @@ void GS_World_Init(void) {
 
 	AEVec2* pos = nullptr;
 	int num;
+	// Initialize warp pts
+	utilities::loadObjs(WarpPts, num, "worldWarpPts.txt");
 
 	utilities::loadObjs(Gates, gatesNum, "worldGates.txt");
 
@@ -256,18 +252,14 @@ void GS_World_Init(void) {
 
 	mapEditorObj = staticObjInstCreate(TYPE_MAP, 0, nullptr, 0);
 
-	MAX_MOBS = 14;
-
 	// =====================================
 	//	Initialize objects for new game
 	// =====================================
 	if (loadState == false) {
 		//Initialise Player
-		AEVec2 PlayerPos = { 12,-8 };
-		//AEVec2 PlayerPos = { 106, -25 };
+		AEVec2 PlayerPos = playerStartPoint;
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-		Player->health = 3;
-		Player->damage = 1;
+		Player->health = MAX_PLAYER_HEALTH;
 
 
 		//Initialise Levers in level
@@ -349,24 +341,33 @@ void GS_World_Init(void) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
+	utilities::loadObjs(pos, num, "worldColosseumFence.txt");
 	if (levelCleared[colosseum] == true) {
-		MapObjInstList[102][28] = TEXTURE_FENCE;
-		binaryMap[102][28] = 1;
-		MapObjInstList[103][28] = TEXTURE_FENCE;
-		binaryMap[103][28] = 1;
+		for (int i = 0; i < 2; i++) {
+			MapObjInstList[(int)pos[i].x][(int)pos[i].y] = TEXTURE_FENCE;
+			binaryMap[(int)pos[i].x][(int)pos[i].y] = 1;
+		}
 	}
+	utilities::unloadObjs(pos);
+
+	utilities::loadObjs(pos, num, "worldMazeFence.txt");
 	if (levelCleared[maze] == true) {
-		MapObjInstList[114][26] = TEXTURE_FENCE;
-		binaryMap[114][26] = 1;
-		MapObjInstList[114][27] = TEXTURE_FENCE;
-		binaryMap[114][27] = 1;
+		for (int i = 0; i < 2; i++) {
+			MapObjInstList[(int)pos[i].x][(int)pos[i].y] = TEXTURE_FENCE;
+			binaryMap[(int)pos[i].x][(int)pos[i].y] = 1;
+		}
 	}
+	utilities::unloadObjs(pos);
+
+	utilities::loadObjs(pos, num, "worldTowerFence.txt");
 	if (levelCleared[tower] == true) {
-		MapObjInstList[109][28] = TEXTURE_FENCE;
-		binaryMap[109][28] = 1;
-		MapObjInstList[110][28] = TEXTURE_FENCE;
-		binaryMap[110][28] = 1;
+		for (int i = 0; i < 2; i++) {
+			MapObjInstList[(int)pos[i].x][(int)pos[i].y] = TEXTURE_FENCE;
+			binaryMap[(int)pos[i].x][(int)pos[i].y] = 1;
+		}
 	}
+	utilities::unloadObjs(pos);
+
 	ParticleSystemInit();
 	playerHitTime = 0;
 
@@ -388,7 +389,7 @@ void GS_World_Init(void) {
 void GS_World_Update(void) {
 
 	
-	if (directionShown == false && Player->posCurr.x > 93) {
+	if (directionShown == false && Player->posCurr.x > directionInstructionX) {
 		pause = true;
 		directionDraw = true;
 
@@ -398,37 +399,13 @@ void GS_World_Update(void) {
 		}
 	}
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		pause = !pause;
 		levelstart = false;
 	}
 
 	if (pause == true) {
-		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
-			cycle = 1;
-		}
-		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
-			cycle++;
-		}
-		if (cycle == 4) {
-			cycle = 0;
-		}
-		PauseObj->pObject->pTexture = textureList[4 + cycle];
-
-		if (cycle == 0) {
-			if (AEInputCheckReleased(AEVK_LBUTTON)) {
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					pause = false;
-				}
-
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					gGameStateNext = GS_MAINMENU;
-				}
-			}
-		}
-
+		utilities::moveHelpScreen(*PauseObj, 4);
 	}
 	if (pause == false) {
 
@@ -670,25 +647,12 @@ void GS_World_Update(void) {
 
 
 		//Change level conditions
-		if (utilities::inRange(Player, WarpPts[0], WarpPts[1])) {
-			gGameStateNext = GS_COLOSSEUM;
-			Player->posCurr = SavedPoint;
-			saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
-		}
-		if (utilities::inRange(Player, WarpPts[2], WarpPts[3])) {
-				gGameStateNext = GS_TOWER;
+		for (int i = 0; i < 4; i++) {
+			if (utilities::inRange(Player, WarpPts[i], WarpPts[i * 2 + 1])) {
+				gGameStateNext = GS_BOSSLEVEL + i;
 				Player->posCurr = SavedPoint;
 				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
-		}
-		if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
-				gGameStateNext = GS_MAZE;
-				Player->posCurr = SavedPoint;
-				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
-		}
-		if (utilities::inRange(Player, WarpPts[6], WarpPts[7])) {
-				gGameStateNext = GS_BOSSLEVEL;
-				Player->posCurr = SavedPoint;
-				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+			}
 		}
 			
 		// ===================================
@@ -1045,6 +1009,8 @@ void GS_World_Free(void) {
 	deletenodes();
 
 	utilities::unloadObjs(Gates);
+
+	utilities::unloadObjs(WarpPts);
 
 	ParticleSystemFree();
 }

@@ -37,6 +37,9 @@ unsigned long		FontListNum = 0;									// The number of used fonts
 
 const unsigned long FLAG_ACTIVE = 0x00000001;							// For whether object instance is active
 
+std::vector<AEGfxTexture*> textureList;									// Dynamic List of textures
+std::vector<AEGfxVertexList*> meshList;									// Dynamic list of meshes
+
 /******************************************************************************/
 /*!
 	Cell related globals
@@ -150,3 +153,7 @@ AEAudioGroup Damage = AEAudioCreateGroup();
 /******************************************************************************/
 bool				levelCleared[3] = { false };	// Array of boolean checking which level is cleared
 bool				damageFlag = 0;
+
+bool pause = 0;										// Bool of pause state
+bool levelstart = 0;								// Bool of level instruction state
+int cycle = 0;

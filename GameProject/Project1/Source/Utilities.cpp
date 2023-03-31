@@ -341,4 +341,33 @@ namespace utilities {
 		AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
 		AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
 	}
+
+	void moveHelpScreen(staticObjInst& PauseObj, int textureID) {
+		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
+			cycle = 1;
+		}
+		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
+			cycle++;
+		}
+		if (cycle == 4) {
+			cycle = 0;
+		}
+
+		PauseObj.pObject->pTexture = textureList[textureID + cycle];
+
+		if (cycle == 0) {
+			if (AEInputCheckReleased(AEVK_LBUTTON)) {
+				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+				{
+					pause = false;
+				}
+
+				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+				{
+					gGameStateNext = GS_MAINMENU;
+				}
+			}
+		}
+
+	}
 }

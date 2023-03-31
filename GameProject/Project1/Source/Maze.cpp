@@ -69,19 +69,12 @@ static Inventory Backpack;
 static staticObjInst* PauseObj;
 static staticObjInst* StartScreenbj;
 
-static bool pause;
-static bool levelstart;
-
-static std::vector<AEGfxTexture*> textureList;
-static std::vector<AEGfxVertexList*> meshList;
-
 static int dark = 0;
 float spiketimer = 0.f;
 static int minimap = 0;
 static int posx = 0;
 static int posy = 0;
 static int flag;
-static int cycle;
 
 static int countx = 0;
 static int county = 0;

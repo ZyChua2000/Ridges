@@ -304,6 +304,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 			switch (type) {
 			case TYPE_CHARACTER:
 				pInst->TextureMap = TEXTURE_PLAYER;
+				pInst->damage = 1;
 				break;
 			case TYPE_ENEMY:
 				pInst->TextureMap = TEXTURE_ENEMY;

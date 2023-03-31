@@ -72,15 +72,11 @@ static staticObjInst* StartScreenbj;
 
 static int dark;
 static float darkTimer;
-static bool pause;
-static bool levelstart;
-static int cycle;
 
 static int levelclearedNum;
 
 static std::vector<int> stageList;
-static std::vector<AEGfxTexture*> textureList;
-static std::vector<AEGfxVertexList*> meshList;
+
 
 static float playerHitTime;
 static staticObjInst* RefBox;

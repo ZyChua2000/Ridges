@@ -73,7 +73,6 @@ static float animated = 1;
 
 static const float BackSize = 10;
 
-static int cycle = 0;
 HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
 void HelpObjInstDestroy(HelpObjInst* pInst);
 
