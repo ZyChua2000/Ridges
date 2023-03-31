@@ -1,7 +1,20 @@
 #pragma once
 #include "main.h"
 #include <vector>
+/******************************************************************************/
+/*!
+\file		GameObjs.h
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	March 31, 2023
+\brief		This header file contains the functions for game object related
+			structs and functions
 
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
 
 extern const float MAX_ENEMY_DISTANCE;							// define the maximum distance at which enemies should stop moving
 
@@ -21,8 +34,8 @@ struct GameObj
 	unsigned long	type;		// object type
 	AEGfxVertexList* pMesh;		// This will hold the triangles which will form the shape of the object
 	AEGfxTexture* pTexture;		// This holds a pointer to the texture that is being used
-	bool refMesh;			// True if Mesh is referencing another object's mesh, else false by default
-	bool refTexture;		// True if texture is referencing another object's texture, else false by default
+	bool refMesh;				// True if Mesh is referencing another object's mesh, else false by default
+	bool refTexture;			// True if texture is referencing another object's texture, else false by default
 	
 };
 
@@ -43,76 +56,130 @@ struct staticObjInst
 	AEMtx33				transform;	// object transformation matrix: Each frame, 
 	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
 	float				dirCurr;	// object's direction(rotation value)
-	float				timetracker;// object's time of existence
-	float				timetracker2;
+	float				timetracker;// Timer value for usage
+	float				timetracker2;// Tiemr value for usage
 	float				Alpha;		// object's transparency value
 	AABB				boundingBox;// object bouding box that encapsulates the object
 
 
 	// Member functions
 
-
+	/*!***********************************************************************
+	\brief
+		This function updates spike's opacity, meant to use for spike objects
+	*************************************************************************/
 	void spikeUpdate();
 
+	/*!***********************************************************************
+	\brief
+		This function calculates the bounding box of the object and updates
+		the member variable
+	*************************************************************************/
 	void calculateBB();
 
+	/*!***********************************************************************
+	\brief
+		This function calculates the transformation matrix of the object
+		and stores it in the member variable
+	*************************************************************************/
 	void calculateTransMatrix();
 
+	/*!***********************************************************************
+	\brief
+		This function spawns the map editor object at where the mouse is at
+		to show what the map editor is currently selecting
+	\param[in] mouseX
+		Mouse X position
+	\param[in] mouseY
+		Mouse Y position
+	\param[in] camX
+		Cam X position
+	\param[in] camY
+		Cam Y position
+	*************************************************************************/
 	void mapEditorObjectSpawn(float mouseX, float mouseY, float camX, float camY);
 
+	/*!***********************************************************************
+	\brief
+		This function turns a chest object into a potion object
+	*************************************************************************/
 	void chest2Potion();
 
+	/*!***********************************************************************
+	\brief
+		This function shoots a bullet from the direction the tower is facing
+	*************************************************************************/
 	void shootBullet();
 
+	/*!***********************************************************************
+	\brief
+		This function rotates an object by 45 degrees
+	*************************************************************************/
 	void tilt45();
 
+	/*!***********************************************************************
+	\brief
+		This function updates slash's opacity, meant for slash objects
+	*************************************************************************/
 	void playerSlashUpdate();
 };
 
+// This struct represents the inventory of the player
 struct Inventory {
 	int Potion;
 	int Key;
-	int lastItem;
 
 	Inventory() {
 		Potion = 0;
 		Key = 0;
-		lastItem = 0;
 	}
 
+	/*!***********************************************************************
+	\brief
+		This function picks up the item object and updates the inventory of
+		the player
+	*************************************************************************/
 	void itemPickUp(staticObjInst* item);
 };
 
 // This struct is for dynamic objects, meaning game entities that will be moving
 struct GameObjInst
 {
-	GameObj* pObject;	// pointer to the 'original' shape
-	unsigned long		flag{};		// bit flag or-ed together
+	// Variables for all objects
+	GameObj* pObject;					// pointer to the 'original' shape
+	unsigned long		flag{};			// bit flag or-ed together
 	float				scale{};		// scaling value of the object instance
-	AEVec2				posCurr{};	// object current position
-	AEVec2				velCurr{};	// object current velocity
-	float				dirCurr{};	// object current direction
-	AABB				boundingBox{};// object bouding box that encapsulates the object
+	AEVec2				posCurr{};		// object current position
+	AEVec2				velCurr{};		// object current velocity
+	float				dirCurr{};		// object current direction
+	AABB				boundingBox{};	// object bouding box that encapsulates the object
 	AEMtx33				transform{};	// object transformation matrix: Each frame, 
-	AEVec2				TextureMap{}; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
+	AEVec2				TextureMap{};	// object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
+	float				timetracker{};// object's time of existence
+
 	int					health{};		// object's health level
 	int					damage{};		// object's damage parameter
-	std::vector<Node*>	path{}; // this is only for enemy or any ai/ npc that requires path
-	float				timetracker{};// object's time of existence
-	bool				stopped{}; //to check if enemy stopped moving
-	bool				enemy_dead{}; // flag to check if enemy is alive or not
-	bool				is_hit{};//check if enemy is hit
-	float				hit_time{};//time got hit
-	float				pathfindtime{};//buffer time for enemies
-	float				pathtimer{}; //timer to count down
-	int					target_node{};// node checker for path finding
-	enum				STATE state {}; //state for boss obj instance
-	enum				INNER_STATE innerState {}; // inner state for boss obj instance
-	float				state_timer{}; // timer for state machine 
-	float				timeCD{};
-	tint				damagetint{};
-	float				damagebuffer{};
-	enum				STATE stateFlag {};
+
+	// Variables exclusively for Player
+	tint				damagetint{};	// Tint for player when damaged
+	float				damagebuffer{};	// Time buffer to alternate tint
+
+	// Variables exclusively for Enemy
+	bool				stopped{};		//to check if enemy stopped moving
+	bool				enemy_dead{};	// flag to check if enemy is alive or not
+	bool				is_hit{};		//check if enemy is hit
+	float				hit_time{};		//time got hit
+	float				pathfindtime{};	//buffer time for enemies
+	float				pathtimer{};	//timer to count down
+	int					target_node{};	// node checker for path finding
+	std::vector<Node*>	path{};			// this is only for enemy or any ai/ npc that requires path
+
+	// Variables exclusively for Boss
+	enum				STATE stateFlag {};			//Flag to assign state in state machine
+	enum				STATE state {};				//state for boss obj instance
+	enum				INNER_STATE innerState {};	// inner state for boss obj instance
+	float				timeCD{};					// timer for state machine 
+	
 
 	// Member functions
 
@@ -123,16 +190,6 @@ struct GameObjInst
 		Amount of health of deduct from the game object, by default 1
 	*************************************************************************/
 	void deducthealth(int damage = 1);
-
-
-	/*!***********************************************************************
-	\brief
-		This function restores health to the game object
-	\param[in] recover
-		Amount of health to restore for the game object, by default 1
-	*************************************************************************/
-	void recoverhealth(int recover = 1);
-
 
 	/*!***********************************************************************
 	\brief
@@ -145,7 +202,7 @@ struct GameObjInst
 	*************************************************************************/
 	 float calculateDistance(GameObjInst dynamicObj);
 
-	/*!***********************************************************************
+	 /*!***********************************************************************
 	\brief
 		This function calculates the distance to another static game object
 	\param[in] staticObj
@@ -156,30 +213,69 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
-	void playerWalk(float walkCD);
-
 	void calculateBB();
 
 	void velToPos(float speed);
 
 	void calculateTransMatrix();
 
+	/******************************************************************************/
+	/*!
+		Player related Functions
+	*/
+	/******************************************************************************/
+
+	/*!***********************************************************************
+	\brief
+		This function restores health to the game object
+	\param[in] recover
+		Amount of health to restore for the game object, by default 1
+	*************************************************************************/
+	void recoverhealth(int recover = 1);
+
+	/*!***********************************************************************
+	\brief
+		This function makes the player walk, inclusive of animation, velocity
+		and audio.
+	\param[in] walkCD
+		Buffer when player uses slash
+	*************************************************************************/
+	void playerWalk(float walkCD);
+
+	/*!***********************************************************************
+	\brief
+		This function makes the player stand still. Resets the velocity to 0
+	*************************************************************************/
+	void playerStand();
+
+	/*!***********************************************************************
+	\brief
+		This function makes the player drink the potion and recover health
+	\param[in] menuObj
+		The menu objs that reflect the number of potions left
+	\param[in] backPack
+		The inventory
+	*************************************************************************/
+	void drinkPotion(staticObjInst* menuObj[3], Inventory& backPack);
+
 	void playerSlashCreate(float angle);
 
 	void dustParticles();
+
+	void playerKnockback(GameObjInst mob);
+
+	void playerDamaged(float damageCD);
+
+	/******************************************************************************/
+	/*!
+		Enemy related Functions
+	*/
+	/******************************************************************************/
 
 	void mobsKilled();
 
 	void mobsPathFind(GameObjInst target);
 
-	void playerStand();
-
-	void drinkPotion(staticObjInst*menuObj[3], Inventory& backPack);
-
-	void playerKnockback(GameObjInst mob);
-
-	void playerDamaged(float damageCD);
-	
 	void mobKnockback(staticObjInst slash);
 	
 };
