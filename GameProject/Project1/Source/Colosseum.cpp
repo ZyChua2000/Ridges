@@ -26,7 +26,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static saveData				data;
 static Node* nodes{};
 
-bool pause;
+
 //static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
@@ -48,7 +48,8 @@ static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 static float slashCD = 0;
 static float walkCD = 0;
 
-bool levelstart;
+static bool pause;
+static bool levelstart;
 
 
 // -----------------------------------------------------------------------------
