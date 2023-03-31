@@ -341,6 +341,20 @@ void GS_Maze_Update(void) {
 			cycle = 0;
 		}
 		PauseObj->pObject->pTexture = textureList[5 + cycle];
+
+		if (cycle == 0) {
+			if (AEInputCheckReleased(AEVK_LBUTTON)) {
+				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
+				{
+					pause = 1;
+				}
+
+				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
+				{
+					gGameStateNext = GS_MAINMENU;
+				}
+			}
+		}
 	}
 
 	if (pause == 1) {
