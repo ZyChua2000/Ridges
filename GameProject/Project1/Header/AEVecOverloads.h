@@ -115,24 +115,128 @@ AEVec2 operator/= (AEVec2& root, AEVec2 branch);
 *************************************************************************/
 AEVec2 operator*= (AEVec2& root, AEVec2 branch);
 
+/*!***********************************************************************
+	\brief
+		This function checks if 2 vectors are identical
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand
+	\return
+		true if identical, false if not
+*************************************************************************/
 bool operator== (AEVec2& root, AEVec2& branch);
 
+/*!***********************************************************************
+	\brief
+		This function checks if 2 vectors are non identical
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand
+	\return
+		true if non identical, false if not
+*************************************************************************/
 bool operator!= (AEVec2& root, AEVec2& branch);
 
+/*!***********************************************************************
+	\brief
+		This function adds a float and a vector
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand
+	\return
+		Resultant vector of adding float to both values of vector
+*************************************************************************/
 AEVec2 operator+ (AEVec2 root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function subtracts a float from a vector
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand
+	\return
+		Resultant vector of subtracting float from both values of vector
+*************************************************************************/
 AEVec2 operator- (AEVec2 root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function adds a float and a vector and assigns the value
+		to the LHS operand
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand
+	\return
+		Resultant vector of adding float to both values of vector
+*************************************************************************/
 AEVec2 operator+= (AEVec2& root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function subtracts a float from a vector and assigns
+		the value to the LHS operand
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand
+	\return
+		Resultant vector of subtracting float from both values of vector
+*************************************************************************/
 AEVec2 operator-= (AEVec2& root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function divides one vector by a float
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand (divisor)
+	\return
+		Resultant vector of the divison
+*************************************************************************/
 AEVec2 operator/ (AEVec2 root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function multiplies one vector with a float
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand (divisor)
+	\return
+		Resultant vector of the multiplciation
+*************************************************************************/
 AEVec2 operator* (AEVec2 root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function divides one vector by a float and assigns the value
+		to the LHS operand
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand (divisor)
+	\return
+		Resultant vector of the divison
+*************************************************************************/
 AEVec2 operator/= (AEVec2& root, float branch);
 
+/*!***********************************************************************
+	\brief
+		This function multiplies one vector with a float and assigns the
+		value to the LHS operand
+	\param[in] root
+		LHS operand
+	\param[in] branch
+		RHS operand (divisor)
+	\return
+		Resultant vector of the multiplciation
+*************************************************************************/
 AEVec2 operator*= (AEVec2& root, float branch);
 
 
