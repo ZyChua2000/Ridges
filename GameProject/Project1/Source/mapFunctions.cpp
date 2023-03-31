@@ -1,7 +1,33 @@
 #include "main.h"
 #include <fstream>
+/******************************************************************************/
+/*!
+\file		mapFunctions.cpp
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	February 02, 2023
+\brief		This source file contains definitions of map related functions
 
+
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
 namespace utilities {
+
+	/*!***********************************************************************
+	\brief
+		This function imports the binary map from text file
+	\param[in] MAP_CELL_HEIGHT
+		The number of cells along the height in the level
+	\param[in] MAP_CELL_WIDTH
+		The number of cells along the width in the level
+	\param[in] MapObjInstList
+		The binary array to store the binary
+	\param[in] filename
+		The filename of the text file
+	*************************************************************************/
 	void importMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, int* MapObjInstList, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ifstream mapInput{ filename };
@@ -13,6 +39,18 @@ namespace utilities {
 		mapInput.close();
 	}
 
+	/*!***********************************************************************
+	\brief
+		This function imports the texture map from text file
+	\param[in] MAP_CELL_HEIGHT
+		The number of cells along the height in the level
+	\param[in] MAP_CELL_WIDTH
+		The number of cells along the width in the level
+	\param[in] MapObjInstList
+		The texture array to store the textures
+	\param[in] filename
+		The filename of the text file
+	*************************************************************************/
 	void importMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ifstream mapInput{ filename };
@@ -25,6 +63,18 @@ namespace utilities {
 		mapInput.close();
 	}
 
+	/*!***********************************************************************
+	\brief
+		This function exports the texture map to a text file
+	\param[in] MAP_CELL_HEIGHT
+		The number of cells along the height in the level
+	\param[in] MAP_CELL_WIDTH
+		The number of cells along the width in the level
+	\param[in] MapObjInstList
+		The texture array that stores the texture
+	\param[in] filename
+		The filename of the text file
+	*************************************************************************/
 	void exportMapTexture(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ofstream mapOutput{ filename };
@@ -41,6 +91,18 @@ namespace utilities {
 		mapOutput.close();
 	}
 
+	/*!***********************************************************************
+	\brief
+		This function exports the binary map to a text file
+	\param[in] MAP_CELL_HEIGHT
+		The number of cells along the height in the level
+	\param[in] MAP_CELL_WIDTH
+		The number of cells along the width in the level
+	\param[in] MapObjInstList
+		The binary array that stores the binary
+	\param[in] filename
+		The filename of the text file
+	*************************************************************************/
 	void exportMapBinary(int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ofstream mapOutput{ filename };
@@ -64,6 +126,16 @@ namespace utilities {
 		mapOutput.close();
 	}
 
+	/*!***********************************************************************
+	\brief
+		This function loads the object data to prepare for creation in level
+	\param[out] Positions
+		Dynamic array of positions of the objects being read
+	\param[out] num
+		The total number of objects to be created
+	\param[in] filename
+		The text file to read from
+	*************************************************************************/
 	void loadObjs(AEVec2*& Positions, int& num, std::string filename) {
 		filename = "Assets/" + filename;
 		std::ifstream fileInput{ filename };
@@ -78,11 +150,32 @@ namespace utilities {
 		fileInput.close();
 	}
 
+	/*!***********************************************************************
+	\brief
+		Frees the dynamic memory of the object data loaded
+	\param[in] Position
+		Pointer to the dynamic memory
+	*************************************************************************/
 	void unloadObjs(AEVec2* Position) {
 		delete[] Position;
 	}
 
-
+	/*!***********************************************************************
+	\brief
+		This function changes the tile that the map editor is selecting
+	\param[in] mouseX
+		The mouse X position
+	\param[in] mouseY
+		The mouse Y position
+	\param[in] MAP_CELL_HEIGHT
+		The number of cells along the height in the level
+	\param[in] MAP_CELL_WIDTH
+		The number of cells along the width in the level
+	\param[in] MapObjInstList
+		The binary array to store the binary
+	\param[in] mapeditorObj
+		The map editor object that displays the tile being selected
+	*************************************************************************/
 	void changeMapObj(float mouseX, float mouseY, int MAP_CELL_HEIGHT, int MAP_CELL_WIDTH, AEVec2* MapObjInstList, staticObjInst mapeditorObj) {
 		for (int j = 0; j < MAP_CELL_HEIGHT; j++) {
 			for (int i = 0; i < MAP_CELL_WIDTH; i++) {
@@ -98,6 +191,19 @@ namespace utilities {
 	}
 } //end of namespace utilities
 
+	/*!***********************************************************************
+	\brief
+		This function spawns the map editor object at where the mouse is at
+		to show what the map editor is currently selecting
+	\param[in] mouseX
+		Mouse X position
+	\param[in] mouseY
+		Mouse Y position
+	\param[in] camX
+		Cam X position
+	\param[in] camY
+		Cam Y position
+	*************************************************************************/
 void staticObjInst::mapEditorObjectSpawn(float mouseX, float mouseY, float camX, float camY) {
 	scale = 0.7f;
 	posCurr = { mouseX + camX + 0.3f, mouseY + camY + 0.3f };
