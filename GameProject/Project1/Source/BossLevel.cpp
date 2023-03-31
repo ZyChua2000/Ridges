@@ -193,7 +193,7 @@ void GS_BossLevel_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png")); //5
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png")); //6
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png")); //7
-	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 8
+	textureList.push_back(AEGfxTextureLoad("Assets/Boss_Obj.png")); // 8
 
 	//Texture Alias
 	AEGfxTexture*& slashTex = textureList[0];

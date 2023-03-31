@@ -96,6 +96,8 @@ static int chestNum;
 
 static bool pause;
 static bool levelstart;
+static bool directionShown;
+static bool directionDraw;
 static int cycle;
 
 
@@ -146,9 +148,9 @@ void GS_World_Load(void) {
 	Player = nullptr;
 
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
-		* RefLine = 0, * Health = 0, * Enemy = 0,  * Key = 0,
-		* Bullet = 0, * Lever = 0, * Chest = 0, * Spike = 0, 
-		* Spike_nonfade = 0, * Tower = 0, *Pause = 0, *Start = 0;
+		* RefLine = 0, * Health = 0, * Enemy = 0, * Key = 0,
+		* Bullet = 0, * Lever = 0, * Chest = 0, * Spike = 0,
+		* Spike_nonfade = 0, * Tower = 0, * Pause = 0, * Start = 0;
 
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
@@ -185,11 +187,12 @@ void GS_World_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
-	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 3
+	textureList.push_back(AEGfxTextureLoad("Assets/World_Obj.png")); // 3
 	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 4
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png")); //5
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png")); //6
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png")); //7
+	textureList.push_back(AEGfxTextureLoad("Assets/Direction.png")); //8
 
 
 	//Texture Alias
@@ -394,9 +397,11 @@ void GS_World_Init(void) {
 	ParticleSystemInit();
 	playerHitTime = 0;
 
-	levelstart = 1;
-	pause = 0;
+	levelstart = true;
+	pause = true;
 	cycle = 0;
+	directionShown = false;
+	directionDraw = false;
 }
 /******************************************************************************/
 /*!
@@ -409,12 +414,22 @@ void GS_World_Init(void) {
 void GS_World_Update(void) {
 
 	
-	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
-		pause = !pause;
-		levelstart = 0;
+	if (directionShown == false && Player->posCurr.x > 93) {
+		pause = true;
+		directionDraw = true;
+
+		if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+			directionShown = true;
+			directionDraw = false;
+		}
 	}
 
-	if (pause == 0) {
+	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
+		pause = !pause;
+		levelstart = false;
+	}
+
+	if (pause == true) {
 		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
 			cycle = 1;
 		}
@@ -430,7 +445,7 @@ void GS_World_Update(void) {
 			if (AEInputCheckReleased(AEVK_LBUTTON)) {
 				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
 				{
-					pause = 1;
+					pause = false;
 				}
 
 				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
@@ -441,7 +456,7 @@ void GS_World_Update(void) {
 		}
 
 	}
-	if (pause == 1) {
+	if (pause == false) {
 
 		// Normalising mouse to 0,0 at the center
 		s32 mouseIntX, mouseIntY;
@@ -872,7 +887,7 @@ void GS_World_Update(void) {
 void GS_World_Draw(void) {
 
 
-	if (!pause) {
+	if (pause == true) {
 
 		if (levelstart)
 		{
@@ -925,9 +940,26 @@ void GS_World_Draw(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
+		if (directionDraw) {
+			AEMtx33 rot, scale, trans, transform;
+			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxTextureSet(textureList[8], 0, 0);
+
+			AEMtx33Rot(&rot, 0);
+			AEMtx33Trans(&trans, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
+			AEMtx33Scale(&scale, 1600, 900);
+			AEMtx33Concat(&transform, &rot, &scale);
+			AEMtx33Concat(&transform, &trans, &transform);
+
+			AEGfxSetTransform(transform.m);
+			AEGfxMeshDraw(meshList[1], AE_GFX_MDM_TRIANGLES);
+		}
+
 
 	}
-	else if (pause) {
+	else if (pause == false) {
 		// Tell the engine to get ready to draw something with texture. 
 		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
