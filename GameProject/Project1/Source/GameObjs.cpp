@@ -1,9 +1,30 @@
+/******************************************************************************/
+/*!
+\file		GameObj.cpp
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	February 02, 2023
+\brief		This source file contains definitions of GameObjs like updating of spikes, 
+			health deduction and recovery.
+
+
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
 #include "main.h"
 
 const float MAX_ENEMY_DISTANCE = 1.0f;							// define the maximum distance at which enemies should stop moving
 
 const float RANGE_FROM_PLAYER = 0.01f;							// define the range for enemy and player intereaction 
 
+
+/******************************************************************/
+/*!
+\brief function definition spike update, 
+*/
+/*******************************************************************/
 void staticObjInst::spikeUpdate() {
 	if (timetracker2 == 0) {
 		timetracker += g_dt;
@@ -38,7 +59,13 @@ void staticObjInst::spikeUpdate() {
 	Alpha = 1.0f - timetracker / SPIKE_TRANSITION_t;
 }
 
-//player health 
+
+/******************************************************************/
+/*!
+\brief function definition for deducting player health
+\param int damage
+*/
+/*******************************************************************/
 void GameObjInst::deducthealth(int damage)
 {
 	if (health > 0)
@@ -48,6 +75,13 @@ void GameObjInst::deducthealth(int damage)
 	}
 }
 //player health recover
+
+/******************************************************************/
+/*!
+\brief function definition for recovering player health
+\param int recover
+*/
+/*******************************************************************/
 void GameObjInst::recoverhealth(int recover)
 {
 	if (health < 3)
@@ -56,16 +90,34 @@ void GameObjInst::recoverhealth(int recover)
 	}
 }
 
+/******************************************************************/
+/*!
+\brief function definition for calculating distance for dynamic GameObjs
+\param GameObjInst dynamicObj
+\return distance result of type float 
+*/
+/*******************************************************************/
 float GameObjInst::calculateDistance(GameObjInst dynamicObj) {
 	return sqrt((posCurr.x - dynamicObj.posCurr.x) * (posCurr.x - dynamicObj.posCurr.x) +
 		(posCurr.y - dynamicObj.posCurr.y) * (posCurr.y - dynamicObj.posCurr.y));
 }
 
+/******************************************************************/
+/*!
+\brief function definition for calculating distance for static GameObjs
+\param GameObjInst dynamicObj
+\return distance result of type float
+*/
+/*******************************************************************/
 float GameObjInst::calculateDistance(staticObjInst staticObj) {
 	return sqrt((posCurr.x - staticObj.posCurr.x) * (posCurr.x - staticObj.posCurr.x) +
 		(posCurr.y - staticObj.posCurr.y) * (posCurr.y - staticObj.posCurr.y));
 }
-
+/******************************************************************/
+/*!
+\brief function definition for calculating Bounding Box of dynamic GameObjs
+*/
+/*******************************************************************/
 void GameObjInst::calculateBB() {
 	boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * abs(scale) + posCurr.x;
 	boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * abs(scale) + posCurr.y;
@@ -73,6 +125,11 @@ void GameObjInst::calculateBB() {
 	boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(scale) + posCurr.y;
 }
 
+/******************************************************************/
+/*!
+\brief function definition for calculating Bounding Box of static GameObjs
+*/
+/*******************************************************************/
 void staticObjInst::calculateBB() {
 	boundingBox.min.x = -(BOUNDING_RECT_SIZE / 2.0f) * abs(scale) + posCurr.x;
 	boundingBox.min.y = -(BOUNDING_RECT_SIZE / 2.0f) * abs(scale) + posCurr.y;
@@ -80,12 +137,23 @@ void staticObjInst::calculateBB() {
 	boundingBox.max.y = (BOUNDING_RECT_SIZE / 2.0f) * abs(scale) + posCurr.y;
 }
 
+/******************************************************************/
+/*!
+\brief function definition for calculating velocity to new position
+\float speed 
+*/
+/*******************************************************************/
 void GameObjInst::velToPos(float speed) {
 	AEVec2 temp_velo{velCurr};
 	AEVec2Normalize(&velCurr, &temp_velo); // normalize
 	posCurr += velCurr * g_dt * speed;
 }
 
+/******************************************************************/
+/*!
+\brief function definition for shooting a bullet in 4 directions.
+*/
+/*******************************************************************/
 void staticObjInst::shootBullet() {
 	AEVec2 velocity;
 	AEVec2 position = posCurr;
@@ -114,7 +182,12 @@ void staticObjInst::shootBullet() {
 	
 	jInst->TextureMap = TEXTURE_BULLET;
 }
-
+/******************************************************************/
+/*!
+\brief function definition for calculating
+		transform matrix of dynamic GameObjs
+*/
+/*******************************************************************/
 void GameObjInst::calculateTransMatrix() {
 	AEMtx33		 transMat = { 0 }, rotMat = { 0 }, scaleMat = { 0 };
 
@@ -136,6 +209,12 @@ void GameObjInst::calculateTransMatrix() {
 	AEMtx33Concat(&transform, &transMat, &transform);
 }
 
+/******************************************************************/
+/*!
+\brief function definition for calculating
+		transform matrix of static GameObjs
+*/
+/*******************************************************************/
 void staticObjInst::calculateTransMatrix() {
 	AEMtx33		 transMat = { 0 }, rotMat = { 0 }, scaleMat = { 0 };
 
@@ -150,6 +229,11 @@ void staticObjInst::calculateTransMatrix() {
 	AEMtx33Concat(&transform, &transMat, &transform);
 }
 
+/******************************************************************/
+/*!
+\brief function definition to drop potion upon opening chest.
+*/
+/*******************************************************************/
 void staticObjInst:: chest2Potion() {
 	TextureMap = TEXTURE_OPENEDCHEST;
 	staticObjInst* Potion = staticObjInstCreate(TYPE_ITEMS, 1, &posCurr, 0);
@@ -158,13 +242,13 @@ void staticObjInst:: chest2Potion() {
 
 /******************************************************************************/
 /*!
-	This function creates a game object instance.
-
-	It takes in input of the type
-	of object, the scale, a vector of the position, a vector of the velocity and
-	a float of the direction
-
-	It returns a pointer to the GameObjInst that is stored in the Game object
+	\brief This function creates a game object instance.
+	\param unsigned long type , It takes in input of the type
+			of object,
+	\param AEVec2* pPos , position of vector
+	\param AEVec2* pVel , velocity of vector
+	\param float dir, direction of gameobj
+	\return a pointer to the GameObjInst that is stored in the Game object
 	Instance List.
 */
 /******************************************************************************/
@@ -234,8 +318,8 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 
 /******************************************************************************/
 /*!
-	This function destroys a Game Object Instance pointed to inside the Game
-	Object Instance List.
+	\brief This function destroys a Game Object Instance pointed to inside the Game
+		   Object Instance List.
 */
 /******************************************************************************/
 void gameObjInstDestroy(GameObjInst* pInst)
