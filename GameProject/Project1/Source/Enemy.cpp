@@ -5,7 +5,7 @@
 \par    	email: zhiliangjavier.low@digipen.edu
 \date   	February 02, 2023
 \brief		This source file contains function definitions for enemy interactivity like A* path finding, 
-Initialising nodes for A* and enemy movement.
+			Initialising nodes for A* and enemy movement.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
@@ -20,6 +20,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 
 
+// DECLARATIONS for Nodes.
 int path_width{};
 int path_height{};
 float dist{};
