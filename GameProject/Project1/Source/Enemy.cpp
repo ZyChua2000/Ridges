@@ -18,9 +18,11 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include <list>
 #include <vector>
 
-
-
-// DECLARATIONS for Nodes.
+/******************************************************************************/
+/*!
+	File globals
+*/
+/******************************************************************************/
 int path_width{};
 int path_height{};
 float dist{};

@@ -91,7 +91,7 @@ void ParticleObjInstDestroy(ParticleObjInst* pInst);
 
 /******************************************************************************/
 /*!
-	"Load" function of this system
+	\brief this function loads particle assets
 */
 /******************************************************************************/
 void ParticleSystemLoad()
@@ -123,7 +123,7 @@ void ParticleSystemLoad()
 
 /******************************************************************************/
 /*!
-	"Init" function of this system
+	\brief this function initializes particle system variables
 */
 /******************************************************************************/
 void ParticleSystemInit()
@@ -134,7 +134,7 @@ void ParticleSystemInit()
 
 /******************************************************************************/
 /*!
-	"Update" function of this system
+	\brief this function updates logic of particle system variables
 */
 /******************************************************************************/
 void ParticleSystemUpdate()
@@ -184,7 +184,8 @@ void ParticleSystemUpdate()
 
 /******************************************************************************/
 /*!
-	"Draw" function of this system
+	\brief this function draws assets of particle
+	\param AEMtx33* localTransform
 */
 /******************************************************************************/
 void ParticleSystemDraw(AEMtx33* localTransform)
@@ -226,7 +227,7 @@ void ParticleSystemDraw(AEMtx33* localTransform)
 
 /******************************************************************************/
 /*!
-	"Free" function of this system
+	\brief this function free up variable that has allocated memory
 */
 /******************************************************************************/
 void ParticleSystemFree()
@@ -237,7 +238,7 @@ void ParticleSystemFree()
 
 /******************************************************************************/
 /*!
-	"Unload" function of this system
+	\brief this function unloads particle assets
 */
 /******************************************************************************/
 void ParticleSystemUnload()
@@ -248,7 +249,14 @@ void ParticleSystemUnload()
 
 /******************************************************************************/
 /*!
-	Requests the particle system to create a defined amount of particle instances
+	\brief this function request the system to spawn the particles
+	\param unsigned int type
+	\param float scale
+	\param AEVec2* pos
+	\param AEVec2* vel
+	\param float dir
+	\param float life
+	\param unsigned int amount
 */
 /******************************************************************************/
 void ParticleSystemRequest(unsigned int type, float scale, AEVec2* pos, AEVec2* vel, float dir, float life, unsigned int amount)
@@ -260,9 +268,16 @@ void ParticleSystemRequest(unsigned int type, float scale, AEVec2* pos, AEVec2* 
 	}
 }
 
-/******************************************************************************/
+/*****************************************************************************/
 /*!
-	Initiates and sets active a particle object instance
+	\brief this function creates a particle object instance
+	\param unsigned int type
+	\param float scale
+	\param AEVec2* pos
+	\param AEVec2* vel
+	\param float dir
+	\param float life
+	\return a pointer to ParticleObjInst
 */
 /******************************************************************************/
 ParticleObjInst* ParticleObjInstCreate(unsigned int type, float scale, AEVec2* pPos, AEVec2* pVel, float dir, float life)
@@ -310,6 +325,11 @@ void ParticleObjInstDestroy(ParticleObjInst* pInst)
 	pInst->flag = 0;
 }
 
+/*****************************************************************************/
+/*!
+	\brief this function destorys particle object
+*/
+/******************************************************************************/
 void GameObjInst::dustParticles() {
 	AEVec2 reverse;
 	AEVec2Neg(&reverse, &velCurr);
