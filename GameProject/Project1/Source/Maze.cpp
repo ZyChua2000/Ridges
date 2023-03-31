@@ -517,9 +517,7 @@ void GS_Maze_Update(void) {
 			GameObjInst* pInst = sGameObjInstList + i;
 			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 			{
-				if (pInst->pObject->type == TYPE_CHARACTER) {
-					pInst->velToPos(PLAYER_SPEED);
-				}
+				pInst->velToPos();
 			}
 		}
 

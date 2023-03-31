@@ -143,7 +143,26 @@ void staticObjInst::calculateBB() {
 \float speed 
 */
 /*******************************************************************/
-void GameObjInst::velToPos(float speed) {
+void GameObjInst::velToPos() {
+	float speed;
+	switch (pObject->type) {
+	case TYPE_ENEMY:
+		speed = NPC_SPEED;
+		break;
+	case TYPE_CHARACTER:
+		speed = PLAYER_SPEED;
+		break;
+	case TYPE_BULLET:
+		speed = BULLET_SPEED;
+		break;
+	case TYPE_BOSS:
+		speed = NPC_SPEED;
+		break;
+	default:
+		speed = 0;
+		break;
+	}
+
 	AEVec2 temp_velo{velCurr};
 	AEVec2Normalize(&velCurr, &temp_velo); // normalize
 	posCurr += velCurr * g_dt * speed;

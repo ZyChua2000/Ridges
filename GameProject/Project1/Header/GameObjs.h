@@ -213,10 +213,23 @@ struct GameObjInst
 	*************************************************************************/
 	float calculateDistance(staticObjInst staticObj);
 
+	 /*!***********************************************************************
+	\brief
+		This function calculates the bounding box of the object
+	*************************************************************************/
 	void calculateBB();
 
-	void velToPos(float speed);
+	/*!***********************************************************************
+	\brief
+		This function updates the position according to the velocity depending
+		on the type of the object
+	*************************************************************************/
+	void velToPos();
 
+	/*!***********************************************************************
+	\brief
+		This function calculates the transformation matrix of the object
+	*************************************************************************/
 	void calculateTransMatrix();
 
 	/******************************************************************************/

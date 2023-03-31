@@ -22,30 +22,22 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
-static saveData				data;
-static Node* nodes{};
 
-static int					MAX_MOBS;
-static int					CURRENT_MOBS;
+static int					MAX_MOBS;							// Total number of mobs at initial state of level
+static int					CURRENT_MOBS;						// Current number of mobs in game
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
-static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_KEYS;							// The total number of keys
-
-static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
 static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
 
-static unsigned int			state = 0;							// Debugging state
-static unsigned int			mapeditor = 0;						// Map edtior state
-
-bool loadState;
-
+// All the warp points to enter other levels
 static const AEVec2 WarpPts[8]{ {102, -34.5f}, {104, -33.5f},
 							{109, -34.5f}, {111, -33.5f},
 						  {121, -28.5f}, {122, -25.5f},
 						  {106, -20.f}, {108, -19.f} };
+
+static const AEVec2 SavedPoint{ 106, -22 }; //Location to load to after completing other challenges
 
 // -----------------------------------------------------------------------------
 
@@ -66,50 +58,47 @@ void loadData(saveData data);
 
 // ---------------------------------------------------------------------------
 
-
+// Map variables
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
-static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
-
-
-
-static float slashCD = 0;
-static float walkCD = 0;
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];			// 2D array of binary collision mapping
 
 // pointer to the objects
-static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
-static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers[3];										// Pointer to each enemy object instance
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
-static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* Key;
-static Inventory Backpack;
-static staticObjInst* Spike;
-static staticObjInst* PauseObj;
-static staticObjInst* StartScreenbj;
+static GameObjInst* Player;								// Pointer to the "Player" game object instance
+static staticObjInst* mapEditorObj;						// Pointer to the reference map editor object instance
+static staticObjInst* Health[3];						// Pointer to the player health statc object instance
+static staticObjInst* Levers[3];						// Pointer to each lever object
+static staticObjInst* MenuObj[3];						// Pointer to each menu UI object
+static staticObjInst* NumObj[3];						// Pointer to each number UI object
+static staticObjInst* Chest[MAX_CHESTS];				// Pointer to Chest objects
+static staticObjInst* PauseObj;							// Pointer to Pause Obj
+static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
 
-static AEVec2* Gates;
-static int gatesNum;
-static int levNum;
-static int chestNum;
+// Object Instance Generation variables
+static AEVec2* Gates;									// Dynamic Array of Gates position
+static int gatesNum;									// Dynamic number of Gates
+static int levNum;										// Dynamic number of Levers
+static int chestNum;									// Dynamic number of Chests
 
-static bool pause;
-static bool levelstart;
-static bool directionShown;
-static bool directionDraw;
-static int cycle;
+// State Variables
+bool loadState;											// Variable for new game vs returning from another level
+static unsigned int	state = 0;							// Debugging state
+static unsigned int	mapeditor = 0;						// Map edtior state
+static bool pause;										// Bool of pause state
+static bool levelstart;									// Bool of level instruction state
+static bool directionShown;								// Bool of Mid-level instruction state
+static bool directionDraw;								// Bool of Mid-level instruction drawing
+static int cycle;										// Tracker for help page
 
+// Time Variables
+static float playerHitTime = 0;							// Stores time left for player's invulnerability upon attacking
+static float slashCD = 0;								// Stores time left before player can slash again
+static float walkCD = 0;								// Stores time left before player can move after slashing
 
-static float spikedmgtimer = 0.f;
-static float internalTimer = 0.f;
-static float playerHitTime;
+static Inventory Backpack;								// Inventory of Character
+static saveData	data;									// Save data container
 
-static staticObjInst* RefBox;
-
-
-static std::vector<AEGfxTexture*> textureList;
-static std::vector<AEGfxVertexList*> meshList;
+static std::vector<AEGfxTexture*> textureList;			// Dynamic list of textures
+static std::vector<AEGfxVertexList*> meshList;			// Dynamic list of meshes
 
  
 
@@ -131,26 +120,22 @@ void GS_World_Load(void) {
 	
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
-	// No game objects (shapes) at this point
+
+	// Setting initial numbers to 0
 	sGameObjNum = 0;
-
-	// zero the game object instance array
-	//memset(sGameObjInstList, 0, sizeof(GameObjInst) * GAME_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sGameObjInstNum = 0;
-
-	// zero the game object instance array
-	//memset(sStaticObjInstList, 0, sizeof(staticObjInst) * STATIC_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sStaticObjInstNum = 0;
-
-	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
+	// List of Unique Game Objs
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
 		* RefLine = 0, * Health = 0, * Enemy = 0, * Key = 0,
 		* Bullet = 0, * Lever = 0, * Chest = 0, * Spike = 0,
 		* Spike_nonfade = 0, * Tower = 0, * Pause = 0, * Start = 0;
+
+	// =====================================
+	//	Load Meshes
+	// =====================================
 
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
@@ -182,8 +167,10 @@ void GS_World_Load(void) {
 	AEGfxVertexList*& spriteMesh = meshList[0];
 	AEGfxVertexList*& fullSizeMesh = meshList[1];
 
+	// =====================================
+	//	Load Textures
+	// =====================================
 
-	//Load Textures
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
@@ -202,7 +189,9 @@ void GS_World_Load(void) {
 	AEGfxTexture*& startTex = textureList[3];
 	AEGfxTexture*& PauseTex = textureList[4];
 
-	// Load mesh and texture into game objects
+	// =====================================
+	//	Load Unique Game Objs
+	// =====================================
 	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
 	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
 	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
@@ -222,12 +211,15 @@ void GS_World_Load(void) {
 
 	ParticleSystemLoad();
 
+
+	// =====================================
+	//	Load Audio
+	// =====================================
 	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
 	Damage = AEAudioCreateGroup();
 	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
 	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
 	InteractGroup = AEAudioCreateGroup();
-	
 	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
 	MovementGroup = AEAudioCreateGroup();
 }
@@ -241,6 +233,7 @@ void GS_World_Load(void) {
 /******************************************************************************/
 void GS_World_Init(void) {
 
+	//Create objects for pause and start screen
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
 	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
 
@@ -324,20 +317,6 @@ void GS_World_Init(void) {
 		}
 	}
 
-	// Initialise Towers
-	utilities::loadObjs(pos, num, "worldTowers.txt");
-
-	float towerRot[] = {
-		TOWER_DOWN,
-		TOWER_DOWN
-	};
-
-	for (int i = 0; i < num; i++) {
-		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &pos[i], towerRot[i]);
-		binaryMap[(int)pos[i].x][(int)-pos[i].y] = 1;
-	}
-	utilities::unloadObjs(pos);
-
 	// Initialise fading Spikes
 	utilities::loadObjs(pos, num, "worldSpikes.txt");
 	for (int i = 0; i < num; i++) {
@@ -345,7 +324,7 @@ void GS_World_Init(void) {
 	}
 	utilities::unloadObjs(pos);
 
-	// Initialise non Spikes
+	// Initialise non fading Spikes
 	utilities::loadObjs(pos, num, "worldSpikes_Nonfade.txt");
 	for (int i = 0; i < num; i++) {
 		staticObjInst* jInst = staticObjInstCreate(TYPE_SPIKE_NONFADE, 1, &pos[i], 0);
@@ -362,8 +341,6 @@ void GS_World_Init(void) {
 	//	Initialize UI objects
 	// =====================================
 
-
-
 	MenuObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	MenuObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
@@ -372,7 +349,7 @@ void GS_World_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
 	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
@@ -397,6 +374,7 @@ void GS_World_Init(void) {
 	ParticleSystemInit();
 	playerHitTime = 0;
 
+	// Initialise in-game states
 	levelstart = true;
 	pause = true;
 	cycle = 0;
@@ -464,8 +442,7 @@ void GS_World_Update(void) {
 		mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
 		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-
-
+		// Calculating Angle between mouse and Player for Slash purposes
 		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 		if (mouseY + camY > Player->posCurr.y) {
 			angleMousetoPlayer = -angleMousetoPlayer;
@@ -477,28 +454,21 @@ void GS_World_Update(void) {
 		utilities::decreaseTime(walkCD);
 		utilities::decreaseTime(playerHitTime);
 
-		Player->playerDamaged(playerHitTime);
-
-
-
 		// =====================================
 		// User Input
 		// =====================================
-		//Debugging mode
+		//Debugging mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_F3)) {
 			state ^= 1;
 		}
-		//Map editor mode
+		//Map editor mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_9)) {
 			mapeditor ^= 1;
 		}
 
-		if (AEInputCheckTriggered(AEVK_N)) {
-			saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
-		}
-
 		Player->playerStand();
 
+		// Movement Controls
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 			Player->playerWalk(walkCD);
@@ -508,24 +478,7 @@ void GS_World_Update(void) {
 			AEAudioStopGroup(MovementGroup);
 		}
 
-
-		//reducing heath for debugging
-		if (AEInputCheckTriggered(AEVK_MINUS))
-		{
-			Player->deducthealth();
-			switch (Player->health)
-			{
-			case 0:
-				Health[2]->TextureMap = TEXTURE_DEADHEART;
-				break;
-			case 1:
-				Health[1]->TextureMap = TEXTURE_DEADHEART;
-				break;
-			case 2:
-				Health[0]->TextureMap = TEXTURE_DEADHEART;
-			}
-		}
-
+		// Interaction Control
 		if (AEInputCheckTriggered(AEVK_E)) {
 
 			//Interaction with levers
@@ -552,25 +505,21 @@ void GS_World_Update(void) {
 			}
 		}
 
-		//if pickup potion then add player health
+		// Healing from Potion
 		if (AEInputCheckTriggered(AEVK_R))
 		{
 			Player->drinkPotion(Health, Backpack);
 		}
 
+		// Slashing Input
 		if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-			SLASH_ACTIVATE = true;
-
-			slashCD = SLASH_COOLDOWN_t;
-			walkCD = WALK_COOLDOWN_t;
-			Player->playerStand();
+			Player->playerSlashCreate(angleMousetoPlayer); // Create Slash
+			slashCD = SLASH_COOLDOWN_t; // Set slash cooldown
+			walkCD = WALK_COOLDOWN_t; // Set walking cooldown
+			Player->playerStand(); // Stop the player
 		}
 
-		if (SLASH_ACTIVATE == true) {
-			Player->playerSlashCreate(angleMousetoPlayer);
-			SLASH_ACTIVATE = false;
-		}
-
+		//Map editor selection - Developer Use
 		if (mapeditor == 1) {
 			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
 
@@ -581,30 +530,11 @@ void GS_World_Update(void) {
 			mapEditorObj->scale = 0;
 		}
 
-		//Map editor printing
+		// Map editor printing - Developer Use
 		if (AEInputCheckTriggered(AEVK_8)) {
 			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
 
 			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
-		}
-
-		if (AEInputCheckTriggered(AEVK_M)) {
-			gGameStateNext = GS_MAINMENU;
-		}
-
-
-		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-		{
-			staticObjInst* pInst = sStaticObjInstList + i;
-			if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-			{
-				continue;
-			}
-			//Interaction with items
-			if (Player->calculateDistance(*pInst) < pickUpRange)
-			{
-				Backpack.itemPickUp(pInst);
-			}
 		}
 
 		// ======================================================
@@ -630,7 +560,7 @@ void GS_World_Update(void) {
 			pEnemy->mobsPathFind(*Player);
 		}
 
-
+		// Calculate Bounding Box for Dynamic Objects
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
 			if (pInst->flag != FLAG_ACTIVE) {
@@ -639,6 +569,7 @@ void GS_World_Update(void) {
 			pInst->calculateBB();
 		}
 
+		// Calculate Bounding Box for Static Objects
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
 			if (pInst->flag != FLAG_ACTIVE) {
@@ -651,25 +582,19 @@ void GS_World_Update(void) {
 		}
 
 		// ======================================================
-		//	-- Positions of the instances are updated here with the already computed velocity (above)col
+		//	-- Positions of the instances are updated here with the already computed velocity (above)
 		// ======================================================
 
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
+
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+
 			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 			{
-				if (pInst->pObject->type == TYPE_CHARACTER) {
-					pInst->velToPos(PLAYER_SPEED);
-				}
-				//invert movement for binary map
-
-				if (pInst->pObject->type == TYPE_ENEMY) {
-					pInst->velToPos(NPC_SPEED);
-				}
-
-				if (pInst->pObject->type == TYPE_BULLET) {
-					pInst->velToPos(BULLET_SPEED);
-				}
+				pInst->velToPos();
 			}
 		}
 
@@ -686,22 +611,17 @@ void GS_World_Update(void) {
 			}
 
 			if (pInst->pObject->type == TYPE_ENEMY) {
-
+				// Between Enemy and Player
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 					&& playerHitTime == 0)
 				{
 					if (Player->health > 0)
 					{
-
 						Player->deducthealth();
-
-
 						//Hit cooldown
 						playerHitTime = DAMAGE_COODLDOWN_t;
-
 						//knockback
 						Player->playerKnockback(*pInst);
-
 					}
 				}
 
@@ -710,25 +630,13 @@ void GS_World_Update(void) {
 					if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 						continue;
 					}
-
+					// Between Enemy and Slashes
 					if (pInst->calculateDistance(*jInst) < slashRange
 						&& jInst->Alpha == 0) {
 						pInst->deducthealth(Player->damage);
 						// Knockback
 						pInst->mobKnockback(*jInst);
 					}
-				}
-			}
-
-			if (pInst->pObject->type == TYPE_BULLET) {
-				int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
-				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
-					Player->deducthealth();
-
-					gameObjInstDestroy(pInst);
-				}
-				if (snapCollision(*pInst, flag)) {
-					gameObjInstDestroy(pInst);
 				}
 			}
 
@@ -740,7 +648,7 @@ void GS_World_Update(void) {
 
 
 		int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, binaryMap);
-
+		// Binary collision for player
 		snapCollision(*Player, flag);
 
 		for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
@@ -753,35 +661,37 @@ void GS_World_Update(void) {
 			{
 				pInst->spikeUpdate(); // Updates alpha of spikes
 			}
-
+			// Between Spikes and Players
 			if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 				Player->deducthealth();
 				playerHitTime = DAMAGE_COODLDOWN_t;
 			}
-
 		}
 
+		// Tint of character if damaged
+		Player->playerDamaged(playerHitTime);
 
-		//Change stage conditions
+
+		//Change level conditions
 		if (utilities::inRange(Player, WarpPts[0], WarpPts[1])) {
 			gGameStateNext = GS_COLOSSEUM;
-			Player->posCurr = { 106, -22 };
+			Player->posCurr = SavedPoint;
 			saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 		}
 		if (utilities::inRange(Player, WarpPts[2], WarpPts[3])) {
 				gGameStateNext = GS_TOWER;
-				Player->posCurr = { 106, -22 };
+				Player->posCurr = SavedPoint;
 				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 		}
 		if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
 				gGameStateNext = GS_MAZE;
-				Player->posCurr = { 106, -22 };
+				Player->posCurr = SavedPoint;
 				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 		}
 		if (utilities::inRange(Player, WarpPts[6], WarpPts[7])) {
 				gGameStateNext = GS_BOSSLEVEL;
-				Player->posCurr = { 106, -22 };
+				Player->posCurr = SavedPoint;
 				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 		}
 			
@@ -791,6 +701,7 @@ void GS_World_Update(void) {
 		//		-- Removing effects after certain time
 		//		-- Removing dead objects
 		// ===================================
+
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 		{
 			staticObjInst* pInst = sStaticObjInstList + i;
@@ -798,20 +709,18 @@ void GS_World_Update(void) {
 				continue;
 			}
 
+			// Updating slash effects
 			if (pInst->pObject->type == TYPE_SLASH) {
 				pInst->playerSlashUpdate();
 			}
 
-			if (pInst->pObject->type == TYPE_TOWER) {
-				utilities::decreaseTime(pInst->timetracker);
-
-				if (pInst->timetracker == 0) {
-					pInst->timetracker = TOWER_REFRESH;
-					pInst->shootBullet();
+			// Picking up items
+			if (pInst->pObject->type == TYPE_ITEMS) {
+				if (Player->calculateDistance(*pInst) < pickUpRange)
+				{
+					Backpack.itemPickUp(pInst);
 				}
-
 			}
-
 		}
 
 		for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -819,16 +728,17 @@ void GS_World_Update(void) {
 			if (pInst->flag != FLAG_ACTIVE) {
 				continue;
 			}
-
+			// Killing Mobs
 			if (pInst->pObject->type == TYPE_ENEMY)
 			{
 				if (pInst->health == 0)
 				{
 					pInst->mobsKilled();
-					CURRENT_MOBS -= 1;
+					CURRENT_MOBS--;
 				}
 			}
 
+			// Increment global time tracker for character
 			if (pInst->pObject->type == TYPE_CHARACTER) {
 				pInst->timetracker += g_dt;
 			}
@@ -838,9 +748,9 @@ void GS_World_Update(void) {
 			utilities::unlockGate(gatesNum / 2 - 1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
 		}
 
+		// Set Camera and the UI objects
 		utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-
 		utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
 
 		// =====================================
@@ -886,6 +796,13 @@ void GS_World_Update(void) {
 /******************************************************************************/
 void GS_World_Draw(void) {
 
+	// Tell the engine to get ready to draw something with texture. 
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
 
 	if (pause == true) {
 
@@ -893,63 +810,44 @@ void GS_World_Draw(void) {
 		{
 			AEMtx33 rot, scale, trans;
 
-			staticObjInst* pInst = StartScreenbj;
-			// Tell the engine to get ready to draw something with texture. 
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+			AEGfxTextureSet(StartScreenbj->pObject->pTexture, 0, 0);
 
 			AEMtx33Rot(&rot, 0);
 			AEMtx33Trans(&trans, 0, 0);
-			AEMtx33Scale(&scale, 1600, 900);
-			AEMtx33Concat(&pInst->transform, &rot, &scale);
-			AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+			AEMtx33Scale(&scale, AEGetWindowWidth(), AEGetWindowHeight());
+			AEMtx33Concat(&StartScreenbj->transform, &rot, &scale);
+			AEMtx33Concat(&StartScreenbj->transform, &trans, &StartScreenbj->transform);
 
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
+			AEGfxSetTransform(StartScreenbj->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			AEGfxMeshDraw(StartScreenbj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
 		else
 		{
 
-			staticObjInst* pInst = PauseObj;
-			// Tell the engine to get ready to draw something with texture. 
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxTextureSet(PauseObj->pObject->pTexture, 0, 0);
 
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-
-			pInst->transform.m[0][2] = camX * SPRITE_SCALE;
-			pInst->transform.m[1][2] = camY * SPRITE_SCALE;
-			pInst->transform.m[0][0] = 1600;
-			pInst->transform.m[1][1] = 900;
+			PauseObj->transform.m[0][2] = camX * SPRITE_SCALE;
+			PauseObj->transform.m[1][2] = camY * SPRITE_SCALE;
+			PauseObj->transform.m[0][0] = AEGetWindowWidth();
+			PauseObj->transform.m[1][1] = AEGetWindowHeight();
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
+			AEGfxSetTransform(PauseObj->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			AEGfxMeshDraw(PauseObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
 		if (directionDraw) {
 			AEMtx33 rot, scale, trans, transform;
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-			AEGfxTextureSet(textureList[8], 0, 0);
 
+			AEGfxTextureSet(textureList[8], 0, 0);
 			AEMtx33Rot(&rot, 0);
 			AEMtx33Trans(&trans, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-			AEMtx33Scale(&scale, 1600, 900);
+			AEMtx33Scale(&scale, AEGetWindowWidth(), AEGetWindowHeight());
 			AEMtx33Concat(&transform, &rot, &scale);
 			AEMtx33Concat(&transform, &trans, &transform);
 
@@ -960,17 +858,13 @@ void GS_World_Draw(void) {
 
 	}
 	else if (pause == false) {
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
+		// Drawing map tiles
 		for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
 			for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
 				AEVec2 Pos = { i + 0.5f, -j - 0.5f };
 
+				// Only draw within viewport
 				if (utilities::checkWithinCam(Pos, camX, camY)) {
 					continue;
 				}
@@ -1009,6 +903,8 @@ void GS_World_Draw(void) {
 			if (pInst->pObject->type == TYPE_REF) {
 				continue;
 			}
+
+			// Only draw within viewport
 			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 				continue;
 			}
@@ -1035,11 +931,7 @@ void GS_World_Draw(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
-
-
 		AEGfxSetTransparency(1.0f);
-
-
 
 		// Spawn dynamic entities
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -1049,21 +941,16 @@ void GS_World_Draw(void) {
 			// skip non-active object
 			if (pInst->flag != FLAG_ACTIVE)
 				continue;
+
+			// Only draw within viewport
 			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 
 				continue;
 			}
-			// for any sprite textures
-			if (pInst->pObject->type != TYPE_NUM) {
+			// Sprite textures
 				AEGfxTextureSet(pInst->pObject->pTexture,
 					pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 					pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-			}
-
-
-			else {
-				AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-			}
 
 			AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
@@ -1072,7 +959,7 @@ void GS_World_Draw(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
-
+		//Debugging text - for developer use
 		if (state == 1)
 		{
 			char debug[20] = "Debug Screen";
