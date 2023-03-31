@@ -611,22 +611,13 @@ void GS_Colosseum_Update(void) {
 					gGameStateNext = GS_DEATHSCREEN;
 				}
 
-				switch (Player->health)
-				{
-				case 0:
-					Health[2]->TextureMap = TEXTURE_DEADHEART;
-					break;
-				case 1:
-					Health[1]->TextureMap = TEXTURE_DEADHEART;
-					break;
-				case 2:
-					Health[0]->TextureMap = TEXTURE_DEADHEART;
-				}
 			}
 
 			int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y,binaryMap);
 
 			snapCollision(*Player, flag);
+
+
 
 			// ===================================
 			// update active game object instances
@@ -666,6 +657,14 @@ void GS_Colosseum_Update(void) {
 				}
 			}
 
+			// Camera position and UI items
+
+			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+
+			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+
+			utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
+
 			// =====================================
 			// calculate the matrix for all objects
 			// =====================================
@@ -693,14 +692,6 @@ void GS_Colosseum_Update(void) {
 				pInst->calculateTransMatrix();
 			}
 
-			// Camera position and UI items
-
-
-			NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
-			NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
-
-
-			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 			//BUG NOT WORKING
 			Player->dustParticles();
@@ -721,7 +712,7 @@ void GS_Colosseum_Update(void) {
 			
 
 		}
-		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX* (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY* (float)SPRITE_SCALE)));
+
 
 }
 

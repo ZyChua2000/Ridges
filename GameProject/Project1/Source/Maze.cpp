@@ -509,19 +509,6 @@ void GS_Maze_Update(void) {
 			gGameStateNext = GS_DEATHSCREEN;
 		}
 
-		
-		switch (Player->health)
-		{
-		case 0:
-			Health[2]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 1:
-			Health[1]->TextureMap = TEXTURE_DEADHEART;
-			break;
-		case 2:
-			Health[0]->TextureMap = TEXTURE_DEADHEART;
-		}
-
 	}
 	
 	
@@ -563,16 +550,7 @@ void GS_Maze_Update(void) {
 	utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 	AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 
-	MenuObj[0]->posCurr = { (float)camX - 9.0f, (float)camY + 5.0f };
-	NumObj[0]->posCurr = { (float)camX - 8.0f, (float)camY + 5.0f };
-
-	MenuObj[1]->posCurr = { (float)camX - 6.0f, (float)camY + 5.0f };
-	NumObj[1]->posCurr = { (float)camX - 5.0f, (float)camY + 5.0f };
-
-	//player health following viewport
-	Health[0]->posCurr = { (float)camX + 7.0f , (float)camY + 5.0f };
-	Health[1]->posCurr = { (float)camX + 8.0f , (float)camY + 5.0f };
-	Health[2]->posCurr = { (float)camX + 9.0f , (float)camY + 5.0f };
+	utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
 
 	// =====================================
 	// calculate the matrix for all objects
@@ -602,8 +580,6 @@ void GS_Maze_Update(void) {
 	}
 
 
-	NumObj[0]->TextureMap = TEXTURE_NUMBERS[Backpack.Potion];
-	NumObj[1]->TextureMap = TEXTURE_NUMBERS[Backpack.Key];
 
 	ParticleSystemUpdate();
 
