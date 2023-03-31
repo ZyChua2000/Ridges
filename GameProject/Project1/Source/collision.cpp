@@ -14,7 +14,16 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 #include "collision.h"
 
-
+/******************************************************************************/
+/*!
+	\brief This function checks for the intersection between two bounding boxes
+	\param const AABB& aabb1
+	\param const AEVec2& vel1
+	\param const AABB& aabb2
+	\param const AEVec2& vel2
+	\return true if intersection happens, else return false
+*/
+/******************************************************************************/
 bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 	const AABB& aabb2, const AEVec2& vel2)
 {
@@ -131,6 +140,16 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 
 }
 
+/******************************************************************************/
+/*!
+	\brief This function checks the instance of binary map collision
+	\param float PosX
+	\param float PosY
+	\param int binaryMap[][]
+	\param float scaleX
+	\return sets flag
+*/
+/******************************************************************************/
 int CheckInstanceBinaryMapCollision(float PosX, float PosY, int binaryMap[124][42], float scaleX, float scaleY)
 {
 	int Flag = 0;
@@ -202,17 +221,35 @@ int CheckInstanceBinaryMapCollision(float PosX, float PosY, int binaryMap[124][4
 
 	return Flag;
 }
-
+/******************************************************************************/
+/*!
+	\brief This function snaps player to grid of x axis
+	\param float* coordinate
+*/
+/******************************************************************************/
 void snaptocelladd(float* coordinate) {
 	*coordinate = static_cast<float>(static_cast<int>(*coordinate)) + 0.5f;
 }
-
+/******************************************************************************/
+/*!
+	\brief This function snaps player to grid of inverted y axis
+	\param float* coordinate
+*/
+/******************************************************************************/
 void snaptocellsub(float* coordinate) {
 	*coordinate = static_cast<float>(static_cast<int>(*coordinate)) - 0.5f;
 }
 
-
-
+/******************************************************************************/
+/*!
+	\brief This function checks the instance of binary map collision for coloseum
+	\param float PosX
+	\param float PosY
+	\param int binaryMap[][]
+	\param float scaleX
+	\return sets flag
+*/
+/******************************************************************************/
 int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, int binaryMap[28][29], float scaleX, float scaleY)
 {
 	int Flag = 0;
@@ -285,7 +322,15 @@ int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, int binaryMap[2
 	return Flag;
 }
 
+/******************************************************************************/
+/*!
+	\brief This function snaps and implements collision
+	\param GameObjInst& Object
+	\param int& flag
+	\return true if collides, else false
 
+*/
+/******************************************************************************/
 bool snapCollision(GameObjInst& Object, int& flag) {
 	bool trueflag = false;
 	if (flag & COLLISION_TOP) {
@@ -324,25 +369,3 @@ bool snapCollision(GameObjInst& Object, int& flag) {
 	return trueflag;
 }
 
-
-//bool ShittyCollisionMap(float posx, float posy) {
-//	if (binaryMap[((int(posx + 8)))][abs((int(posy)))]) {
-//		std::cout << "r" << std::endl;
-//
-//	}
-//	if (binaryMap[((int(posx - 8)))][abs((int(posy)))]) {
-//		std::cout << "l" << std::endl;
-//
-//	}
-//	if (binaryMap[((int(posx)))][abs((int(posy)))+8]) {
-//		std::cout << "t" << std::endl;
-//
-//	}
-//	if (binaryMap[((int(posx)))][abs((int(posy)))-8]) {
-//		std::cout << "b" << std::endl;
-//
-//	}
-//	return 0;
-//}
-
-//binaryMap[((int(Player->posCurr.x)))][abs((int(Player->posCurr.y)))])

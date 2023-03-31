@@ -520,7 +520,7 @@ void GS_World_Update(void) {
 					Levers[lev]->tilt45();
 					//Remove gates: Change texture & Binary map
 					utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
-					AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
+					AEAudioPlay(Interact, InteractGroup, 0.3, 1, 0);
 				}
 			}
 
@@ -530,7 +530,7 @@ void GS_World_Update(void) {
 				//Interaction with Chest
 				if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
 				{
-					AEAudioPlay(Interact, InteractGroup, 1, 1, 0);
+					AEAudioPlay(Interact, InteractGroup, 0.3, 0.5, 0);
 					//change texture of chest
 					Chest[i]->chest2Potion();
 				}
@@ -747,6 +747,29 @@ void GS_World_Update(void) {
 
 		}
 
+
+		//Change stage conditions
+		if (utilities::inRange(Player, WarpPts[0], WarpPts[1])) {
+			gGameStateNext = GS_COLOSSEUM;
+			Player->posCurr = { 106, -22 };
+			saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+		}
+		if (utilities::inRange(Player, WarpPts[2], WarpPts[3])) {
+				gGameStateNext = GS_TOWER;
+				Player->posCurr = { 106, -22 };
+				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+		}
+		if (utilities::inRange(Player, WarpPts[4], WarpPts[5])) {
+				gGameStateNext = GS_MAZE;
+				Player->posCurr = { 106, -22 };
+				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+		}
+		if (utilities::inRange(Player, WarpPts[6], WarpPts[7])) {
+				gGameStateNext = GS_BOSSLEVEL;
+				Player->posCurr = { 106, -22 };
+				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
+		}
+			
 		// ===================================
 		// update active game object instances
 		// Example:

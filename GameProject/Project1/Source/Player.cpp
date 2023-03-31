@@ -1,5 +1,23 @@
 #include "main.h"
+/******************************************************************************/
+/*!
+\file		GameObj.cpp
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	February 02, 2023
+\brief		This source file contains definitions of Player functions
 
+
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
+
+/*!***********************************************************************
+	\brief
+		This function updates slash's opacity, meant for slash objects
+*************************************************************************/
 void staticObjInst::playerSlashUpdate() {
 	timetracker += g_dt;
 	if (timetracker >= 0.2f) {
@@ -10,25 +28,31 @@ void staticObjInst::playerSlashUpdate() {
 	}
 }
 
-//player walk
+/*!***********************************************************************
+\brief
+	This function makes the player walk, inclusive of animation, velocity
+	and audio.
+\param[in] walkCD
+	Buffer when player uses slash
+*************************************************************************/
 void GameObjInst::playerWalk(float walkCD)
 {
 	AEVec2 velNull = { 0,0 };
 	//Audio
 	if (AEInputCheckTriggered(AEVK_W) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)){
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	if (AEInputCheckTriggered(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_D)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	if (AEInputCheckTriggered(AEVK_S) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_W) && !AEInputCheckCurr(AEVK_D)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	if (AEInputCheckTriggered(AEVK_D) && !AEInputCheckCurr(AEVK_A) && !AEInputCheckCurr(AEVK_S) && !AEInputCheckCurr(AEVK_W)) {
-		AEAudioPlay(Movement, MovementGroup, 1, 1, -1);
+		AEAudioPlay(Movement, MovementGroup, 0.3, 1, -1);
 	}
 
 	//Velocity
@@ -75,6 +99,13 @@ void GameObjInst::playerWalk(float walkCD)
 	}
 }
 
+
+/*!***********************************************************************
+\brief
+	This function creates the slash according to the angle
+\param[in] angle
+	The angle between the player and the mouse
+*************************************************************************/
 void GameObjInst::playerSlashCreate(float angle) {
 	AEVec2 Pos = posCurr + velCurr;
 	Pos.x += -cos(angle) / 1.3f;
@@ -82,14 +113,24 @@ void GameObjInst::playerSlashCreate(float angle) {
 	staticObjInst* slashObj = staticObjInstCreate(TYPE_SLASH, 1.5, &Pos, angle + PI);
 	slashObj->timetracker = 0;
 	slashObj->Alpha = 0;
-	AEAudioPlay(HeroSlash, Damage, 1, 1, 0);
+	AEAudioPlay(HeroSlash, Damage, 0.3, 1, 0);
 }
 
+/*!***********************************************************************
+\brief
+	This function makes the player stand still. Resets the velocity to 0
+*************************************************************************/
 void GameObjInst::playerStand() {
 	velCurr = { 0,0 };
 	TextureMap = TEXTURE_PLAYER;
 }
 
+/*!***********************************************************************
+\brief
+	This function knocks the player back from touching the mob
+\param[in] mob
+	The mob that touches the player
+*************************************************************************/
 void GameObjInst::playerKnockback(GameObjInst mob) {
 	AEVec2 nil{ 0,0 };
 	if (velCurr == nil) //If standing still
@@ -97,6 +138,12 @@ void GameObjInst::playerKnockback(GameObjInst mob) {
 	else posCurr -= velCurr / 2; // If moving, pushback by player's velocity(walking into mob)
 }
 
+/*!***********************************************************************
+\brief
+	This function creates the slash according to the angle
+\param[in] angle
+	The angle between the player and the mouse
+*************************************************************************/
 void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
 	if (health > 0 && health < 3 && backPack.Potion > 0)
 	{
@@ -114,6 +161,12 @@ void GameObjInst::drinkPotion(staticObjInst* menuObj[3], Inventory& backPack) {
 	}
 }
 
+/*!***********************************************************************
+\brief
+	This function makes the player tint from being damaged
+\param[in] damageCD
+	The time left for invulnerability
+*************************************************************************/
 void GameObjInst::playerDamaged(float damageCD) {
 	if (damageCD == 0) {
 		damagetint = { 1,1,1 };
