@@ -42,7 +42,6 @@ extern double	g_appTime;
 #include "Globals.h"
 #include "ParticleSystem.h"
 #include "mapFunctions.h"
-#include "staticObjs.h"
 #include "SplashScreen.h"
 #include "WinScreen.h"
 #include "HelpScreen.h"
