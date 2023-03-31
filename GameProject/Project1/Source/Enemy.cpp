@@ -1,10 +1,24 @@
+/******************************************************************************/
+/*!
+\file		Enemy.cpp
+\author 	Javier Low Zhi Liang
+\par    	email: zhiliangjavier.low@digipen.edu
+\date   	February 02, 2023
+\brief		This source file contains function definitions for enemy interactivity like A* path finding, 
+Initialising nodes for A* and enemy movement.
+
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
+
 #include "main.h"
 #include <iostream>
 #include <list>
 #include <vector>
 
 
-//Node *nodes = nullptr; // Pointer to hold an array of nodes,  need this in world.cpp
 
 int path_width{};
 int path_height{};
@@ -15,13 +29,18 @@ Node n_enemy{};
 Node n_player{};
 
 
-/******************************************************************
-function definition for Initialising node variables
-*******************************************************************/
+/******************************************************************/
+/*!
+\brief function definition for Initialising node variables
+\param int *grid , taking in a pointer of the Binary Grid level
+\param int width , taking in width of map 
+\param int height , taking in height of map 	
+*/
+/*******************************************************************/
 void NodesInit(int *grid, int width, int height)
 {
 
-	path_width = width;
+	path_width = width; 
 	path_height = height;
 	nodes = new Node[path_width * path_height]; // allocate mem for *nodes to point to array holding type Nodes
 
@@ -33,8 +52,8 @@ void NodesInit(int *grid, int width, int height)
 			int index = y * path_width + x;
 			Node* node = &nodes[index];
 
-			nodes[index].ae_NodePos.x = x+0.5f; //init pos x for node, + 0.5 offset to set node in the middle of x axis grid
-			nodes[index].ae_NodePos.y = -y-0.5f; //init pos y for node, - 0.5 offset to set node in the middle of y axis grid
+			nodes[index].ae_NodePos.x = x +0.5f; //init pos x for node, + 0.5 offset to set node in the middle of x axis grid
+			nodes[index].ae_NodePos.y = -y -0.5f; //init pos y for node, - 0.5 offset to set node in the middle of y axis grid
 			nodes[index].parent = nullptr; //init parent to point to nothing first 
 			nodes[index].b_Closed = false; //init closed node to false
 
@@ -43,7 +62,6 @@ void NodesInit(int *grid, int width, int height)
 			{
  				
  				nodes[y * path_width + x].b_Obstacle = true; //if grid[x][y] == 1, it is  obstacle and set to true
-				//std::cout << y * path_width + x << std::endl;
 			}
 			else
 			{
@@ -60,6 +78,7 @@ void NodesInit(int *grid, int width, int height)
 			Node* node = &nodes[y * path_width + x];
 
 			//connecting the nodes together horizontally and vertically
+
 			if (y > 0)//checking to prevent adding nodes that dont exist
 				nodes[y * path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x + 0)]); // connecting with node above current
 
@@ -72,9 +91,10 @@ void NodesInit(int *grid, int width, int height)
 			if (x < path_width - 1)//checking to prevent adding nodes that dont exist
 				nodes[y * path_width + x].v_Neighbours.push_back(&nodes[(y + 0) * path_width + (x + 1)]); // connecting with left node
 
-			//std::cout << "Size: " << nodes[y * path_width + x].v_Neighbours.size() << std::endl;
+			
 			  
 			//connect diagonally
+
 			if (y>0 && x>0)//checking to prevent adding nodes that dont exist
 				nodes[y*path_width + x].v_Neighbours.push_back(&nodes[(y - 1) * path_width + (x - 1)]);
 
@@ -93,27 +113,46 @@ void NodesInit(int *grid, int width, int height)
 	std::cout << "Nodes Initialised" << std::endl;
 }
 
-/******************************************************************
-function definition for calculating distance
-*******************************************************************/
+
+/******************************************************************/
+/*!
+\brief function definition for calculating distance
+\param Node* a , taking in a pointer of type Node
+\param Node* b, taking in a pointer of type Node
+\return distance of type float.
+*/
+/*******************************************************************/
+
 float distance(Node* a, Node* b) // to calculate dist
 {
 	return sqrtf((a->ae_NodePos.x - b->ae_NodePos.x) * (a->ae_NodePos.x - b->ae_NodePos.x) + (a->ae_NodePos.y - b->ae_NodePos.y) * (a->ae_NodePos.y - b->ae_NodePos.y));
 }
 
-/******************************************************************
-function definition for calculating hcost of nodes
-*******************************************************************/
+/******************************************************************/
+/*!
+\brief function definition for calculating hcost of nodes
+\param Node* a , taking in a pointer of type Node
+\param Node* b, taking in a pointer of type Node
+\return hcost of type float.
+*/
+/*******************************************************************/
 float heuristic(Node* a, Node* b) // to calculate heuristic
 {
 	return distance(a, b);
 }
 
-//float i_hcost = heuristic(nodesrc, nodedesc);
 
-/******************************************************************
-function definition for A* pathfinding
-*******************************************************************/
+
+/******************************************************************/
+/*!
+\brief function definition for A* pathfinding
+\param float x ,taking in x coordinate of Player GameObj
+\param float y ,taking in y coordinate of Player GameObj
+\param float x1,taking in x coordinate of Enemy GameObj
+\param float y1,taking in y coordinate of Enemy GameObj
+\return shortest of type vector holding node pointers
+*/
+/*******************************************************************/
 std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 {
 
@@ -132,8 +171,6 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	nodedesc->ae_NodePos.y = y1;
 	nodedesc->b_Obstacle = false;
 
-	//nodesrc = n_enemy;
-	//nodedesc = n_player;
 
 	for (int x2 = 0; x2 < path_width; x2++)
 	{
@@ -225,18 +262,24 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	
 
 
-/******************************************************************
-function definition deleting nodes
-*******************************************************************/
+/******************************************************************/
+/*!
+\brief function definition deleting nodes
+*/
+/*******************************************************************/
 void deletenodes()
 {
 	
 	delete[] nodes;
 }
 
-/******************************************************************
-function definition for mobsKilled
-*******************************************************************/
+
+/******************************************************************/
+/*!
+\brief function definition for mobsKilled
+*/
+/*******************************************************************/
+
 void GameObjInst::mobsKilled() {
 
 	srand(static_cast<unsigned int>(time(NULL)));
@@ -250,9 +293,12 @@ void GameObjInst::mobsKilled() {
 	gameObjInstDestroy(this);
 }
 
-/******************************************************************
-function definition for mobsPathfind with movement implemented
-*******************************************************************/
+/******************************************************************/
+/*!
+\brief function definition for mobsPathfind with movement implemented
+\param GameObjInst target
+*/
+/*******************************************************************/
 void GameObjInst::mobsPathFind(GameObjInst target) {
 	pathtimer -= g_dt; // timer counting down 
 
@@ -328,9 +374,12 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 	}
 }
 
-/******************************************************************
-function definition of mobKnockback
-*******************************************************************/
+/******************************************************************/
+/*!
+\brief function definition for mobsKnockback
+\param GameObjInst slash 
+*/
+/*******************************************************************/
 void GameObjInst::mobKnockback(staticObjInst slash) {
 	AEVec2 slash2Mob = slash.posCurr - posCurr; //Based on distance between mob and slash
 	posCurr -= slash2Mob;

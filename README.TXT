@@ -8,7 +8,7 @@ Teammates:
 
 Chua Zheng Yang		-	c.zhengyang@digipen.edu
 Liu Chengrong		-	Chengrong.liu@digipen
-Alvin Woo Jia Hao	-	a.woo@digipen.edu
+Alvin Woo Jia Hao		-	a.woo@digipen.edu
 Javier Low Zhi Liang	-	zhiliangjavier.low@digipen.edu
 Jaasmeet Singh		-	Jaasmeet.s@digipen.edu
 
