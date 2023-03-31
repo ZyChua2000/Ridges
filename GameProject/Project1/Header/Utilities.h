@@ -231,3 +231,4 @@ namespace utilities {
 		Calculation of a matrix for boss health bar
 	*************************************************************************/
 	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform);
+}
