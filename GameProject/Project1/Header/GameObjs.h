@@ -294,10 +294,27 @@ struct GameObjInst
 	*/
 	/******************************************************************************/
 
+	/*!***********************************************************************
+	\brief
+		This function kills the mob and converts it to a potion at a random
+		chance
+	*************************************************************************/
 	void mobsKilled();
 
+	/*!***********************************************************************
+	\brief
+		This function activates the pathfinding for the mob
+	\param[in] target
+		The object to pathfind to
+	*************************************************************************/
 	void mobsPathFind(GameObjInst target);
 
+	/*!***********************************************************************
+	\brief
+		This function knocks the mob back upon being slashed
+	\param[in] slash
+		The slash object
+	*************************************************************************/
 	void mobKnockback(staticObjInst slash);
 	
 };
@@ -337,10 +354,53 @@ enum TYPE
 	TYPE_NUM
 };
 
+/*!***********************************************************************
+\brief
+	This function creates a dynamic object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] pVel
+	Pointer to the initial velocity of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 
+GameObjInst* gameObjInstCreate(unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir);
 
-
+/*!***********************************************************************
+\brief
+	This function frees a dynamic object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 void gameObjInstDestroy(GameObjInst* pInst);
+
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 staticObjInst* staticObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
-void gameObjInstDestroy(GameObjInst* pInst);
-GameObjInst* gameObjInstCreate(unsigned long type,float scale,AEVec2* pPos,AEVec2* pVel,float dir);
+
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
+void staticObjInstDestroy(staticObjInst* pInst);
