@@ -27,7 +27,7 @@ struct bosshp
 	int* currenthp;
 	f32 width;
 	f32 height;
-	float damagetaken;
+	int damagetaken;
 };
 
 struct saveData {

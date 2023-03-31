@@ -36,21 +36,21 @@ enum TYPE_BUTTON
 };
 struct MenuObj
 {
-	unsigned long type;
-	AEGfxVertexList* pMesh;
-	AEGfxTexture* pTexture;
-	bool refMesh;
-	bool refTexture;
+	unsigned long type{};
+	AEGfxVertexList* pMesh{};
+	AEGfxTexture* pTexture{};
+	bool refMesh{};
+	bool refTexture{};
 };
 
 struct MenuObjInst
 {
-	MenuObj* pObject;
-	unsigned long flag =0;
-	float scale;
-	AEVec2 posCurr;
-	float	dirCurr;
-	AEMtx33				transform;
+	MenuObj* pObject{};
+	unsigned long flag{};
+	float scale{};
+	AEVec2 posCurr{};
+	float	dirCurr{};
+	AEMtx33	transform{};
 };
 
 static const unsigned int	MENU_OBJ_NUM_MAX = 8;
@@ -151,7 +151,7 @@ void GS_MainMenu_Init(void) {
 
 		mBack = menuObjInstCreate(TYPE_BACK1, BackSize, &Backpos, 0.0f);
 		
-		AEAudioPlay(BackgroundMusic, Group1, 0.1, 1, 1);
+		AEAudioPlay(BackgroundMusic, Group1, 0.1f, 1, 1);
 }
 
 

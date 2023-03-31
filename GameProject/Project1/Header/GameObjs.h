@@ -87,33 +87,32 @@ struct Inventory {
 struct GameObjInst
 {
 	GameObj* pObject;	// pointer to the 'original' shape
-	unsigned long		flag;		// bit flag or-ed together
-	float				scale;		// scaling value of the object instance
-	AEVec2				posCurr;	// object current position
-	AEVec2				velCurr;	// object current velocity
-	float				dirCurr;	// object current direction
-	AABB				boundingBox;// object bouding box that encapsulates the object
-	AEMtx33				transform;	// object transformation matrix: Each frame, 
-	AEVec2				TextureMap; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
-	int					health;		// object's health level
-	int					damage;		// object's damage parameter
-	std::vector<Node*>	path; // this is only for enemy or any ai/ npc that requires path
-	float				timetracker;// object's time of existence
-	bool				stopped; //to check if enemy stopped moving
-	bool				enemy_dead; // flag to check if enemy is alive or not
-	bool				is_hit;//check if enemy is hit
-	float				hit_time;//time got hit
-	float				pathfindtime;//buffer time for enemies
-	float				pathtimer; //timer to count down
-	int					target_node;// node checker for path finding
-	enum				STATE state; //state for boss obj instance
-	enum				INNER_STATE innerState; // inner state for boss obj instance
-	float				state_timer; // timer for state machine 
-	float				timeCD;
-	tint				damagetint;
-	float				damagebuffer;
-	enum				STATE stateFlag;
-
+	unsigned long		flag{};		// bit flag or-ed together
+	float				scale{};		// scaling value of the object instance
+	AEVec2				posCurr{};	// object current position
+	AEVec2				velCurr{};	// object current velocity
+	float				dirCurr{};	// object current direction
+	AABB				boundingBox{};// object bouding box that encapsulates the object
+	AEMtx33				transform{};	// object transformation matrix: Each frame, 
+	AEVec2				TextureMap{}; // object's coordinates for sprite in spritesheet, irrelevant if spritesheet not used
+	int					health{};		// object's health level
+	int					damage{};		// object's damage parameter
+	std::vector<Node*>	path{}; // this is only for enemy or any ai/ npc that requires path
+	float				timetracker{};// object's time of existence
+	bool				stopped{}; //to check if enemy stopped moving
+	bool				enemy_dead{}; // flag to check if enemy is alive or not
+	bool				is_hit{};//check if enemy is hit
+	float				hit_time{};//time got hit
+	float				pathfindtime{};//buffer time for enemies
+	float				pathtimer{}; //timer to count down
+	int					target_node{};// node checker for path finding
+	enum				STATE state {}; //state for boss obj instance
+	enum				INNER_STATE innerState {}; // inner state for boss obj instance
+	float				state_timer{}; // timer for state machine 
+	float				timeCD{};
+	tint				damagetint{};
+	float				damagebuffer{};
+	enum				STATE stateFlag {};
 
 	// Member functions
 

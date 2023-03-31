@@ -284,7 +284,7 @@ void GS_Maze_Init(void) {
 
 	playerHitTime = 0;
 
-	AEAudioPlay(MazeBG, MazeBGG, 0.1, 1, 1);
+	AEAudioPlay(MazeBG, MazeBGG, 0.1f, 1, 1);
 	
 }
 

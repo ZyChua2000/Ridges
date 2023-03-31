@@ -175,7 +175,7 @@ namespace utilities {
 
 	void bossBarTransMatrix(bosshp& boss, AEMtx33 &hpbartransform) {
 		boss.damagetaken = boss.maxhp - *boss.currenthp;
-		boss.width = SPRITE_SCALE * 9 * *boss.currenthp / boss.maxhp;
+		boss.width = SPRITE_SCALE * 9.f * *boss.currenthp / boss.maxhp;
 
 		//scale, rot, trans for health bar
 		AEMtx33 bar_scale, bar_trans, bar_rot;
