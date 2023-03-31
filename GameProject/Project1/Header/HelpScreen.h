@@ -1,10 +1,10 @@
 /******************************************************************************/
 /*!
 \file		HelpScreen.h
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Alvin Woo Jia Hao
+\par    	email: a.woo\@digipen.edu
 \date   	February 02, 2023
-\brief		This header file contains the functions for the level of Help Screen.
+\brief		This header file contains the functions for the level of Main Menu.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
