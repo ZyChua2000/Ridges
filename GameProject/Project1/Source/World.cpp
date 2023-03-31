@@ -112,7 +112,7 @@ static std::vector<AEGfxVertexList*> meshList;			// Dynamic list of meshes
 /*!
 	"Load" function of this state
 	This function loads all necessary assets for the World level.
-	It should be called once before the start of the level.clic
+	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
 /******************************************************************************/
@@ -266,10 +266,6 @@ void GS_World_Init(void) {
 		AEVec2 PlayerPos = { 12,-8 };
 		//AEVec2 PlayerPos = { 106, -25 };
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
-
-		Backpack.Potion = 0;
-		Backpack.Key = 0;
-
 		Player->health = 3;
 		Player->damage = 1;
 
@@ -488,7 +484,7 @@ void GS_World_Update(void) {
 					Levers[lev]->tilt45();
 					//Remove gates: Change texture & Binary map
 					utilities::unlockGate(lev, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT);
-					AEAudioPlay(Interact, InteractGroup, 0.3, 1, 0);
+					AEAudioPlay(Interact, InteractGroup, 0.3f, 1, 0);
 				}
 			}
 
@@ -498,7 +494,7 @@ void GS_World_Update(void) {
 				//Interaction with Chest
 				if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
 				{
-					AEAudioPlay(Interact, InteractGroup, 0.3, 0.5, 0);
+					AEAudioPlay(Interact, InteractGroup, 0.3f, 0.5f, 0);
 					//change texture of chest
 					Chest[i]->chest2Potion();
 				}
@@ -814,7 +810,7 @@ void GS_World_Draw(void) {
 
 			AEMtx33Rot(&rot, 0);
 			AEMtx33Trans(&trans, 0, 0);
-			AEMtx33Scale(&scale, AEGetWindowWidth(), AEGetWindowHeight());
+			AEMtx33Scale(&scale, static_cast<f32>(AEGetWindowWidth()), static_cast<f32>(AEGetWindowHeight()));
 			AEMtx33Concat(&StartScreenbj->transform, &rot, &scale);
 			AEMtx33Concat(&StartScreenbj->transform, &trans, &StartScreenbj->transform);
 
@@ -832,8 +828,8 @@ void GS_World_Draw(void) {
 
 			PauseObj->transform.m[0][2] = camX * SPRITE_SCALE;
 			PauseObj->transform.m[1][2] = camY * SPRITE_SCALE;
-			PauseObj->transform.m[0][0] = AEGetWindowWidth();
-			PauseObj->transform.m[1][1] = AEGetWindowHeight();
+			PauseObj->transform.m[0][0] = static_cast<f32>(AEGetWindowWidth());
+			PauseObj->transform.m[1][1] = static_cast<f32>(AEGetWindowHeight());
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
 			AEGfxSetTransform(PauseObj->transform.m);
@@ -847,7 +843,7 @@ void GS_World_Draw(void) {
 			AEGfxTextureSet(textureList[8], 0, 0);
 			AEMtx33Rot(&rot, 0);
 			AEMtx33Trans(&trans, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-			AEMtx33Scale(&scale, AEGetWindowWidth(), AEGetWindowHeight());
+			AEMtx33Scale(&scale, static_cast<f32>(AEGetWindowWidth()), static_cast<f32>(AEGetWindowHeight()));
 			AEMtx33Concat(&transform, &rot, &scale);
 			AEMtx33Concat(&transform, &trans, &transform);
 
