@@ -91,6 +91,7 @@ static AEVec2* Gates;
 static int gatesNum;
 static int levNum;
 static int chestNum;
+static int cycle;
 
 static const float timingFIRST = 0.0f;
 static const float timingSECOND = 0.6f;
@@ -165,15 +166,19 @@ void GS_Tower_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
-	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 3
-	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 4
+	textureList.push_back(AEGfxTextureLoad("Assets/Tower_Obj.png")); // 3
+	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 4
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png")); //5
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png")); //6
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png")); //7
+
 
 	//Texture Alias
 	AEGfxTexture*& slashTex = textureList[0];
 	AEGfxTexture*& refBox = textureList[1];
 	AEGfxTexture*& spriteSheet = textureList[2];
-	AEGfxTexture*& PauseTex = textureList[3];
-	AEGfxTexture*& startTex = textureList[4];
+	AEGfxTexture*& startTex = textureList[3];
+	AEGfxTexture*& PauseTex = textureList[4];
 
 
 	// Load mesh and texture into game objects
@@ -352,6 +357,7 @@ void GS_Tower_Init(void) {
 
 	levelstart = 1;
 	pause = 0;	
+	cycle = 0;
 }
 
 
@@ -365,11 +371,23 @@ void GS_Tower_Init(void) {
 
 void GS_Tower_Update(void) {
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
 		pause = !pause;
 		levelstart = 0;
 	}
 
+	if (pause == 0) {
+		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
+			cycle = 1;
+		}
+		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
+			cycle++;
+		}
+		if (cycle == 4) {
+			cycle = 0;
+		}
+		PauseObj->pObject->pTexture = textureList[4 + cycle];
+	}
 	if (pause == 1) {
 
 		// Normalising mouse to 0,0 at the center

@@ -81,6 +81,7 @@ static int minimap = 0;
 static int posx = 0;
 static int posy = 0;
 static int flag;
+static int cycle;
 
 static int countx = 0;
 static int county = 0;
@@ -201,15 +202,20 @@ void GS_Maze_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
 	textureList.push_back(AEGfxTextureLoad("Assets/Darkroom.png")); // 3
-	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 4
-	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 5
+	textureList.push_back(AEGfxTextureLoad("Assets/Maze_Obj.png")); // 4
+	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 5
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png")); //6
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png")); //7
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png")); //8
+
 
 	//Texture Alias
 	AEGfxTexture*& slashTex = textureList[0];
 	AEGfxTexture*& refBox = textureList[1];
 	AEGfxTexture*& spriteSheet = textureList[2];
-	AEGfxTexture*& PauseTex = textureList[4];
-	AEGfxTexture*& startTex = textureList[5];
+	AEGfxTexture*& startTex = textureList[4];
+	AEGfxTexture*& PauseTex = textureList[5];
+
 
 
 	// Load mesh and texture into game objects
@@ -303,7 +309,8 @@ void GS_Maze_Init(void) {
 
 	levelstart = 1;
 	pause = 0;
-	
+	cycle = 0;
+
 }
 
 
@@ -318,9 +325,22 @@ void GS_Maze_Init(void) {
 void GS_Maze_Update(void) {
 	
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
 		pause = !pause;
 		levelstart = 0;
+	}
+
+	if (pause == 0) {
+		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
+			cycle = 1;
+		}
+		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
+			cycle++;
+		}
+		if (cycle == 4) {
+			cycle = 0;
+		}
+		PauseObj->pObject->pTexture = textureList[5 + cycle];
 	}
 
 	if (pause == 1) {
