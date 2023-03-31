@@ -214,7 +214,7 @@ void GS_Maze_Load(void) {
 	utilities::loadMeshNTexture(Chest, spriteMesh, spriteSheet, TYPE_CHEST);
 	utilities::loadMeshNTexture(Spike, spriteMesh, spriteSheet, TYPE_SPIKE);
 
-	 MazeBG = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Warped.mp3");
+	 MazeBG = AEAudioLoadMusic("Assets/Music/INPUT - NewAge MSCNEW2_01.wav");
 	 MazeBGG = AEAudioCreateGroup();
 }
 
@@ -284,7 +284,7 @@ void GS_Maze_Init(void) {
 
 	playerHitTime = 0;
 
-	AEAudioPlay(MazeBG, MazeBGG, 0.1f, 1, 1);
+	AEAudioPlay(MazeBG, MazeBGG, 0.5f, 1, 1);
 	
 }
 

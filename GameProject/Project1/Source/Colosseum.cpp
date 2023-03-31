@@ -336,7 +336,7 @@ void GS_Colosseum_Update(void) {
 			if (AEInputCheckTriggered(AEVK_9)) {
 				mapeditor ^= 1;
 			}
-
+			
 
 			Player->playerStand();
 
@@ -660,7 +660,7 @@ void GS_Colosseum_Update(void) {
 
 				pInst->calculateTransMatrix();
 			}
-
+			
 
 			//BUG NOT WORKING
 			Player->dustParticles();
@@ -681,8 +681,12 @@ void GS_Colosseum_Update(void) {
 			
 
 		}
+		if (AEInputCheckTriggered(AEVK_H)) {
 
-
+			gGameStateNext = GS_HELP;
+			return;
+		}
+		
 }
 
 /******************************************************************************/
