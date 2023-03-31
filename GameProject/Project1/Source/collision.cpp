@@ -131,7 +131,7 @@ bool CollisionIntersection_RectRect(const AABB& aabb1, const AEVec2& vel1,
 
 }
 
-int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, int binaryMap[28][29], float scaleX, float scaleY)
+int CheckInstanceBinaryMapCollision(float PosX, float PosY, int binaryMap[124][42], float scaleX, float scaleY)
 {
 	int Flag = 0;
 	int x1, y1, x2, y2;
@@ -213,7 +213,7 @@ void snaptocellsub(float* coordinate) {
 
 
 
-int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, float scaleX, float scaleY, int binaryMap[28][29])
+int CheckInstanceBinaryMapCollisionCollo(float PosX, float PosY, int binaryMap[28][29], float scaleX, float scaleY)
 {
 	int Flag = 0;
 	int x1, y1, x2, y2;
