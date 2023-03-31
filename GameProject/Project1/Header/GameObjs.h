@@ -258,12 +258,34 @@ struct GameObjInst
 	*************************************************************************/
 	void drinkPotion(staticObjInst* menuObj[3], Inventory& backPack);
 
+	/*!***********************************************************************
+	\brief
+		This function creates the slash according to the angle
+	\param[in] angle
+		The angle between the player and the mouse
+	*************************************************************************/
 	void playerSlashCreate(float angle);
 
+	/*!***********************************************************************
+	\brief
+		This function creates dust particles where the player walks
+	*************************************************************************/
 	void dustParticles();
 
+	/*!***********************************************************************
+	\brief
+		This function knocks the player back from touching the mob
+	\param[in] mob
+		The mob that touches the player
+	*************************************************************************/
 	void playerKnockback(GameObjInst mob);
 
+	/*!***********************************************************************
+	\brief
+		This function makes the player tint from being damaged
+	\param[in] damageCD
+		The time left for invulnerability
+	*************************************************************************/
 	void playerDamaged(float damageCD);
 
 	/******************************************************************************/
