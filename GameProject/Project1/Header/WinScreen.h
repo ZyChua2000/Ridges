@@ -1,10 +1,10 @@
 /******************************************************************************/
 /*!
-\file		Mainmenu.h
+\file		Winscreen.h
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
 \date   	February 02, 2023
-\brief		This header file contains the functions for the level of Main Menu.
+\brief		This header file contains the functions for the level of Winscreen.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
