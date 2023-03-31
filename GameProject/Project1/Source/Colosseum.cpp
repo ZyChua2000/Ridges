@@ -263,7 +263,7 @@ void GS_Colosseum_Init(void) {
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
-	camX = Player->posCurr.x, camY = Player->posCurr.y;
+	AEGfxSetCamPosition(0, 0);
 
 	// =====================================
 	//	Initialize UI objects
@@ -630,11 +630,8 @@ void GS_Colosseum_Update(void) {
 			}
 
 			// Camera position and UI items
-
-			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-
 			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-
+			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 			utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
 
 			// =====================================

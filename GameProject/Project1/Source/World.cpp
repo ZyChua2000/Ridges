@@ -1199,6 +1199,7 @@ void loadData(saveData data) {
 		GameObjInst* pInst = gameObjInstCreate(TYPE_ENEMY, 1, &pos, nullptr, 0);
 		saveText >> pInst->health;
 	}
+	CURRENT_MOBS = data.mobsNum;
 
 	saveText >> data.chestNum;
 	for (int i = 0; i < data.chestNum; i++) {
@@ -1211,6 +1212,7 @@ void loadData(saveData data) {
 		Chest[i] = staticObjInstCreate(TYPE_CHEST, 1, &pos, 0);
 		Chest[i]->TextureMap = tex;
 	}
+	chestNum = data.chestNum;
 
 	saveText >> data.leverNum;
 	for (int i = 0; i < data.leverNum; i++) {
@@ -1223,6 +1225,7 @@ void loadData(saveData data) {
 		Levers[i] = staticObjInstCreate(TYPE_LEVERS, 1, &pos, 0);
 		Levers[i]->TextureMap = tex;
 	}
+	levNum = data.leverNum;
 }
 
 
