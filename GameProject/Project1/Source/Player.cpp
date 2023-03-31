@@ -1,7 +1,7 @@
 #include "main.h"
 /******************************************************************************/
 /*!
-\file		GameObj.cpp
+\file		Player.cpp
 \author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
 \date   	February 02, 2023

@@ -1,6 +1,19 @@
 #pragma once
 #ifndef GLOBALS
 #define GLOBALS
+/******************************************************************************/
+/*!
+\file		Globals.h
+\author 	Chua Zheng Yang
+\par    	email: c.zhengyang\@digipen.edu
+\date   	February 02, 2023
+\brief		This header file contains the declarations for all global variables
+
+Copyright (C) 2023 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the
+prior written consent of DigiPen Institute of Technology is prohibited.
+ */
+ /******************************************************************************/
 
 /******************************************************************************/
 /*!
