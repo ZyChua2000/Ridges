@@ -1,9 +1,9 @@
 /******************************************************************************/
 /*!
 \file		Utilities.cpp
-\author 	
-\par    	email: 
-\date   	February 02, 2023
+\co-author  Liu Chengrong,
+\par    	email: chengrong.liu\@digipen.edu,
+\date   	March 31, 2023
 \brief		This source file contains the function definition of different functions
 			that will be called and use to run the game
 
