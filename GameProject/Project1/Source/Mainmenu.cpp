@@ -131,7 +131,7 @@ void GS_MainMenu_Load(void) {
 		800.f, 450.f, 0x00FF00, 1.f, 0.0f);
 	CreditMesh = AEGfxMeshEnd();
 
-	BackgroundMusic = AEAudioLoadMusic("Assets/Music/Alexander Ehlers - Flags.mp3");
+	BackgroundMusic = AEAudioLoadMusic("Assets/Music/SCI-FI-FOREST_GEN-HDF-20668.wav");
 	Group1 = AEAudioCreateGroup();
 	Credit_Img = AEGfxTextureLoad("Assets/Credits.png");
 }

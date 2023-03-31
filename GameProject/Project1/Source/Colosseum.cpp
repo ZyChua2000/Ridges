@@ -26,7 +26,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static saveData				data;
 static Node* nodes{};
 
-bool pause;
+
 //static const unsigned int	MAX_CHESTS;							// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
 static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
@@ -48,7 +48,8 @@ static						AEVec2 binaryPlayerPos;				// Position on Binary Map
 static float slashCD = 0;
 static float walkCD = 0;
 
-bool levelstart;
+static bool pause;
+static bool levelstart;
 
 
 // -----------------------------------------------------------------------------
@@ -82,6 +83,7 @@ static staticObjInst* PauseObj;
 static staticObjInst* StartScreenbj;
 static Inventory Backpack;
 static int chestnum;
+static int cycle = 0;
 
 static std::vector<AEGfxTexture*> textureList;
 static std::vector<AEGfxVertexList*> meshList;
@@ -177,15 +179,20 @@ void GS_Colosseum_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
-	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 3
-	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 4
+	textureList.push_back(AEGfxTextureLoad("Assets/ColloStart.png")); // 3
+	textureList.push_back(AEGfxTextureLoad("Assets/PauseScreen.png")); // 4
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_1.png")); //5
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png")); //6
+	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png")); //7
+
 
 	//Texture Alias
 	AEGfxTexture*& slashTex = textureList[0];
 	AEGfxTexture*& refBox = textureList[1];
 	AEGfxTexture*& spriteSheet = textureList[2];
-	AEGfxTexture*& PauseTex = textureList[3];
-	AEGfxTexture*& startTex = textureList[4];
+	AEGfxTexture*& startTex = textureList[3];
+	AEGfxTexture*& PauseTex = textureList[4];
+
 
 
 	// Load mesh and texture into game objects
@@ -281,6 +288,7 @@ void GS_Colosseum_Init(void) {
 
 	levelstart = 1;
 	pause = 0;
+	cycle = 0;
 
 	ParticleSystemInit();
 
@@ -298,10 +306,24 @@ void GS_Colosseum_Init(void) {
 void GS_Colosseum_Update(void) {
 
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
 		pause = !pause;
 		levelstart = 0;
 	}
+
+	if (pause == 0) {
+		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
+			cycle = 1;
+		}
+		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
+			cycle++;
+		}
+		if (cycle == 4) {
+			cycle = 0;
+		}
+		PauseObj->pObject->pTexture = textureList[4 + cycle];
+	}
+
 		if (pause == 1) {
 
 
@@ -336,7 +358,7 @@ void GS_Colosseum_Update(void) {
 			if (AEInputCheckTriggered(AEVK_9)) {
 				mapeditor ^= 1;
 			}
-
+			
 
 			Player->playerStand();
 
@@ -660,7 +682,7 @@ void GS_Colosseum_Update(void) {
 
 				pInst->calculateTransMatrix();
 			}
-
+			
 
 			//BUG NOT WORKING
 			Player->dustParticles();
@@ -681,8 +703,7 @@ void GS_Colosseum_Update(void) {
 			
 
 		}
-
-
+		
 }
 
 /******************************************************************************/
