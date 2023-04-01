@@ -144,7 +144,7 @@ AEVec2 operator*= (AEVec2& root, AEVec2 branch) {
 	\return
 		true if identical, false if not
 *************************************************************************/
-bool operator== (AEVec2& root, AEVec2& branch) {
+bool operator== (const AEVec2& root, const AEVec2& branch) {
 	if (root.x == branch.x && root.y == branch.y) {
 		return true;
 	}
@@ -163,12 +163,12 @@ bool operator== (AEVec2& root, AEVec2& branch) {
 	\return
 		true if non identical, false if not
 *************************************************************************/
-bool operator!= (AEVec2& root, AEVec2& branch) {
+bool operator!= (const AEVec2& root, const AEVec2& branch) {
 	if (root.x != branch.x || root.y != branch.y) {
-		return false;
+		return true;
 	}
 	else {
-		return true;
+		return false;
 	}
 }
 

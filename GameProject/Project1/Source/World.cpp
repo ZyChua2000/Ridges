@@ -24,7 +24,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 /******************************************************************************/
 
 static int					MAX_MOBS;							// Total number of mobs at initial state of level
-static int					CURRENT_MOBS;						// Current number of mobs in game
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 
 static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
@@ -38,7 +37,7 @@ static const int directionInstructionX = 93;					// X coordinate limit to displa
 
 // -----------------------------------------------------------------------------
 
-
+// Functions for World.cpp only
 void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax);
 
 void loadData(saveData data);
@@ -78,18 +77,19 @@ static int chestNum;									// Dynamic number of Chests
 
 // State Variables
 bool loadState;											// Variable for new game vs returning from another level
-static bool	debugging = 0;								// Debugging state
-static bool	mapeditor = 0;								// Map edtior state
+static bool	debugging;									// Debugging state
+static bool	mapeditor;									// Map edtior state
 static bool directionShown;								// Bool of Mid-level instruction state
 static bool directionDraw;								// Bool of Mid-level instruction drawing
 
 // Time Variables
-static float playerHitTime = 0;							// Stores time left for player's invulnerability upon attacking
-static float slashCD = 0;								// Stores time left before player can slash again
-static float walkCD = 0;								// Stores time left before player can move after slashing
+static float playerHitTime;								// Stores time left for player's invulnerability upon attacking
+static float slashCD;									// Stores time left before player can slash again
+static float walkCD;									// Stores time left before player can move after slashing
 
 static Inventory Backpack;								// Inventory of Character
 static saveData	data;									// Save data container
+static int	CURRENT_MOBS;								// Current number of mobs in game
 
 
 // All the warp points to enter other levels
@@ -334,7 +334,7 @@ void GS_World_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 	
-	//Initialise player health.
+	//Initialise player health UI.
 	for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
@@ -367,7 +367,6 @@ void GS_World_Init(void) {
 	utilities::unloadObjs(pos);
 
 	ParticleSystemInit();
-	playerHitTime = 0;
 
 	// Initialise in-game states
 	levelstart = true;
@@ -375,6 +374,12 @@ void GS_World_Init(void) {
 	cycle = 0;
 	directionShown = false;
 	directionDraw = false;
+	debugging = false;
+	mapeditor = false;
+
+	playerHitTime = 0;
+	slashCD = 0;
+	walkCD = 0;
 }
 /******************************************************************************/
 /*!
@@ -472,7 +477,7 @@ void GS_World_Update(void) {
 			for (int i = 0; i < chestNum; i++)
 			{
 				//Interaction with Chest
-				if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+				if (Player->calculateDistance(*Chest[i]) < chestRange && Chest[i]->TextureMap != TEXTURE_OPENEDCHEST)
 				{
 					AEAudioPlay(Interact, InteractGroup, 0.3f, 0.5f, 0);
 					//change texture of chest
@@ -767,7 +772,7 @@ void GS_World_Draw(void) {
 	if (pause == true) {
 
 		// Draw starting instructions
-		if (levelstart)
+		if (levelstart == true)
 		{
 			AEMtx33 rot, scale, trans;
 

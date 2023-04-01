@@ -130,7 +130,7 @@ const float			slashRange = 0.9f;				// Range of distance for slash to hit enemy
 const float			SLASH_COOLDOWN_t = 0.5f;		// Time for slash to cooldown
 const float			WALK_COOLDOWN_t = 0.2f;			// Time for walk to be stopped after slash
 const float			DAMAGE_COODLDOWN_t = 1.5f;		// Time for damage invulenrability to reset
-
+const float			chestRange = 1.0f;				// Range to open chest
 
 /******************************************************************************/
 /*!

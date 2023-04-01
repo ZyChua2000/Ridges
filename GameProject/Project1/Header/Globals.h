@@ -131,6 +131,7 @@ extern const float			slashRange;				// Range of distance for slash to hit enemy
 extern const float			SLASH_COOLDOWN_t;		// Time for slash to cooldown
 extern const float			WALK_COOLDOWN_t;		// Time for walk to be stopped after slash
 extern const float			DAMAGE_COODLDOWN_t;		// Time for damage invulenrability to reset
+extern const float			chestRange;				// Range to open chest
 
 /******************************************************************************/
 /*!

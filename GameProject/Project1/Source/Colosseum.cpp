@@ -23,30 +23,16 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
-static saveData				data;
-static Node* nodes{};
 
-
-//static const unsigned int	MAX_CHESTS;							// The total number of chests
-static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
-static int					CURRENT_MOBS = MAX_MOBS;
+static const unsigned int	MAX_MOBS = 11;						// The total number of mobs
+static const int			totalWaves = 3;						// The total number of waves
 
 static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
-
-static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
-static unsigned int			state = 0;							// Debugging state
-static unsigned int			mapeditor = 0;						// Map edtior state
-
-
-static float slashCD = 0;
-static float walkCD = 0;
-
-
+static const AEVec2 playerStartPoint{ 14,-6 };					// Starting coordinate of new game player
 
 // -----------------------------------------------------------------------------
 //static Node* nodes{};
@@ -62,45 +48,38 @@ static float walkCD = 0;
 
 // ---------------------------------------------------------------------------
 
-
+// Map variables
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
-static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
+static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];			// 2D array of binary collision mapping
 
 
 // pointer to the objects
 static GameObjInst* Player;												// Pointer to the "Player" game object instance
 static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* RefBox;
-static staticObjInst* Chest[MAX_CHESTS];
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
-static staticObjInst* PauseObj;
-static staticObjInst* StartScreenbj;
-static Inventory Backpack;
-static int chestnum;
+static staticObjInst* Chest[MAX_CHESTS];								// Pointer to Chest objects
+static staticObjInst* MenuObj[3];										// Pointer to each menu UI object
+static staticObjInst* NumObj[3];										// Pointer to each number UI object
+static staticObjInst* PauseObj;											// Pointer to Pause Obj
+static staticObjInst* StartScreenbj;									// Pointer to start screen Obj
 
+// Object Instance Generation variables
+static int chestnum;					// Number of chests
+static int waves;						// Wave number
 
-float Timer = 0.f;
-static float internalTimer = 0.f;
-int waves = 0;
-float wavestimer = 0.f;
-bool spawned = false;
+// State Variables
+static bool spawned;					// Wave spawning state
+static bool	state;						// Debugging state
+static bool	mapeditor;					// Map edtior state
 
-// ---------------------------------------------------------------------------
+// Time Variables
+static float slashCD;					// Stores time left before player can slash again
+static float walkCD;					// Stores time left before player can move after slashing
+static float playerHitTime;				// Stores time left for player invulnerability after being hit
 
-/******************************************************************************/
+static Inventory Backpack;				// Inventory of Character
 
-
-//int CheckInstanceBinaryMapCollision(float PosX, float PosY,
-//	float scaleX, float scaleY);
-
-
-
-
-
-
-
+static int CURRENT_MOBS;				// Current number of mobs in game
 
 
 /******************************************************************************/
@@ -115,28 +94,23 @@ void GS_Colosseum_Load(void) {
 
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
-	// No game objects (shapes) at this point
+	// Setting initial numbers to 0
 	sGameObjNum = 0;
-
-	// zero the game object instance array
-	//memset(sGameObjInstList, 0, sizeof(GameObjInst) * GAME_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sGameObjInstNum = 0;
-
-	// zero the game object instance array
-	//memset(sStaticObjInstList, 0, sizeof(staticObjInst) * STATIC_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sStaticObjInstNum = 0;
-
-	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
-
+	// List of Unique Game Objs
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
 		* RefLine = 0, * Health = 0, * Enemy = 0, * Key = 0,
 		* Bullet = 0, * Chest = 0, * Spike = 0, * Spike_nonfade = 0,
 		* Pause = 0, *Start = 0;
 
+
+	// =====================================
+	//	Load Meshes
+	// =====================================
+	
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
 
@@ -167,8 +141,10 @@ void GS_Colosseum_Load(void) {
 	AEGfxVertexList*& spriteMesh = meshList[0];
 	AEGfxVertexList*& fullSizeMesh = meshList[1];
 
+	// =====================================
+	//	Load Textures
+	// =====================================
 
-	//Load Textures
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
@@ -188,7 +164,9 @@ void GS_Colosseum_Load(void) {
 
 
 
-	// Load mesh and texture into game objects
+	// =====================================
+	//	Load Unique Game Objs
+	// =====================================
 	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
 	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
 	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
@@ -215,6 +193,8 @@ void GS_Colosseum_Load(void) {
 */
 /******************************************************************************/
 void GS_Colosseum_Init(void) {
+
+	//Create objects for pause and start screen
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
 	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
 
@@ -240,10 +220,10 @@ void GS_Colosseum_Init(void) {
 	}
 	utilities::unloadObjs(pos);
 	// =====================================
-	//	Initialize objects for new game
+	//	Initialize objects for laded game
 	// =====================================
 		//Initialise Player
-	AEVec2 PlayerPos = { 14.f,-16.f };
+	AEVec2 PlayerPos = playerStartPoint;
 	Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 	std::ifstream ifs{ "Assets/save.txt" };
@@ -254,8 +234,8 @@ void GS_Colosseum_Init(void) {
 
 	Player->damage = 1;
 
-	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
+	//Initialise player health UI.
+	for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
@@ -277,14 +257,21 @@ void GS_Colosseum_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	//PauseObj = staticObjInstCreate(TYPE_PAUSE, 2, nullptr, 0);
 
-	levelstart = 1;
-	pause = 0;
+	// Initialise in-game states
+	spawned = false;					
+	state = false;					
+	mapeditor = false;					
+	levelstart = true;
+	pause = true;
 	cycle = 0;
 
-	ParticleSystemInit();
+	// Time Variables
+	slashCD = 0;				
+	walkCD = 0;					
+	playerHitTime = 0;			
 
+	ParticleSystemInit();
 }
 
 
@@ -299,39 +286,20 @@ void GS_Colosseum_Init(void) {
 void GS_Colosseum_Update(void) {
 
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
+
+	// Toggle Pause button
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		pause = !pause;
-		levelstart = 0;
+		levelstart = false;
+		cycle = 0;
 	}
 
-	if (pause == 0) {
-		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
-			cycle = 1;
-		}
-		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
-			cycle++;
-		}
-		if (cycle == 4) {
-			cycle = 0;
-		}
-		PauseObj->pObject->pTexture = textureList[4 + cycle];
-
-		if (cycle == 0) {
-			if (AEInputCheckReleased(AEVK_LBUTTON)) {
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					pause = 1;
-				}
-
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					gGameStateNext = GS_MAINMENU;
-				}
-			}
-		}
+	// Toggle help screen
+	if (pause == true && levelstart == false) {
+		utilities::moveHelpScreen(*PauseObj, 4);
 	}
 
-		if (pause == 1) {
+		if (pause == false) {
 
 
 			// Normalising mouse to 0,0 at the center
@@ -340,130 +308,78 @@ void GS_Colosseum_Update(void) {
 			mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
 			mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
+			// Calculating Angle between mouse and Player for Slash purposes
+
 			float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 			if (mouseY + camY > Player->posCurr.y) {
 				angleMousetoPlayer = -angleMousetoPlayer;
 			}
 
-			static float playerHitTime = 0;
 			//Time-related variables
 			utilities::decreaseTime(slashCD);
 			utilities::decreaseTime(walkCD);
 			utilities::decreaseTime(playerHitTime);
 
-
-
-
 			// =====================================
 			// User Input
 			// =====================================
-			//Debugging mode
+			//Debugging mode - Developer use
 			if (AEInputCheckTriggered(AEVK_F3)) {
-				state ^= 1;
+				state ^= true;
 			}
-			//Map editor mode
+			//Map editor mode - Developer Use
 			if (AEInputCheckTriggered(AEVK_9)) {
-				mapeditor ^= 1;
+				mapeditor ^= true;
 			}
 			
-
 			Player->playerStand();
 
+			// Movement Controls
 			if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 				|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 				Player->playerWalk(walkCD);
 			}
 
+			if (CURRENT_MOBS == 0 && waves >= 1) { // From wave 2 onwards, wave 1 activated by chest
+				waves++;
+				spawned = true;
+				// Level complete condition
+				if (waves > totalWaves) { // If complete last wave
+					utilities::completeLevel(colosseum, Player, Backpack);
+				}
+			}
 
 			if (AEInputCheckTriggered(AEVK_E)) {
 
 				for (int i = 0; i < chestnum; i++)
 				{
 					//Interaction with Chest
-					if (Player->calculateDistance(*Chest[i]) < 1 && Chest[i]->TextureMap.x != 8)
+					if (Player->calculateDistance(*Chest[i]) < chestRange && Chest[i]->TextureMap != TEXTURE_OPENEDCHEST)
 					{
 						//change texture of chest
 						Chest[i]->chest2Potion();
-						spawned = false;
-						waves = 1;
+						spawned = true;
+						waves++;
 					}
 				}
 			}
 
-
-			if (CURRENT_MOBS == 0) {
-				switch (waves) {
-				case 1:
-					waves = 2;
-					break;
-				case 2:
-					waves = 3;
-					break;
-				case 3:
-					//move to next level
-					utilities::completeLevel(colosseum, Player, Backpack);
-					waves = 4;
-					break;
-				default:
-					break;
-				}
-				spawned = false;
-			}
-
-
-
-			if (waves == 1 && !spawned) {
-				//Initialise enemy in level
-				AEVec2* pos = nullptr;
-				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave1.txt");
-				for (int i = 0; i < CURRENT_MOBS; i++) {
-					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-				}
-				utilities::unloadObjs(pos);
-				spawned = true;
-			}
-
-			if (waves == 2 && !spawned) {
-				//Initialise enemy in level
-				AEVec2* pos = nullptr;
-				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave2.txt");
-				for (int i = 0; i < CURRENT_MOBS; i++) {
-					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-				}
-				utilities::unloadObjs(pos);
-				spawned = true;
-			}
-
-			if (waves == 3 && !spawned) {
-				//Initialise enemy in level
-				AEVec2* pos = nullptr;
-				utilities::loadObjs(pos, CURRENT_MOBS, "colosseumWave3.txt");
-				for (int i = 0; i < CURRENT_MOBS; i++) {
-					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-				}
-				utilities::unloadObjs(pos);
-				spawned = true;
-			}
-
-			//if pickup potion then add player health
+			// Healing from Potion
 			if (AEInputCheckTriggered(AEVK_R))
 			{
 				Player->drinkPotion(Health, Backpack);
 			}
 
+			// Slashing Input
 			if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-				SLASH_ACTIVATE = true;
+				Player->playerSlashCreate(angleMousetoPlayer);
 				slashCD = SLASH_COOLDOWN_t;
 				walkCD = WALK_COOLDOWN_t;
 				Player->playerStand();
 			}
 
-			if (SLASH_ACTIVATE == true) {
-				Player->playerSlashCreate(angleMousetoPlayer);
-				SLASH_ACTIVATE = false;
-			}
-
-			if (mapeditor == 1) {
+			//Map editor selection - Developer Use
+			if (mapeditor == true) {
 				mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
 
 				utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
@@ -473,32 +389,12 @@ void GS_Colosseum_Update(void) {
 				mapEditorObj->scale = 0;
 			}
 
-			//Map editor printing
+			// Map editor printing - Developer Use
 			if (AEInputCheckTriggered(AEVK_8)) {
 				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
 
 				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
 			}
-
-			if (AEInputCheckTriggered(AEVK_M)) {
-				gGameStateNext = GS_MAINMENU;
-			}
-
-
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-			{
-				staticObjInst* pInst = sStaticObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-				{
-					continue;
-				}
-				//Interaction with items
-				if (Player->calculateDistance(*pInst) < pickUpRange)
-				{
-					Backpack.itemPickUp(pInst);
-				}
-			}
-
 
 			// ======================================================
 			// update physics of all active game object instances
@@ -523,7 +419,7 @@ void GS_Colosseum_Update(void) {
 				pEnemy->mobsPathFind(*Player);
 			}
 
-
+			// Calculate Bounding Box for Dynamic Objects
 			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 				GameObjInst* pInst = sGameObjInstList + i;
 				if (pInst->flag != FLAG_ACTIVE) {
@@ -532,6 +428,7 @@ void GS_Colosseum_Update(void) {
 				pInst->calculateBB();
 			}
 
+			// Calculate Bounding Box for Static Objects
 			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 				staticObjInst* pInst = sStaticObjInstList + i;
 				if (pInst->flag != FLAG_ACTIVE) {
@@ -569,7 +466,7 @@ void GS_Colosseum_Update(void) {
 				}
 
 				if (pInst->pObject->type == TYPE_ENEMY) {
-
+					// Between Enemy and Player
 					if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 						&& playerHitTime == 0)
 					{
@@ -591,6 +488,7 @@ void GS_Colosseum_Update(void) {
 						if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 							continue;
 						}
+						// Between Enemy and Slashes
 						if (pInst->calculateDistance(*jInst) < slashRange
 							&& jInst->Alpha == 0) {
 							pInst->deducthealth(Player->damage);
@@ -599,18 +497,19 @@ void GS_Colosseum_Update(void) {
 						}
 					}
 				}
-
-
-				if (Player->health == 0) {
-					gGameStateNext = GS_DEATHSCREEN;
-				}
-
 			}
 
 			int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y,binaryMap);
-
+			// Binary collision for player
 			snapCollision(*Player, flag);
 
+			// Tint of character if damaged
+			Player->playerDamaged(playerHitTime);
+
+			//Change level conditions
+			if (Player->health == 0) {
+				gGameStateNext = GS_DEATHSCREEN;
+			}
 
 
 			// ===================================
@@ -625,9 +524,17 @@ void GS_Colosseum_Update(void) {
 				if (pInst->flag != FLAG_ACTIVE) {
 					continue;
 				}
-
+				// Updating slash effects
 				if (pInst->pObject->type == TYPE_SLASH) {
 					pInst->playerSlashUpdate();
+				}
+
+				// Picking up items
+				if (pInst->pObject->type == TYPE_ITEMS) {
+					if (Player->calculateDistance(*pInst) < pickUpRange)
+					{
+						Backpack.itemPickUp(pInst);
+					}
 				}
 			}
 
@@ -636,7 +543,7 @@ void GS_Colosseum_Update(void) {
 				if (pInst->flag != FLAG_ACTIVE) {
 					continue;
 				}
-
+				// Killing Mobs
 				if (pInst->pObject->type == TYPE_ENEMY)
 				{
 					if (pInst->health == 0)
@@ -645,11 +552,27 @@ void GS_Colosseum_Update(void) {
 						CURRENT_MOBS -= 1;
 					}
 				}
-
+				// Increment global time tracker for character
 				if (pInst->pObject->type == TYPE_CHARACTER) {
 					pInst->timetracker += g_dt;
 				}
 			}
+
+			// Spawning mobs for waves
+			if (spawned == true) {
+				std::string input = "colosseumWave" + std::to_string(waves) + ".txt";
+
+				AEVec2* pos = nullptr;
+				utilities::loadObjs(pos, CURRENT_MOBS, input);
+				for (int i = 0; i < CURRENT_MOBS; i++) {
+					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
+				}
+				utilities::unloadObjs(pos);
+				spawned = false;
+			}
+
+			// Dust particles for player
+			Player->dustParticles();
 
 			// Camera position and UI items
 			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
@@ -683,27 +606,8 @@ void GS_Colosseum_Update(void) {
 				pInst->calculateTransMatrix();
 			}
 			
-
-			//BUG NOT WORKING
-			Player->dustParticles();
-
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-			{
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->pObject && pInst->pObject->type == TYPE_ENEMY) {
-
-					if (pInst->flag == 1) {
-						pInst->dustParticles();
-					}
-				}
-			}
-
-
-			ParticleSystemUpdate();
-			
-
-		}
-		
+			ParticleSystemUpdate();	
+		}	
 }
 
 /******************************************************************************/
@@ -715,78 +619,63 @@ void GS_Colosseum_Update(void) {
 /******************************************************************************/
 void GS_Colosseum_Draw(void) {
 
-	if (!pause) {
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-		if (levelstart)
+	if (pause == true) {
+		// Draw starting instructions
+		if (levelstart == true)
 		{
 			AEMtx33 rot, scale, trans;
 
-			staticObjInst* pInst = StartScreenbj;
-			// Tell the engine to get ready to draw something with texture. 
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+			AEGfxTextureSet(StartScreenbj->pObject->pTexture, 0, 0);
 
 			AEMtx33Rot(&rot, 0);
 			AEMtx33Trans(&trans, camX * SPRITE_SCALE, camY * SPRITE_SCALE);
-			AEMtx33Scale(&scale,  1600, 900);
-			AEMtx33Concat(&pInst->transform, &rot, &scale);
-			AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+			AEMtx33Scale(&scale, static_cast<f32>(AEGetWindowWidth()), static_cast<f32>(AEGetWindowHeight()));
+			AEMtx33Concat(&StartScreenbj->transform, &rot, &scale);
+			AEMtx33Concat(&StartScreenbj->transform, &trans, &StartScreenbj->transform);
 
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
+			AEGfxSetTransform(StartScreenbj->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			AEGfxMeshDraw(StartScreenbj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
-
+		// Draw pause screen
 		else
 		{
 
-			staticObjInst* pInst = PauseObj;
-			// Tell the engine to get ready to draw something with texture. 
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			AEGfxTextureSet(PauseObj->pObject->pTexture, 0, 0);
 
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-
-			pInst->transform.m[0][2] = camX * SPRITE_SCALE;
-			pInst->transform.m[1][2] = camY * SPRITE_SCALE;
-			pInst->transform.m[0][0] = 1600;
-			pInst->transform.m[1][1] = 900;
+			PauseObj->transform.m[0][2] = camX * SPRITE_SCALE;
+			PauseObj->transform.m[1][2] = camY * SPRITE_SCALE;
+			PauseObj->transform.m[0][0] = static_cast<f32>(AEGetWindowWidth());
+			PauseObj->transform.m[1][1] = static_cast<f32>(AEGetWindowHeight());
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
+			AEGfxSetTransform(PauseObj->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			AEGfxMeshDraw(PauseObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
 
-	} else if (pause) {
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+	} else if (pause == false) {
 
+		// Drawing map tiles
 		for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
 			for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
 				AEVec2 Pos = { i + 0.5f, -j - 0.5f };
 
+				// Only draw within viewport
 				if (utilities::checkWithinCam(Pos, camX, camY)) {
 					continue;
 				}
 				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-				if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
+				// Tint the tile mouse is hovering over when mapeditor mode is on
+				if (mapeditor == true && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
 					AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
 				}
 
@@ -845,11 +734,7 @@ void GS_Colosseum_Draw(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
-
-
 		AEGfxSetTransparency(1.0f);
-
-
 
 		// Spawn dynamic entities
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -859,21 +744,18 @@ void GS_Colosseum_Draw(void) {
 			// skip non-active object
 			if (pInst->flag != FLAG_ACTIVE)
 				continue;
-			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
+			// Only draw within viewport
 
+			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 				continue;
 			}
 			// for any sprite textures
-			if (pInst->pObject->type != TYPE_NUM) {
-				AEGfxTextureSet(pInst->pObject->pTexture,
-					pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
-					pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-			}
 
-
-			else {
-				AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-			}
+			AEGfxTextureSet(pInst->pObject->pTexture,
+				pInst->TextureMap.x* TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+				pInst->TextureMap.y* TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+			// For tint upon damage, all set to 1 by default
+			AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
 			AEGfxSetTransform(pInst->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
@@ -881,7 +763,7 @@ void GS_Colosseum_Draw(void) {
 		}
 
 
-		if (state == 1)
+		if (state == true)
 		{
 			char debug[20] = "Debug Screen";
 			char input[20] = "Input";
@@ -990,9 +872,10 @@ void GS_Colosseum_Unload(void) {
 		AEGfxTextureUnload(texture);
 	}
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
+	// Reset camera position
 	AEGfxSetCamPosition(0, 0);
 
+	// Clear vectors
 	meshList.clear();
 	textureList.clear();
 

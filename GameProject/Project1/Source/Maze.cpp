@@ -58,8 +58,6 @@ static staticObjInst* NumObj[3];						// Pointer to each number UI object
 static staticObjInst* PauseObj;							// Pointer to Pause Obj
 static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
 
-static Inventory Backpack;
-
 // State Variables
 static bool					state;						// Debugging state
 static bool					mapeditor;					// Map edtior state
@@ -78,6 +76,8 @@ static float				walkCD;						// Stores time left before player can move after sl
 // Path tracking variables
 static AEVec2 mappingarr[pathingTrackingMax];			// 2D Array of Vectors to track position of pathing
 static int arrin;										// Accessing value of Array, incremented per game loop
+
+static Inventory Backpack;								// Inventory of Character
 
 AEAudio MazeBG;
 AEAudioGroup MazeBGG;
