@@ -59,7 +59,7 @@ static staticObjInst* PauseObj;							// Pointer to Pause Obj
 static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
 
 // State Variables
-static bool					state;						// Debugging state
+static bool					debugging;					// Debugging state
 static bool					mapeditor;					// Map edtior state
 static bool					dark;						// Dark room state
 static bool					pathing;					// Pathing mode state
@@ -288,7 +288,7 @@ void GS_Maze_Init(void) {
 	AEAudioPlay(MazeBG, MazeBGG, 0.1f, 1, 1);
 
 	// Initialise states and timers
-	state = false;
+	debugging = false;
 	mapeditor = false;
 	dark = true;
 	pathing = false;
@@ -350,7 +350,7 @@ void GS_Maze_Update(void) {
 		// =====================================
 		//Debugging mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_F3)) {
-			state ^= true;
+			debugging ^= true;
 		}
 		//Map editor mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_9)) {
@@ -827,7 +827,7 @@ void GS_Maze_Draw(void) {
 		}
 
 		// Debugging mode - for developer use
-		if (state == true)
+		if (debugging == true)
 		{
 			char debug[20] = "Debug Screen";
 			char input[20] = "Input";

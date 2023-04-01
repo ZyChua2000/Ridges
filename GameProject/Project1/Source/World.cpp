@@ -236,10 +236,6 @@ void GS_World_Init(void) {
 
 	utilities::loadObjs(Gates, gatesNum, "worldGates.txt");
 
-	// =====================================
-	//	Initialize map textures
-	// =====================================
-
 	utilities::importMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
 
 	// =====================================
@@ -648,10 +644,9 @@ void GS_World_Update(void) {
 		// Tint of character if damaged
 		Player->playerDamaged(playerHitTime);
 
-
 		//Change level conditions
 		for (int i = 0; i < 4; i++) {
-			if (utilities::inRange(Player, WarpPts[i], WarpPts[i * 2 + 1])) {
+			if (utilities::inRange(Player, WarpPts[i * 2], WarpPts[i * 2 + 1])) {
 				gGameStateNext = GS_BOSSLEVEL + i;
 				Player->posCurr = SavedPoint;
 				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);

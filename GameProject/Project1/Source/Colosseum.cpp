@@ -69,7 +69,7 @@ static int waves;						// Wave number
 
 // State Variables
 static bool spawned;					// Wave spawning state
-static bool	state;						// Debugging state
+static bool	debugging;					// Debugging state
 static bool	mapeditor;					// Map edtior state
 
 // Time Variables
@@ -260,7 +260,7 @@ void GS_Colosseum_Init(void) {
 
 	// Initialise in-game states
 	spawned = false;					
-	state = false;					
+	debugging = false;					
 	mapeditor = false;					
 	levelstart = true;
 	pause = true;
@@ -284,8 +284,6 @@ void GS_Colosseum_Init(void) {
 /******************************************************************************/
 
 void GS_Colosseum_Update(void) {
-
-
 
 	// Toggle Pause button
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
@@ -325,7 +323,7 @@ void GS_Colosseum_Update(void) {
 		// =====================================
 		//Debugging mode - Developer use
 		if (AEInputCheckTriggered(AEVK_F3)) {
-			state ^= true;
+			debugging ^= true;
 		}
 		//Map editor mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_9)) {
@@ -763,7 +761,7 @@ void GS_Colosseum_Draw(void) {
 		}
 
 
-		if (state == true)
+		if (debugging == true)
 		{
 			char debug[20] = "Debug Screen";
 			char input[20] = "Input";

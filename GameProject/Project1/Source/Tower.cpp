@@ -37,7 +37,7 @@ static const float timingFIRST = 0.0f;
 static const float timingSECOND = 0.6f;
 static const float timingTHIRD = 1.2f;
 static const float timingFOURTH = 1.8f;
-static const AEVec2 playerStartPoint{ 58.5,-6 };					// Starting coordinate of new game player
+static const AEVec2 playerStartPoint{ 58.5,-6 };				// Starting coordinate of new game player
 
 
 // -----------------------------------------------------------------------------
@@ -70,17 +70,14 @@ static staticObjInst* NumObj[3];						// Pointer to each number UI object
 static staticObjInst* PauseObj;							// Pointer to Pause Obj
 static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
 
-
-
-
 // Object Instance Generation variables
 static AEVec2* Gates;									// Dynamic Array of Gates position
 static int gatesNum;									// Dynamic number of Gates
 static int levNum;										// Dynamic number of Levers
 
 // State Variables
-static bool	state = 0;									// Debugging state
-static bool	mapeditor = 0;								// Map edtior state
+static bool	debugging;									// Debugging state
+static bool	mapeditor;									// Map edtior state
 
 // Time Variables
 static float playerHitTime;								// Stores time left for player's invulnerability upon attacking
@@ -101,28 +98,22 @@ static int	CURRENT_MOBS;								// Current number of mobs in game
 void GS_Tower_Load(void) {
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
-	// No game objects (shapes) at this point
+	// Setting initial numbers to 0
 	sGameObjNum = 0;
-
-	// zero the game object instance array
-	//memset(sGameObjInstList, 0, sizeof(GameObjInst) * GAME_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sGameObjInstNum = 0;
-
-	// zero the game object instance array
-	//memset(sStaticObjInstList, 0, sizeof(staticObjInst) * STATIC_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sStaticObjInstNum = 0;
-
-	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
-
+	// List of Unique Game Objs
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
 		* RefLine = 0, * Health = 0, * Enemy = 0, * Key = 0,
 		* Bullet = 0, * Lever = 0, * Chest = 0, * Spike = 0, 
 		* Spike_nonfade = 0, * Tower = 0,*Pause = 0, *Start = 0;
 
+	// =====================================
+	//	Load Meshes
+	// =====================================
+	
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
 
@@ -153,6 +144,9 @@ void GS_Tower_Load(void) {
 	AEGfxVertexList*& spriteMesh = meshList[0];
 	AEGfxVertexList*& fullSizeMesh = meshList[1];
 
+	// =====================================
+	//	Load Textures
+	// =====================================
 
 	//Load Textures
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
@@ -172,8 +166,10 @@ void GS_Tower_Load(void) {
 	AEGfxTexture*& startTex = textureList[3];
 	AEGfxTexture*& PauseTex = textureList[4];
 
+	// =====================================
+	//	Load Unique Game Objs
+	// =====================================
 
-	// Load mesh and texture into game objects
 	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
 	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
 	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
@@ -201,8 +197,10 @@ void GS_Tower_Load(void) {
 */
 /******************************************************************************/
 void GS_Tower_Init(void) {
+	//Create objects for pause and start screen
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
 	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
+
 	AEVec2* pos = nullptr;
 	int num;
 
@@ -224,7 +222,7 @@ void GS_Tower_Init(void) {
 
 
 	// =====================================
-	//	Initialize objects for new game
+	//	Initialize objects for loaded game
 	// =====================================
 		//Initialise Player
 		AEVec2 PlayerPos = playerStartPoint;
@@ -252,15 +250,9 @@ void GS_Tower_Init(void) {
 		}
 		utilities::unloadObjs(pos);
 
-
-	
-
-
-	// =====================================
-	//	Initialize objects for loaded game
-	// =====================================
 	utilities::loadObjs(pos, num, "towerTowersD.txt");
 
+	// Tower timing list
 	float towerdowntiming[14] = {
 	timingFIRST,
 	timingSECOND,
@@ -335,16 +327,20 @@ void GS_Tower_Init(void) {
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
 	//Initialise player health.
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
 	ParticleSystemInit();
 
 	playerHitTime = 0;
+	slashCD = 0;
+	walkCD = 0;
 
-	levelstart = 1;
-	pause = 0;	
+	levelstart = true;
+	pause = true;
+	debugging = false;
+	mapeditor = false;
 	cycle = 0;
 }
 
@@ -359,38 +355,18 @@ void GS_Tower_Init(void) {
 
 void GS_Tower_Update(void) {
 
-	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
+	// Toggle Pause button
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		pause = !pause;
-		levelstart = 0;
+		levelstart = false;
+		cycle = 0;
 	}
 
-	if (pause == 0) {
-		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
-			cycle = 1;
-		}
-		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
-			cycle++;
-		}
-		if (cycle == 4) {
-			cycle = 0;
-		}
-		PauseObj->pObject->pTexture = textureList[4 + cycle];
-
-		if (cycle == 0) {
-			if (AEInputCheckReleased(AEVK_LBUTTON)) {
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					pause = 1;
-				}
-
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					gGameStateNext = GS_MAINMENU;
-				}
-			}
-		}
+	// Toggle help screen
+	if (pause == true && levelstart == false) {
+		utilities::moveHelpScreen(*PauseObj, 4);
 	}
-	if (pause == 1) {
+	if (pause == false) {
 
 		// Normalising mouse to 0,0 at the center
 		s32 mouseIntX, mouseIntY;
@@ -398,6 +374,7 @@ void GS_Tower_Update(void) {
 		mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
 		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
+		// Calculating Angle between mouse and Player for Slash purposes
 		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
 		if (mouseY + camY > Player->posCurr.y) {
 			angleMousetoPlayer = -angleMousetoPlayer;
@@ -407,24 +384,24 @@ void GS_Tower_Update(void) {
 		utilities::decreaseTime(slashCD);
 		utilities::decreaseTime(walkCD);
 		utilities::decreaseTime(playerHitTime);
-		Player->playerDamaged(playerHitTime);
 
 
 		// =====================================
 		// User Input
 		// =====================================
-		//Debugging mode
+		//Debugging mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_F3)) {
-			state ^= 1;
+			debugging ^= true;
 		}
-		//Map editor mode
+		//Map editor mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_9)) {
-			mapeditor ^= 1;
+			mapeditor ^= true;
 		}
 
 
 		Player->playerStand();
 
+		// Movement Controls
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 			Player->playerWalk(walkCD);
@@ -434,23 +411,7 @@ void GS_Tower_Update(void) {
 			AEAudioStopGroup(MovementGroup);
 		}
 
-		//reducing heath for debugging
-		if (AEInputCheckTriggered(AEVK_MINUS))
-		{
-			Player->deducthealth();
-			switch (Player->health)
-			{
-			case 0:
-				Health[2]->TextureMap = TEXTURE_DEADHEART;
-				break;
-			case 1:
-				Health[1]->TextureMap = TEXTURE_DEADHEART;
-				break;
-			case 2:
-				Health[0]->TextureMap = TEXTURE_DEADHEART;
-			}
-		}
-
+		// Interaction Control
 		if (AEInputCheckTriggered(AEVK_E)) {
 
 			//Interaction with levers
@@ -465,12 +426,13 @@ void GS_Tower_Update(void) {
 			}
 		}
 
-		//if pickup potion then add player health
+		// Healing from Potion
 		if (AEInputCheckTriggered(AEVK_R))
 		{
 			Player->drinkPotion(Health, Backpack);
 		}
 
+		// Slashing Input
 		if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
 			Player->playerSlashCreate(angleMousetoPlayer);
 			slashCD = SLASH_COOLDOWN_t;
@@ -478,8 +440,8 @@ void GS_Tower_Update(void) {
 			Player->playerStand();
 		}
 
-
-		if (mapeditor == 1) {
+		//Map editor selection - Developer Use
+		if (mapeditor == true) {
 			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
 
 			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
@@ -489,32 +451,12 @@ void GS_Tower_Update(void) {
 			mapEditorObj->scale = 0;
 		}
 
-		//Map editor printing
+		// Map editor printing - Developer Use
 		if (AEInputCheckTriggered(AEVK_8)) {
 			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
 
 			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
 		}
-
-		if (AEInputCheckTriggered(AEVK_M)) {
-			gGameStateNext = GS_MAINMENU;
-		}
-
-
-		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-		{
-			staticObjInst* pInst = sStaticObjInstList + i;
-			if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-			{
-				continue;
-			}
-			//Interaction with items
-			if (Player->calculateDistance(*pInst) < pickUpRange)
-			{
-				Backpack.itemPickUp(pInst);
-			}
-		}
-
 
 		// ======================================================
 		// update physics of all active game object instances
@@ -539,7 +481,7 @@ void GS_Tower_Update(void) {
 			pEnemy->mobsPathFind(*Player);
 		}
 
-
+		// Calculate Bounding Box for Dynamic Objects
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
 			if (pInst->flag != FLAG_ACTIVE) {
@@ -548,6 +490,7 @@ void GS_Tower_Update(void) {
 			pInst->calculateBB();
 		}
 
+		// Calculate Bounding Box for Static Objects
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
 			if (pInst->flag != FLAG_ACTIVE) {
@@ -566,6 +509,11 @@ void GS_Tower_Update(void) {
 
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
+
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+
 			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 			{
 				pInst->velToPos();
@@ -585,6 +533,7 @@ void GS_Tower_Update(void) {
 			}
 
 			if (pInst->pObject->type == TYPE_ENEMY) {
+				// Between Enemy and Player
 
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 					&& playerHitTime == 0)
@@ -608,6 +557,7 @@ void GS_Tower_Update(void) {
 					if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 						continue;
 					}
+					// Between Enemy and Slashes
 
 					if (pInst->calculateDistance(*jInst) < slashRange
 						&& jInst->Alpha == 0) {
@@ -621,23 +571,21 @@ void GS_Tower_Update(void) {
 			if (pInst->pObject->type == TYPE_BULLET) {
 				int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
-
+					// Between bullet and player
 					Player->deducthealth();
 					gameObjInstDestroy(pInst);
 				}
+				// between bullet and wall
 				if (snapCollision(*pInst, flag)) {
 					gameObjInstDestroy(pInst);
 				}
 			}
-
-			if (Player->health == 0) {
-				gGameStateNext = GS_DEATHSCREEN;
-			}
 		}
 
 		int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, binaryMap);
-
+		// Player binary collision
 		snapCollision(*Player, flag);
+
 
 		for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
@@ -646,13 +594,23 @@ void GS_Tower_Update(void) {
 			}
 
 			pInst->spikeUpdate(); // Updates alpha of spikes
-
+			// Between Spikes and Player
 			if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 				Player->deducthealth();
 				playerHitTime = DAMAGE_COODLDOWN_t;
 			}
+		}
 
+		// Tint of character if damaged
+		Player->playerDamaged(playerHitTime);
+
+		// Change level conditions
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
+		}
+		if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
+			utilities::completeLevel(tower, Player, Backpack);
 		}
 
 		// ===================================
@@ -682,6 +640,14 @@ void GS_Tower_Update(void) {
 
 			}
 
+			// Picking up items
+			if (pInst->pObject->type == TYPE_ITEMS) {
+				if (Player->calculateDistance(*pInst) < pickUpRange)
+				{
+					Backpack.itemPickUp(pInst);
+				}
+			}
+
 		}
 
 		for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
@@ -689,7 +655,7 @@ void GS_Tower_Update(void) {
 			if (pInst->flag != FLAG_ACTIVE) {
 				continue;
 			}
-
+			// Killing Mobs
 			if (pInst->pObject->type == TYPE_ENEMY)
 			{
 				if (pInst->health == 0)
@@ -698,28 +664,15 @@ void GS_Tower_Update(void) {
 					CURRENT_MOBS -= 1;
 				}
 			}
-
+			// Increment global time tracker for character
 			if (pInst->pObject->type == TYPE_CHARACTER) {
 				pInst->timetracker += g_dt;
 			}
 		}
 
-		if (MAX_MOBS - CURRENT_MOBS == 2) { //If first 2 tutorial monsters are killed,unlock gate 1
-			utilities::unlockGate(gatesNum / 2 - 1, *MapObjInstList, *binaryMap, Gates, MAP_CELL_HEIGHT); //Tutorial gate is last gate in list
-		}
-
-
-		// Clear condition
-
-
-		if (utilities::inRange(Player, levelClearMin, levelClearMax)) {
-			utilities::completeLevel(tower, Player, Backpack);
-		}
-
-
+		// Set Camera and the UI objects
 		utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-
 		utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
 
 		// =====================================
@@ -749,8 +702,6 @@ void GS_Tower_Update(void) {
 			pInst->calculateTransMatrix();
 		}
 
-		// Camera position and UI items
-
 		//Player->dustParticles();
 
 		ParticleSystemUpdate();
@@ -767,80 +718,63 @@ void GS_Tower_Update(void) {
 /******************************************************************************/
 	void GS_Tower_Draw(void) {
 
-		if (!pause) {
 
-			if (levelstart)
+		// Set modes for rendering
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+		if (pause == true) {
+			// Draw starting instructions
+			if (levelstart == true)
 			{
 				AEMtx33 rot, scale, trans;
 
-				staticObjInst* pInst = StartScreenbj;
-				// Tell the engine to get ready to draw something with texture. 
-				AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-				// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-				// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-				AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+				AEGfxTextureSet(StartScreenbj->pObject->pTexture, 0, 0);
 
 				AEMtx33Rot(&rot, 0);
 				AEMtx33Trans(&trans, 0, 0);
-				AEMtx33Scale(&scale, 1600, 900);
-				AEMtx33Concat(&pInst->transform, &rot, &scale);
-				AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+				AEMtx33Scale(&scale, static_cast<f32>(AEGetWindowWidth()), static_cast<f32>(AEGetWindowHeight()));
+				AEMtx33Concat(&StartScreenbj->transform, &rot, &scale);
+				AEMtx33Concat(&StartScreenbj->transform, &trans, &StartScreenbj->transform);
 
 
 				// Set the current object instance's transform matrix using "AEGfxSetTransform"
-				AEGfxSetTransform(pInst->transform.m);
+				AEGfxSetTransform(StartScreenbj->transform.m);
 				// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-				AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+				AEGfxMeshDraw(StartScreenbj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 			}
-
+			// Draw pause screen
 			else
 			{
+				AEGfxTextureSet(PauseObj->pObject->pTexture, 0, 0);
 
-				staticObjInst* pInst = PauseObj;
-				// Tell the engine to get ready to draw something with texture. 
-				AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-				// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-				// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-				AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-				AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-
-				pInst->transform.m[0][2] = camX * SPRITE_SCALE;
-				pInst->transform.m[1][2] = camY * SPRITE_SCALE;
-				pInst->transform.m[0][0] = 1600;
-				pInst->transform.m[1][1] = 900;
+				PauseObj->transform.m[0][2] = camX * SPRITE_SCALE;
+				PauseObj->transform.m[1][2] = camY * SPRITE_SCALE;
+				PauseObj->transform.m[0][0] = static_cast<f32>(AEGetWindowWidth());
+				PauseObj->transform.m[1][1] = static_cast<f32>(AEGetWindowHeight());
 
 				// Set the current object instance's transform matrix using "AEGfxSetTransform"
-				AEGfxSetTransform(pInst->transform.m);
+				AEGfxSetTransform(PauseObj->transform.m);
 				// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-				AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+				AEGfxMeshDraw(PauseObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 			}
 
 
 		}
-		else if (pause) {
-
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
+		else if (pause == false) {
+		// Drawing map tiles
 		for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
 			for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
 				AEVec2 Pos = { i + 0.5f, -j - 0.5f };
 
+				// Only draw within viewport
 				if (utilities::checkWithinCam(Pos, camX, camY)) {
 					continue;
 				}
 				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-				if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
+				if (mapeditor == true && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
 					AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
 				}
 
@@ -873,6 +807,7 @@ void GS_Tower_Update(void) {
 			if (pInst->pObject->type == TYPE_REF) {
 				continue;
 			}
+			// Only draw within viewport
 			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 				continue;
 			}
@@ -899,11 +834,7 @@ void GS_Tower_Update(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
-
-
 		AEGfxSetTransparency(1.0f);
-
-
 
 		// Spawn dynamic entities
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -913,21 +844,15 @@ void GS_Tower_Update(void) {
 			// skip non-active object
 			if (pInst->flag != FLAG_ACTIVE)
 				continue;
+			// Only draw within viewport
 			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
-
 				continue;
 			}
 			// for any sprite textures
-			if (pInst->pObject->type != TYPE_NUM) {
+
 				AEGfxTextureSet(pInst->pObject->pTexture,
 					pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 					pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-			}
-
-
-			else {
-				AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-			}
 			AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
 			AEGfxSetTransform(pInst->transform.m);
@@ -936,7 +861,7 @@ void GS_Tower_Update(void) {
 		}
 
 
-		if (state == 1)
+		if (debugging == true)
 		{
 			char debug[20] = "Debug Screen";
 			char input[20] = "Input";
