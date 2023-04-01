@@ -420,7 +420,7 @@ void GS_World_Update(void) {
 		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
 		// Calculating Angle between mouse and Player for Slash purposes
-		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + camX, mouseY + camY);
 		if (mouseY + camY > Player->posCurr.y) {
 			angleMousetoPlayer = -angleMousetoPlayer;
 		}
@@ -525,7 +525,6 @@ void GS_World_Update(void) {
 		for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 		{
 			GameObjInst* pEnemy = sGameObjInstList + j;
-
 
 			// skip non-active object
 			if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)

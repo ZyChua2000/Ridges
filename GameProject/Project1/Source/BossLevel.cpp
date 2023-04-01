@@ -23,68 +23,50 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
-static saveData				data;
-static Node* nodes{};
-
-
-static const unsigned int	MAX_MOBS = 11;						// The total number of mobs
-static int					CURRENT_MOBS = MAX_MOBS;
-static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
-static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_KEYS;							// The total number of keys
-
-static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
-
 static const int			MAP_CELL_WIDTH = 24;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
-static const float			darkRoom_duration = 3.f;
-static const float			bossCircle_duration = 0.5f;
-static const float			bossAttackRange = 1.0f;
-static const float			bossSearchRange = 1.5f;
-
-
-static unsigned int			state = 0;							// Debugging state
-static unsigned int			mapeditor = 0;						// Map edtior state
+// Boss Attributes
+static const float			darkRoom_duration = 3.f;			// Duration for dark room to exist
+static const float			bossCircle_duration = 0.5f;			// Duration for boss circle to toggle
+static const float			bossAttackRange = 1.0f;				// Range of boss attack
+static const float			bossSearchRange = 1.5f;				// Range of boss to stop patrolling
 
 // -----------------------------------------------------------------------------
 
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
-
-
-static float slashCD = 0;
-static float walkCD = 0;
-
 // pointer to the objects
-static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static GameObjInst* Boss;
-static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
-static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
-static staticObjInst* bossHeart;
-static Inventory Backpack;
-static GameObj hpbar;
+static GameObjInst* Player;								// Pointer to the "Player" game object instance
+static GameObjInst* Boss;								// Pointer to the "Boss" game object instance
+static staticObjInst* mapEditorObj;						// Pointer to the reference map editor object instance
+static staticObjInst* Health[3];						// Pointer to the player health statc object instance
+static staticObjInst* MenuObj[3];						// Pointer to each menu UI object
+static staticObjInst* NumObj[3];						// Pointer to each number UI object
+static staticObjInst* bossHeart;						// Pointer to bossHeart object
+static staticObjInst* PauseObj;							// Pointer to Pause Obj
+static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
 
-static staticObjInst* PauseObj;
-static staticObjInst* StartScreenbj;
+// State Variables
+static bool dark;										// Dark room state
+static bool	debugging;									// Debugging state
+static bool	mapeditor;									// Map edtior state
 
-static int dark;
-static float darkTimer;
+// Time Variables
+static float darkTimer;									// Stores time left for dark room state
+static float playerHitTime;								// Stores time left for player's invulnerability upon attacking
+static float slashCD;									// Stores time left before player can slash again
+static float walkCD;									// Stores time left before player can move after slashing
 
-static int levelclearedNum;
 
-static std::vector<int> stageList;
+// HP bar variables
+static bosshp bossHP;									// Struct for more info on bosshp for drawing purpose
+static AEMtx33 hpbartransform;							// Transformation matrix of bosshp bar
+static GameObj hpbar;									// Global obj of boss hp bar
 
-
-static float playerHitTime;
-static staticObjInst* RefBox;
-
-static AEMtx33 hpbartransform;
-
-static bosshp boss;
+static std::vector<int> stageList;						// List of stages uncleared, which boss attack is available
+static Inventory Backpack;								// Inventoy of player
 
 static AEAudio BossBGM;
 static AEAudioGroup BossGroup;
@@ -102,26 +84,21 @@ static AEAudioGroup BossGroup;
 void GS_BossLevel_Load(void) {
 	// zero the game object array
 	memset(sGameObjList, 0, sizeof(GameObj) * GAME_OBJ_NUM_MAX);
-	// No game objects (shapes) at this point
+	// Setting initial numbers to 0
 	sGameObjNum = 0;
-
-	// zero the game object instance array
-	//memset(sGameObjInstList, 0, sizeof(GameObjInst) * GAME_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sGameObjInstNum = 0;
-
-	// zero the game object instance array
-	//memset(sStaticObjInstList, 0, sizeof(staticObjInst) * STATIC_OBJ_INST_NUM_MAX);
-	// No game object instances (sprites) at this point
 	sStaticObjInstNum = 0;
-
-	// The ship object instance hasn't been created yet, so this "spShip" pointer is initialized to 0
 	Player = nullptr;
 
+	// List of Unique Game Objs
 	GameObj* Character = 0, * Item = 0, * Map = 0, * Slash = 0,
 		*RefLine = 0, *Health = 0, *Enemy = 0, *Boss = 0, *Key = 0,
 		*Bullet = 0, *BossCircle = 0, *BossCircleAttack = 0, *BossSlash=0,
 		*Pause = 0, *Start = 0;
+
+	// =====================================
+	//	Load Meshes
+	// =====================================
 
 	//Mesh for Sprite Sheet - 0
 	AEGfxMeshStart();
@@ -180,8 +157,10 @@ void GS_BossLevel_Load(void) {
 	AEGfxVertexList*& healthBarMesh = meshList[2];
 	AEGfxVertexList*& darkRoomMesh = meshList[3];
 
+	// =====================================
+	//	Load Textures
+	// =====================================
 
-	//Load Textures
 	textureList.push_back(AEGfxTextureLoad("Assets/slash.png")); // 0
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/RefBox.png")); // 1
 	textureList.push_back(AEGfxTextureLoad("Assets/Tilemap/tilemap_packed.png")); // 2
@@ -200,8 +179,9 @@ void GS_BossLevel_Load(void) {
 	AEGfxTexture*& PauseTex = textureList[4];
 	AEGfxTexture*& startTex = textureList[8];
 	
-	
-	// Load mesh and texture into game objects
+	// =====================================
+	//	Load Unique Game Objs
+	// =====================================
 	utilities::loadMeshNTexture(Character, spriteMesh, spriteSheet, TYPE_CHARACTER);
 	utilities::loadMeshNTexture(Item, spriteMesh, spriteSheet, TYPE_ITEMS);
 	utilities::loadMeshNTexture(Map, spriteMesh, spriteSheet, TYPE_MAP);
@@ -218,8 +198,6 @@ void GS_BossLevel_Load(void) {
 	utilities::loadMeshNTexture(Pause, fullSizeMesh, PauseTex, TYPE_PAUSE);
 	utilities::loadMeshNTexture(Start, fullSizeMesh, startTex, TYPE_START);
 
-	
-
 	ParticleSystemLoad();
 
 	BossBGM = AEAudioLoadMusic("Assets/Music/DEEP WATERS - DanceTechno MSCDNT2_57.wav");
@@ -234,13 +212,11 @@ void GS_BossLevel_Load(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Init(void) {
-	srand(static_cast<unsigned int>(time(NULL))); //Random seed
+	srand(static_cast<unsigned int>(time(NULL))); //Random seed for boss attack pattern
+
+	//Create objects for pause and start screen
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
 	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
-
-	dark = notActivated;
-	darkTimer = 0; // Reset dark timer
-	playerHitTime = 0; // Reset hit cooldown
 
 	// =====================================
 	//	Initialize map textures
@@ -269,13 +245,10 @@ void GS_BossLevel_Init(void) {
 		ifs >> Backpack.Potion; //set to player number of current key
 		ifs.close();
 
-		Player->damage = 1;
-
 		//Initialise player health.
 		for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
 			Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75f, nullptr, 0);
 		}
-
 
 	//Init pathfinding nodes
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
@@ -297,23 +270,35 @@ void GS_BossLevel_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	boss.maxhp = Boss->health;
-	boss.currenthp = &Boss->health;
+	// Initialise bosshp struct
+	bossHP.maxhp = Boss->health;
+	bossHP.currenthp = &Boss->health;
+	// Initialise heart object for boss health bar
+	bossHeart = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
 
 	ParticleSystemInit();
 
-
+	// Initialise available attack list
 	for (int i = 0; i < 3; i++) {
 		if (levelCleared[i] == false) {
 			stageList.push_back(i);
 		}
 	}
-	levelstart = 1;
-	pause = 0;
+
+	// Initialise in-game states
+	levelstart = true;
+	pause = true;
+	dark = false;
+	debugging = false;
+	mapeditor = false;
+
+	darkTimer = 0;
+	playerHitTime = 0;
+	slashCD = 0;
+	walkCD = 0;
 	cycle = 0;
 
 	AEAudioPlay(BossBGM, BossGroup, 0.2f, 1, 1);
-	bossHeart = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
 }
 
 
@@ -325,42 +310,19 @@ void GS_BossLevel_Init(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Update(void) {
-	if (AEInputCheckTriggered(AEVK_ESCAPE) && cycle == 0) {
+	// Toggle Pause button
+	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		pause = !pause;
-		levelstart = 0;
+		levelstart = false;
+		cycle = 0;
 	}
 
-	if (pause == 0) {
-		if (AEInputCheckTriggered(AEVK_H) && cycle == 0) {
-			cycle = 1;
-		}
-		if (cycle != 0 && AEInputCheckTriggered(AEVK_RIGHT)) {
-			AEAudioStopGroup(BossGroup);
-			cycle++;
-		}
-		if (cycle == 4) {
-			cycle = 0;
-		}
-			PauseObj->pObject->pTexture = textureList[4 + cycle];
-
-		if (cycle == 0) {
-			if (AEInputCheckReleased(AEVK_LBUTTON)) {
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					AEAudioStopGroup(BossGroup);
-					pause = 1;
-				}
-
-				if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-				{
-					AEAudioStopGroup(BossGroup);
-					gGameStateNext = GS_MAINMENU;
-				}
-			}
-		}
+	// Toggle help screen
+	if (pause == true && levelstart == false) {
+		utilities::moveHelpScreen(*PauseObj, 4);
 	}
 
-	if (pause == 1) {
+	if (pause == false) {
 
 		// Normalising mouse to 0,0 at the center
 		s32 mouseIntX, mouseIntY;
@@ -368,58 +330,55 @@ void GS_BossLevel_Update(void) {
 		mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
 		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+		// Calculating Angle between mouse and Player for Slash purposes
+
+		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + camX, mouseY + camY);
 		if (mouseY + camY > Player->posCurr.y) {
 			angleMousetoPlayer = -angleMousetoPlayer;
 		}
-
-		BossStateMachine(Boss);
+		
 		//Time-related variables
 		utilities::decreaseTime(slashCD);
 		utilities::decreaseTime(walkCD);
 		utilities::decreaseTime(playerHitTime);
-		Player->playerDamaged(playerHitTime);
 
 		// =====================================
 		// User Input
 		// =====================================
-		//Debugging mode
+		//Debugging mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_F3)) {
-			state ^= 1;
-		}
-		//Map editor mode
-		if (AEInputCheckTriggered(AEVK_9)) {
-			mapeditor ^= 1;
+			debugging ^= true;
 		}
 
+		//Map editor mode - Developer Use
+		if (AEInputCheckTriggered(AEVK_9)) {
+			mapeditor ^= true;
+		}
 
 		Player->playerStand();
 
+		// Movement Controls
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 			Player->playerWalk(walkCD);
 		}
 
-
-		//if pickup potion then add player health
+		// Healing from Potion
 		if (AEInputCheckTriggered(AEVK_R))
 		{
 			Player->drinkPotion(Health, Backpack);
 		}
 
+		// Slashing Input
 		if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-			SLASH_ACTIVATE = true;
+			Player->playerSlashCreate(angleMousetoPlayer);
 			slashCD = SLASH_COOLDOWN_t;
 			walkCD = WALK_COOLDOWN_t;
 			Player->playerStand();
 		}
 
-		if (SLASH_ACTIVATE == true) {
-			Player->playerSlashCreate(angleMousetoPlayer);
-			SLASH_ACTIVATE = false;
-		}
-
-		if (mapeditor == 1) {
+		//Map editor selection - Developer Use
+		if (mapeditor == true) {
 			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
 
 			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
@@ -429,30 +388,11 @@ void GS_BossLevel_Update(void) {
 			mapEditorObj->scale = 0;
 		}
 
-		//Map editor printing
+		// Map editor printing - Developer Use
 		if (AEInputCheckTriggered(AEVK_8)) {
 			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureBoss.txt");
 
 			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryBoss.txt");
-		}
-
-		if (AEInputCheckTriggered(AEVK_M)) {
-			AEAudioStopGroup(BossGroup);
-			gGameStateNext = GS_MAINMENU;
-		}
-
-		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-		{
-			staticObjInst* pInst = sStaticObjInstList + i;
-			if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_KEY && pInst->pObject->type != TYPE_ITEMS))
-			{
-				continue;
-			}
-			//Interaction with items
-			if (Player->calculateDistance(*pInst) < pickUpRange)
-			{
-				Backpack.itemPickUp(pInst);
-			}
 		}
 
 		// ======================================================
@@ -461,12 +401,13 @@ void GS_BossLevel_Update(void) {
 		//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 		//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 
+		// Boss state machine
+		BossStateMachine(Boss);
 
 		// Pathfinding for Enemy AI
 		for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 		{
 			GameObjInst* pEnemy = sGameObjInstList + j;
-
 
 			// skip non-active object
 			if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
@@ -478,7 +419,7 @@ void GS_BossLevel_Update(void) {
 			pEnemy->mobsPathFind(*Player);
 		}
 
-
+		// Calculate Bounding Box for Dynamic Objects
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
 			if (pInst->flag != FLAG_ACTIVE) {
@@ -487,6 +428,7 @@ void GS_BossLevel_Update(void) {
 			pInst->calculateBB();
 		}
 
+		// Calculate Bounding Box for Static Objects
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
 			if (pInst->flag != FLAG_ACTIVE) {
@@ -504,6 +446,11 @@ void GS_BossLevel_Update(void) {
 
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
+
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+
 			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 			{
 				pInst->velToPos();
@@ -524,6 +471,7 @@ void GS_BossLevel_Update(void) {
 			if (pInst->pObject->type == TYPE_ENEMY || pInst->pObject->type == TYPE_BOSS) {
 
 				if (pInst->pObject->type == TYPE_ENEMY) {
+					// Between Enemy and Player
 					if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
 						&& playerHitTime == 0)
 					{
@@ -545,7 +493,7 @@ void GS_BossLevel_Update(void) {
 						if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
 							continue;
 						}
-
+						// Between Enemy and Slashes
 						if (pInst->calculateDistance(*jInst) < slashRange
 							&& jInst->Alpha == 0) {
 							pInst->deducthealth(Player->damage);
@@ -563,9 +511,9 @@ void GS_BossLevel_Update(void) {
 
 						if (pInst->calculateDistance(*jInst) < slashRange
 							&& jInst->Alpha == 0) {
+							// Between Boss and Slashes
 							pInst->deducthealth(Player->damage);
 							if (pInst->health <= 0) {
-								AEAudioStopGroup(BossGroup);
 								gGameStateNext = GS_WIN; // Win condition
 							}
 						}
@@ -576,41 +524,30 @@ void GS_BossLevel_Update(void) {
 			if (pInst->pObject->type == TYPE_BULLET) {
 				int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
+					// Between Bullet and Player
 					Player->deducthealth();
 					gameObjInstDestroy(pInst);
 				}
 				if (snapCollision(*pInst, flag)) {
+					// Between Bullet and Wall
 					gameObjInstDestroy(pInst);
 				}
-			}
-
-			if (Player->health == 0) {
-				gGameStateNext = GS_DEATHSCREEN;
 			}
 		}
 
 
 
 		int flag = CheckInstanceBinaryMapCollision(Player->posCurr.x, -Player->posCurr.y, binaryMap);
-
+		// Binary collision for player
 		snapCollision(*Player, flag);
 
 		for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
-			if (pInst->flag != 1 || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_BOSSCIRCLEATTACK)) {
+			if (pInst->flag != 1 || (pInst->pObject->type != TYPE_BOSSCIRCLEATTACK)) {
 				continue;
 			}
 
-			if (pInst->pObject->type == TYPE_SPIKE) {
-				pInst->spikeUpdate(); // Updates alpha of spikes
-
-				if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
-
-					Player->deducthealth();
-					playerHitTime = DAMAGE_COODLDOWN_t;
-				}
-			}
-
+			// Between boss circle attack and player
 			if (pInst->pObject->type == TYPE_BOSSCIRCLEATTACK) {
 				if (Player->calculateDistance(*pInst) < 1.5f && playerHitTime == 0) {
 					playerHitTime = DAMAGE_COODLDOWN_t;
@@ -619,20 +556,27 @@ void GS_BossLevel_Update(void) {
 			}
 
 		}
+		// Tint of character if damaged
+		Player->playerDamaged(playerHitTime);
 
+		//Change level conditions
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
+		}
 		// ===================================
 		// update active game object instances
 		// Example:
 		//		-- Removing effects after certain time
 		//		-- Removing dead objects
 		// ===================================
-		if (dark == 0) {
+		// Dark room timer
+		if (dark == true) {
 			darkTimer += g_dt;
 		}
 
 		if (darkTimer > darkRoom_duration) {
 			darkTimer = 0;
-			dark = notActivated;
+			dark = false;
 		}
 
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
@@ -641,15 +585,24 @@ void GS_BossLevel_Update(void) {
 			if (pInst->flag != FLAG_ACTIVE) {
 				continue;
 			}
-
+			// Update slashes
 			if (pInst->pObject->type == TYPE_SLASH || pInst->pObject->type == TYPE_BOSSSLASH) {
 				pInst->playerSlashUpdate();
 			}
 
+			// Update boss circle attacks
 			if (pInst->pObject->type == TYPE_BOSSCIRCLE || pInst->pObject->type == TYPE_BOSSCIRCLEATTACK) {
 				pInst->timetracker += g_dt;
 				if (pInst->timetracker > bossCircle_duration) {
 					staticObjInstDestroy(pInst);
+				}
+			}
+
+			// Picking up items
+			if (pInst->pObject->type == TYPE_ITEMS) {
+				if (Player->calculateDistance(*pInst) < pickUpRange)
+				{
+					Backpack.itemPickUp(pInst);
 				}
 			}
 
@@ -660,7 +613,7 @@ void GS_BossLevel_Update(void) {
 			if (pInst->flag != FLAG_ACTIVE) {
 				continue;
 			}
-
+			// Killing Mobs
 			if (pInst->pObject->type == TYPE_ENEMY)
 			{
 				if (pInst->health == 0)
@@ -668,17 +621,18 @@ void GS_BossLevel_Update(void) {
 					pInst->mobsKilled();
 				}
 			}
-
+			// Increment global time tracker for character
 			if (pInst->pObject->type == TYPE_CHARACTER) {
 				pInst->timetracker += g_dt;
 			}
 		}
 
+		// Set Camera and the UI objects
 		utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
 		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-
 		utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
 		bossHeart->posCurr = { camX - 5.75f, camY - 370.f/80 };
+
 		// =====================================
 		// calculate the matrix for all objects
 		// =====================================
@@ -706,7 +660,7 @@ void GS_BossLevel_Update(void) {
 			pInst->calculateTransMatrix();
 		}
 
-		utilities::bossBarTransMatrix(boss, hpbartransform, camX, camY);
+		utilities::bossBarTransMatrix(bossHP, hpbartransform, camX, camY);
 
 		//Player->dustParticles();
 
@@ -723,70 +677,55 @@ void GS_BossLevel_Update(void) {
 */
 /******************************************************************************/
 void GS_BossLevel_Draw(void) {
-	if (!pause) {
 
-		if (levelstart)
+	// Set modes for rendering
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+	if (pause == true) {
+
+		// Draw starting instructions
+		if (levelstart == true)
 		{
 			AEMtx33 rot, scale, trans;
 
-			staticObjInst* pInst = StartScreenbj;
-			// Tell the engine to get ready to draw something with texture. 
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
+			AEGfxTextureSet(StartScreenbj->pObject->pTexture, 0, 0);
 
 			AEMtx33Rot(&rot, 0);
 			AEMtx33Trans(&trans, 0, 0);
-			AEMtx33Scale(&scale, 1600, 900);
-			AEMtx33Concat(&pInst->transform, &rot, &scale);
-			AEMtx33Concat(&pInst->transform, &trans, &pInst->transform);
+			AEMtx33Scale(&scale, static_cast<f32>(AEGetWindowWidth()), static_cast<f32>(AEGetWindowHeight()));
+			AEMtx33Concat(&StartScreenbj->transform, &rot, &scale);
+			AEMtx33Concat(&StartScreenbj->transform, &trans, &StartScreenbj->transform);
 
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
+			AEGfxSetTransform(StartScreenbj->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			AEGfxMeshDraw(StartScreenbj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
+		// Draw pause screen
 		else
 		{
+			AEGfxTextureSet(PauseObj->pObject->pTexture, 0, 0);
 
-			staticObjInst* pInst = PauseObj;
-			// Tell the engine to get ready to draw something with texture. 
-			AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-			AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-			// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-			AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-			AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-
-			pInst->transform.m[0][2] = camX * SPRITE_SCALE;
-			pInst->transform.m[1][2] = camY * SPRITE_SCALE;
-			pInst->transform.m[0][0] = 1600;
-			pInst->transform.m[1][1] = 900;
+			PauseObj->transform.m[0][2] = camX * SPRITE_SCALE;
+			PauseObj->transform.m[1][2] = camY * SPRITE_SCALE;
+			PauseObj->transform.m[0][0] = static_cast<f32>(AEGetWindowWidth());
+			PauseObj->transform.m[1][1] = static_cast<f32>(AEGetWindowHeight());
 
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
-			AEGfxSetTransform(pInst->transform.m);
+			AEGfxSetTransform(PauseObj->transform.m);
 			// Draw the shape used by the current object instance using "AEGfxMeshDraw"
-			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			AEGfxMeshDraw(PauseObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
 
 	}
-	else if (pause) {
+	else if (pause == false) {
 
-		// Tell the engine to get ready to draw something with texture. 
-		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-		// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
-		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-		// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
-		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
+		// Drawing map tiles
 		for (unsigned long i = 0; i < MAP_CELL_WIDTH; i++) {
 			for (long j = 0; j < MAP_CELL_HEIGHT; j++) {
 				AEVec2 Pos = { i + 0.5f, -j - 0.5f };
@@ -796,7 +735,7 @@ void GS_BossLevel_Draw(void) {
 				}
 				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-				if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
+				if (mapeditor == true && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
 					AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
 				}
 
@@ -829,6 +768,7 @@ void GS_BossLevel_Draw(void) {
 			if (pInst->pObject->type == TYPE_REF) {
 				continue;
 			}
+			// Only draw within viewport
 			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 				continue;
 			}
@@ -858,11 +798,7 @@ void GS_BossLevel_Draw(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
-
-
 		AEGfxSetTransparency(1.0f);
-
-
 
 		// Spawn dynamic entities
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
@@ -872,21 +808,16 @@ void GS_BossLevel_Draw(void) {
 			// skip non-active object
 			if (pInst->flag != FLAG_ACTIVE)
 				continue;
+			// Only draw within viewport
 			if (utilities::checkWithinCam(pInst->posCurr, camX, camY)) {
 
 				continue;
 			}
 			// for any sprite textures
-			if (pInst->pObject->type != TYPE_NUM) {
+
 				AEGfxTextureSet(pInst->pObject->pTexture,
 					pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 					pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-			}
-
-
-			else {
-				AEGfxTextureSet(pInst->pObject->pTexture, 0, 0);
-			}
 			AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
 			AEGfxSetTransform(pInst->transform.m);
@@ -894,24 +825,19 @@ void GS_BossLevel_Draw(void) {
 			AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
-		if (dark == Activated) {
+		if (dark == true) {
+			AEMtx33 lscale, lrotate, ltranslate, ltransform;
+
 			AEGfxSetTransparency(1.0f);
 			AEGfxTextureSet(textureList[3], 0, 0);
-			// Create a scale matrix that scales by 100 x and y
-			AEMtx33 lscale = { 0 };
+
 			AEMtx33Scale(&lscale, 20, 20);
-			// Create a rotation matrix that rotates by 45 degrees
-			AEMtx33 lrotate = { 0, };
-
 			AEMtx33Rot(&lrotate, 0);
-
-			// Create a translation matrix that translates by // 100 in the x-axis and 100 in the y-axis
-			AEMtx33 ltranslate = { 0 };
-			AEMtx33Trans(&ltranslate, Player->posCurr.x * SPRITE_SCALE, Player->posCurr.y * SPRITE_SCALE);
+			AEMtx33Trans(&ltranslate, Player->posCurr.x * SPRITE_SCALE, Player->posCurr.y* SPRITE_SCALE);
 			// Concat the matrices (TRS) 
-			AEMtx33 ltransform = { 0 };
 			AEMtx33Concat(&ltransform, &lrotate, &lscale);
 			AEMtx33Concat(&ltransform, &ltranslate, &ltransform);
+
 			// Choose the transform to use 
 			AEGfxSetTransform(ltransform.m);
 			// Actually drawing the mesh
@@ -932,7 +858,7 @@ void GS_BossLevel_Draw(void) {
 			bossHeart->TextureMap.y* TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
 		AEGfxMeshDraw(bossHeart->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
-		if (state == Activated)
+		if (debugging == true)
 		{
 			char debug[20] = "Debug Screen";
 			char input[20] = "Input";
@@ -1081,7 +1007,7 @@ void BossStateMachine(GameObjInst* pInst)
 				//CHALLENGE ATTACK
 				// random between 0, 1 and 2
 				pInst->innerState = INNER_STATE_ON_EXIT;
-				if (Backpack.Key != 0) {
+				if (Backpack.Key != 3) {
 					int random = stageList[rand() % 3-Backpack.Key];
 					if (random == 0) {
 						pInst->stateFlag = STATE_MAZE_DARKEN;
@@ -1323,7 +1249,7 @@ void BossStateMachine(GameObjInst* pInst)
 		case INNER_STATE_ON_UPDATE:
 
 			std::cout << "updating state 5" << std::endl;
-			dark = Activated;
+			dark = true;
 			// Stay still for awhile
 			pInst->timeCD += g_dt;
 			if (pInst->timeCD > 1.0f) {

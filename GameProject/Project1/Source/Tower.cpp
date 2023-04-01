@@ -375,7 +375,7 @@ void GS_Tower_Update(void) {
 		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
 		// Calculating Angle between mouse and Player for Slash purposes
-		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + camX, mouseY + camY);
 		if (mouseY + camY > Player->posCurr.y) {
 			angleMousetoPlayer = -angleMousetoPlayer;
 		}
