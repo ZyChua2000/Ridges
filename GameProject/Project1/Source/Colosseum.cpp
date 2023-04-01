@@ -32,7 +32,7 @@ static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
 static const int			MAP_CELL_WIDTH = 28;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 29;				// Total number of cell heights
 
-static const AEVec2 playerStartPoint{ 14,-6 };					// Starting coordinate of new game player
+static const AEVec2 playerStartPoint{ 14,-16 };					// Starting coordinate of new game player
 
 // -----------------------------------------------------------------------------
 //static Node* nodes{};
@@ -299,315 +299,315 @@ void GS_Colosseum_Update(void) {
 		utilities::moveHelpScreen(*PauseObj, 4);
 	}
 
-		if (pause == false) {
+	if (pause == false) {
 
 
-			// Normalising mouse to 0,0 at the center
-			s32 mouseIntX, mouseIntY;
-			AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
-			mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
-			mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
+		// Normalising mouse to 0,0 at the center
+		s32 mouseIntX, mouseIntY;
+		AEInputGetCursorPosition(&mouseIntX, &mouseIntY);
+		mouseX = (float)(mouseIntX - AEGetWindowWidth() / 2) / SPRITE_SCALE;
+		mouseY = (float)(-mouseIntY + AEGetWindowHeight() / 2) / SPRITE_SCALE;
 
-			// Calculating Angle between mouse and Player for Slash purposes
+		// Calculating Angle between mouse and Player for Slash purposes
 
-			float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
-			if (mouseY + camY > Player->posCurr.y) {
-				angleMousetoPlayer = -angleMousetoPlayer;
+		float angleMousetoPlayer = utilities::getAngle(Player->posCurr.x, Player->posCurr.y, mouseX + Player->posCurr.x, mouseY + Player->posCurr.y);
+		if (mouseY + camY > Player->posCurr.y) {
+			angleMousetoPlayer = -angleMousetoPlayer;
+		}
+
+		//Time-related variables
+		utilities::decreaseTime(slashCD);
+		utilities::decreaseTime(walkCD);
+		utilities::decreaseTime(playerHitTime);
+
+		// =====================================
+		// User Input
+		// =====================================
+		//Debugging mode - Developer use
+		if (AEInputCheckTriggered(AEVK_F3)) {
+			state ^= true;
+		}
+		//Map editor mode - Developer Use
+		if (AEInputCheckTriggered(AEVK_9)) {
+			mapeditor ^= true;
+		}
+
+		Player->playerStand();
+
+		// Movement Controls
+		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
+			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
+			Player->playerWalk(walkCD);
+		}
+
+		if (CURRENT_MOBS == 0 && waves >= 1) { // From wave 2 onwards, wave 1 activated by chest
+			waves++;
+			spawned = true;
+			// Level complete condition
+			if (waves > totalWaves) { // If complete last wave
+				utilities::completeLevel(colosseum, Player, Backpack);
 			}
+		}
 
-			//Time-related variables
-			utilities::decreaseTime(slashCD);
-			utilities::decreaseTime(walkCD);
-			utilities::decreaseTime(playerHitTime);
+		if (AEInputCheckTriggered(AEVK_E)) {
 
-			// =====================================
-			// User Input
-			// =====================================
-			//Debugging mode - Developer use
-			if (AEInputCheckTriggered(AEVK_F3)) {
-				state ^= true;
+			for (int i = 0; i < chestnum; i++)
+			{
+				//Interaction with Chest
+				if (Player->calculateDistance(*Chest[i]) < chestRange && Chest[i]->TextureMap != TEXTURE_OPENEDCHEST)
+				{
+					//change texture of chest
+					Chest[i]->chest2Potion();
+					spawned = true;
+					waves++;
+				}
 			}
-			//Map editor mode - Developer Use
-			if (AEInputCheckTriggered(AEVK_9)) {
-				mapeditor ^= true;
-			}
-			
+		}
+
+		// Healing from Potion
+		if (AEInputCheckTriggered(AEVK_R))
+		{
+			Player->drinkPotion(Health, Backpack);
+		}
+
+		// Slashing Input
+		if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
+			Player->playerSlashCreate(angleMousetoPlayer);
+			slashCD = SLASH_COOLDOWN_t;
+			walkCD = WALK_COOLDOWN_t;
 			Player->playerStand();
+		}
 
-			// Movement Controls
-			if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
-				|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
-				Player->playerWalk(walkCD);
+		//Map editor selection - Developer Use
+		if (mapeditor == true) {
+			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
+		}
+		else {
+			mapEditorObj->scale = 0;
+		}
+
+		// Map editor printing - Developer Use
+		if (AEInputCheckTriggered(AEVK_8)) {
+			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
+
+			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
+		}
+
+		// ======================================================
+		// update physics of all active game object instances
+		//  -- Get the AABB bounding rectangle of every active instance:
+		//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+		//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
+
+
+			// Pathfinding for Enemy AI
+		for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
+		{
+			GameObjInst* pEnemy = sGameObjInstList + j;
+
+
+			// skip non-active object
+			if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
+				continue;
+
+			if (Player->calculateDistance(*pEnemy) > enemySightRange)
+				continue;
+
+			pEnemy->mobsPathFind(*Player);
+		}
+
+		// Calculate Bounding Box for Dynamic Objects
+		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+			pInst->calculateBB();
+		}
+
+		// Calculate Bounding Box for Static Objects
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
+			staticObjInst* pInst = sStaticObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+			if (pInst->pObject->type != TYPE_SLASH) {
+				continue;
+			}
+			pInst->calculateBB();
+		}
+
+
+		// ======================================================
+		//	-- Positions of the instances are updated here with the already computed velocity (above)col
+		// ======================================================
+
+		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
+			{
+				pInst->velToPos();
+			}
+		}
+
+
+		// ====================
+		// check for collision
+		// ====================
+
+		//if player receive damage from collision or from mob, player decrease health
+		for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
 			}
 
-			if (CURRENT_MOBS == 0 && waves >= 1) { // From wave 2 onwards, wave 1 activated by chest
-				waves++;
-				spawned = true;
-				// Level complete condition
-				if (waves > totalWaves) { // If complete last wave
-					utilities::completeLevel(colosseum, Player, Backpack);
-				}
-			}
-
-			if (AEInputCheckTriggered(AEVK_E)) {
-
-				for (int i = 0; i < chestnum; i++)
+			if (pInst->pObject->type == TYPE_ENEMY) {
+				// Between Enemy and Player
+				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
+					&& playerHitTime == 0)
 				{
-					//Interaction with Chest
-					if (Player->calculateDistance(*Chest[i]) < chestRange && Chest[i]->TextureMap != TEXTURE_OPENEDCHEST)
+					if (Player->health > 0)
 					{
-						//change texture of chest
-						Chest[i]->chest2Potion();
-						spawned = true;
-						waves++;
+						Player->deducthealth();
+
+						//Hit cooldown
+						playerHitTime = DAMAGE_COODLDOWN_t;
+
+						//knockback
+						Player->playerKnockback(*pInst);
+
+					}
+				}
+
+				for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
+					staticObjInst* jInst = sStaticObjInstList + j;
+					if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
+						continue;
+					}
+					// Between Enemy and Slashes
+					if (pInst->calculateDistance(*jInst) < slashRange
+						&& jInst->Alpha == 0) {
+						pInst->deducthealth(Player->damage);
+						// Knockback
+						pInst->mobKnockback(*jInst);
 					}
 				}
 			}
+		}
 
-			// Healing from Potion
-			if (AEInputCheckTriggered(AEVK_R))
-			{
-				Player->drinkPotion(Health, Backpack);
+		int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y, binaryMap);
+		// Binary collision for player
+		snapCollision(*Player, flag);
+
+		// Tint of character if damaged
+		Player->playerDamaged(playerHitTime);
+
+		//Change level conditions
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
+		}
+
+
+		// ===================================
+		// update active game object instances
+		// Example:
+		//		-- Removing effects after certain time
+		//		-- Removing dead objects
+		// ===================================
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+		{
+			staticObjInst* pInst = sStaticObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+			// Updating slash effects
+			if (pInst->pObject->type == TYPE_SLASH) {
+				pInst->playerSlashUpdate();
 			}
 
-			// Slashing Input
-			if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-				Player->playerSlashCreate(angleMousetoPlayer);
-				slashCD = SLASH_COOLDOWN_t;
-				walkCD = WALK_COOLDOWN_t;
-				Player->playerStand();
-			}
-
-			//Map editor selection - Developer Use
-			if (mapeditor == true) {
-				mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-				utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-			}
-			else {
-				mapEditorObj->scale = 0;
-			}
-
-			// Map editor printing - Developer Use
-			if (AEInputCheckTriggered(AEVK_8)) {
-				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureTower.txt");
-
-				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryTower.txt");
-			}
-
-			// ======================================================
-			// update physics of all active game object instances
-			//  -- Get the AABB bounding rectangle of every active instance:
-			//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-			//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
-
-
-				// Pathfinding for Enemy AI
-			for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
-			{
-				GameObjInst* pEnemy = sGameObjInstList + j;
-
-
-				// skip non-active object
-				if (pEnemy->flag != FLAG_ACTIVE || pEnemy->pObject->type != TYPE_ENEMY)
-					continue;
-
-				if (Player->calculateDistance(*pEnemy) > enemySightRange)
-					continue;
-
-				pEnemy->mobsPathFind(*Player);
-			}
-
-			// Calculate Bounding Box for Dynamic Objects
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-				pInst->calculateBB();
-			}
-
-			// Calculate Bounding Box for Static Objects
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
-				staticObjInst* pInst = sStaticObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-				if (pInst->pObject->type != TYPE_SLASH) {
-					continue;
-				}
-				pInst->calculateBB();
-			}
-
-
-			// ======================================================
-			//	-- Positions of the instances are updated here with the already computed velocity (above)col
-			// ======================================================
-
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
+			// Picking up items
+			if (pInst->pObject->type == TYPE_ITEMS) {
+				if (Player->calculateDistance(*pInst) < pickUpRange)
 				{
-					pInst->velToPos();
+					Backpack.itemPickUp(pInst);
 				}
 			}
+		}
 
-
-			// ====================
-			// check for collision
-			// ====================
-
-			//if player receive damage from collision or from mob, player decrease health
-			for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-
-				if (pInst->pObject->type == TYPE_ENEMY) {
-					// Between Enemy and Player
-					if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)
-						&& playerHitTime == 0)
-					{
-						if (Player->health > 0)
-						{
-							Player->deducthealth();
-
-							//Hit cooldown
-							playerHitTime = DAMAGE_COODLDOWN_t;
-
-							//knockback
-							Player->playerKnockback(*pInst);
-
-						}
-					}
-
-					for (int j = 0; j < STATIC_OBJ_INST_NUM_MAX; j++) {
-						staticObjInst* jInst = sStaticObjInstList + j;
-						if (jInst->flag != FLAG_ACTIVE || jInst->pObject->type != TYPE_SLASH) {
-							continue;
-						}
-						// Between Enemy and Slashes
-						if (pInst->calculateDistance(*jInst) < slashRange
-							&& jInst->Alpha == 0) {
-							pInst->deducthealth(Player->damage);
-							// Knockback
-							pInst->mobKnockback(*jInst);
-						}
-					}
-				}
+		for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
+			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
 			}
-
-			int flag = CheckInstanceBinaryMapCollisionCollo(Player->posCurr.x, -Player->posCurr.y,binaryMap);
-			// Binary collision for player
-			snapCollision(*Player, flag);
-
-			// Tint of character if damaged
-			Player->playerDamaged(playerHitTime);
-
-			//Change level conditions
-			if (Player->health == 0) {
-				gGameStateNext = GS_DEATHSCREEN;
-			}
-
-
-			// ===================================
-			// update active game object instances
-			// Example:
-			//		-- Removing effects after certain time
-			//		-- Removing dead objects
-			// ===================================
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+			// Killing Mobs
+			if (pInst->pObject->type == TYPE_ENEMY)
 			{
-				staticObjInst* pInst = sStaticObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-				// Updating slash effects
-				if (pInst->pObject->type == TYPE_SLASH) {
-					pInst->playerSlashUpdate();
-				}
-
-				// Picking up items
-				if (pInst->pObject->type == TYPE_ITEMS) {
-					if (Player->calculateDistance(*pInst) < pickUpRange)
-					{
-						Backpack.itemPickUp(pInst);
-					}
-				}
-			}
-
-			for (int i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
-				GameObjInst* pInst = sGameObjInstList + i;
-				if (pInst->flag != FLAG_ACTIVE) {
-					continue;
-				}
-				// Killing Mobs
-				if (pInst->pObject->type == TYPE_ENEMY)
+				if (pInst->health == 0)
 				{
-					if (pInst->health == 0)
-					{
-						pInst->mobsKilled();
-						CURRENT_MOBS -= 1;
-					}
-				}
-				// Increment global time tracker for character
-				if (pInst->pObject->type == TYPE_CHARACTER) {
-					pInst->timetracker += g_dt;
+					pInst->mobsKilled();
+					CURRENT_MOBS -= 1;
 				}
 			}
-
-			// Spawning mobs for waves
-			if (spawned == true) {
-				std::string input = "colosseumWave" + std::to_string(waves) + ".txt";
-
-				AEVec2* pos = nullptr;
-				utilities::loadObjs(pos, CURRENT_MOBS, input);
-				for (int i = 0; i < CURRENT_MOBS; i++) {
-					GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-				}
-				utilities::unloadObjs(pos);
-				spawned = false;
+			// Increment global time tracker for character
+			if (pInst->pObject->type == TYPE_CHARACTER) {
+				pInst->timetracker += g_dt;
 			}
+		}
 
-			// Dust particles for player
-			Player->dustParticles();
+		// Spawning mobs for waves
+		if (spawned == true) {
+			std::string input = "colosseumWave" + std::to_string(waves) + ".txt";
 
-			// Camera position and UI items
-			utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
-			AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
-			utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
-
-			// =====================================
-			// calculate the matrix for all objects
-			// =====================================
-
-			for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
-			{
-				GameObjInst* pInst = sGameObjInstList + i;
-
-				// skip non-active object
-				if ((pInst->flag & FLAG_ACTIVE) == 0)
-					continue;
-
-				pInst->calculateTransMatrix();
+			AEVec2* pos = nullptr;
+			utilities::loadObjs(pos, CURRENT_MOBS, input);
+			for (int i = 0; i < CURRENT_MOBS; i++) {
+				GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
 			}
+			utilities::unloadObjs(pos);
+			spawned = false;
+		}
 
-			for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
-			{
-				staticObjInst* pInst = sStaticObjInstList + i;
+		// Dust particles for player
+		Player->dustParticles();
+
+		// Camera position and UI items
+		utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
+		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
+		utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
+
+		// =====================================
+		// calculate the matrix for all objects
+		// =====================================
+
+		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
+		{
+			GameObjInst* pInst = sGameObjInstList + i;
+
+			// skip non-active object
+			if ((pInst->flag & FLAG_ACTIVE) == 0)
+				continue;
+
+			pInst->calculateTransMatrix();
+		}
+
+		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
+		{
+			staticObjInst* pInst = sStaticObjInstList + i;
 
 
-				// skip non-active object
-				if ((pInst->flag & FLAG_ACTIVE) == 0)
-					continue;
+			// skip non-active object
+			if ((pInst->flag & FLAG_ACTIVE) == 0)
+				continue;
 
-				pInst->calculateTransMatrix();
-			}
-			
-			ParticleSystemUpdate();	
-		}	
+			pInst->calculateTransMatrix();
+		}
+
+		ParticleSystemUpdate();
+	}
 }
 
 /******************************************************************************/

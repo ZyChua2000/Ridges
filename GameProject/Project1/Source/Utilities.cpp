@@ -329,15 +329,16 @@ namespace utilities {
 	\param[in] hpbartransform
 		Calculation of a matrix for boss health bar
 	*************************************************************************/
-	void bossBarTransMatrix(bosshp& boss, AEMtx33 &hpbartransform) {
+	void bossBarTransMatrix(bosshp& boss, AEMtx33 &hpbartransform, float camX, float camY) {
 		boss.damagetaken = boss.maxhp - *boss.currenthp;
-		boss.width = SPRITE_SCALE * 9.f * *boss.currenthp / boss.maxhp;
+		boss.width = SPRITE_SCALE * 12.f * *boss.currenthp / boss.maxhp;
+		boss.height = SPRITE_SCALE/2;
 
 		//scale, rot, trans for health bar
 		AEMtx33 bar_scale, bar_trans, bar_rot;
 		AEMtx33Scale(&bar_scale, boss.width, boss.height);
 		AEMtx33Rot(&bar_rot, 0);
-		AEMtx33Trans(&bar_trans, camX * SPRITE_SCALE + 80.f - (boss.damagetaken * SPRITE_SCALE * 4 / boss.maxhp), camY * SPRITE_SCALE + 350.f);
+		AEMtx33Trans(&bar_trans, camX * SPRITE_SCALE + 20 - (boss.damagetaken * SPRITE_SCALE * 4 / boss.maxhp), camY * SPRITE_SCALE - 370.f);
 		AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
 		AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
 	}

@@ -22,26 +22,22 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 	Defines
 */
 /******************************************************************************/
-static saveData				data;
-static Node* nodes{};
-
-
-static const unsigned int	MAX_MOBS = 11;							// The total number of mobs
-static int					CURRENT_MOBS = MAX_MOBS;
+static const unsigned int	MAX_MOBS = 11;						// The total number of mobs
 static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const unsigned int	MAX_LEVERS = 3;						// The total number of levers
-static const unsigned int	MAX_KEYS;							// The total number of	 keys
-
-static bool					SLASH_ACTIVATE = false;				// Bool to run slash animation
 
 static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
-static const AEVec2			levelClearMin = { 38,-14 };
-static const AEVec2			levelClearMax = { 40,-13 };
+static const AEVec2			levelClearMin = { 38,-14 };			// Min tile for level to be cleared
+static const AEVec2			levelClearMax = { 40,-13 };			// Max tile for level to be cleared
 
-static unsigned int			state = 0;							// Debugging state
-static unsigned int			mapeditor = 0;						// Map edtior state
+// Timing sets for towers;
+static const float timingFIRST = 0.0f;
+static const float timingSECOND = 0.6f;
+static const float timingTHIRD = 1.2f;
+static const float timingFOURTH = 1.8f;
+static const AEVec2 playerStartPoint{ 58.5,-6 };					// Starting coordinate of new game player
 
 
 // -----------------------------------------------------------------------------
@@ -64,32 +60,35 @@ static unsigned int			mapeditor = 0;						// Map edtior state
 static AEVec2				MapObjInstList[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of each map tile object
 static int					binaryMap[MAP_CELL_WIDTH][MAP_CELL_HEIGHT];	// 2D array of binary collision mapping
 
-static float slashCD = 0;
-static float walkCD = 0;
-static float playerHitTime;
-
 // pointer to the objects
-static GameObjInst* Player;												// Pointer to the "Player" game object instance
-static staticObjInst* mapEditorObj;										// Pointer to the reference map editor object instance
-static staticObjInst* Health[3];										// Pointer to the player health statc object instance
-static staticObjInst* Levers[3];										// Pointer to each enemy object instance
-static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
-static staticObjInst* NumObj[3];
-static staticObjInst* PauseObj;
-static staticObjInst* StartScreenbj;
+static GameObjInst* Player;								// Pointer to the "Player" game object instance
+static staticObjInst* mapEditorObj;						// Pointer to the reference map editor object instance
+static staticObjInst* Health[3];						// Pointer to the player health statc object instance
+static staticObjInst* Levers[3];						// Pointer to each lever object
+static staticObjInst* MenuObj[3];						// Pointer to each menu UI object
+static staticObjInst* NumObj[3];						// Pointer to each number UI object
+static staticObjInst* PauseObj;							// Pointer to Pause Obj
+static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
 
-static Inventory Backpack;
-static staticObjInst* RefBox;
 
-static AEVec2* Gates;
-static int gatesNum;
-static int levNum;
-static int chestNum;
 
-static const float timingFIRST = 0.0f;
-static const float timingSECOND = 0.6f;
-static const float timingTHIRD = 1.2f;
-static const float timingFOURTH = 1.8f;
+
+// Object Instance Generation variables
+static AEVec2* Gates;									// Dynamic Array of Gates position
+static int gatesNum;									// Dynamic number of Gates
+static int levNum;										// Dynamic number of Levers
+
+// State Variables
+static bool	state = 0;									// Debugging state
+static bool	mapeditor = 0;								// Map edtior state
+
+// Time Variables
+static float playerHitTime;								// Stores time left for player's invulnerability upon attacking
+static float slashCD;									// Stores time left before player can slash again
+static float walkCD;									// Stores time left before player can move after slashing
+
+static Inventory Backpack;								// Inventory of Character
+static int	CURRENT_MOBS;								// Current number of mobs in game
 
 /******************************************************************************/
 /*!
@@ -228,7 +227,7 @@ void GS_Tower_Init(void) {
 	//	Initialize objects for new game
 	// =====================================
 		//Initialise Player
-		AEVec2 PlayerPos = { 58.5,-6 };
+		AEVec2 PlayerPos = playerStartPoint;
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 		
 		std::ifstream ifs{ "Assets/save.txt" };
@@ -236,8 +235,6 @@ void GS_Tower_Init(void) {
 		ifs >> Backpack.Key; //set to player number of current potion
 		ifs >> Backpack.Potion; //set to player number of current key
 		ifs.close();
-
-
 
 		//Initialise Levers in level
 		utilities::loadObjs(pos, levNum, "towerLevers.txt");
@@ -252,9 +249,6 @@ void GS_Tower_Init(void) {
 		utilities::loadObjs(pos, CURRENT_MOBS, "towerEnemy.txt");
 		for (int i = 0; i < CURRENT_MOBS; i++) {
 			GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
-			enemy->health = 3;
-			enemy->pathfindtime = 0.25f;
-			enemy->pathtimer = enemy->pathfindtime;
 		}
 		utilities::unloadObjs(pos);
 
@@ -282,6 +276,7 @@ void GS_Tower_Init(void) {
 	timingFOURTH,
 	timingSECOND,
 	timingTHIRD };
+
 	for (int i = 0; i < num; i++)
 	{
 		staticObjInst* jInst = staticObjInstCreate(TYPE_TOWER, 1, &pos[i], 0);
@@ -477,16 +472,12 @@ void GS_Tower_Update(void) {
 		}
 
 		if (AEInputCheckTriggered(AEVK_LBUTTON) && slashCD == 0) {
-			SLASH_ACTIVATE = true;
+			Player->playerSlashCreate(angleMousetoPlayer);
 			slashCD = SLASH_COOLDOWN_t;
 			walkCD = WALK_COOLDOWN_t;
 			Player->playerStand();
 		}
 
-		if (SLASH_ACTIVATE == true) {
-			Player->playerSlashCreate(angleMousetoPlayer);
-			SLASH_ACTIVATE = false;
-		}
 
 		if (mapeditor == 1) {
 			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);

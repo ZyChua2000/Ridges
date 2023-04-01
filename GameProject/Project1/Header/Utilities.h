@@ -229,8 +229,12 @@ namespace utilities {
 		Accessing the boss details
 	\param[in] hpbartransform
 		Calculation of a matrix for boss health bar
+	\param[in] camX
+		Camera X position
+	\param[in] camY
+		Camera Y position
 	*************************************************************************/
-	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform);
+	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform, float camX, float camY);
 
 	/*!***********************************************************************
 	\brief

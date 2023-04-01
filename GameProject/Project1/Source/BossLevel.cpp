@@ -64,6 +64,7 @@ static staticObjInst* mapEditorObj;										// Pointer to the reference map edi
 static staticObjInst* Health[3];										// Pointer to the player health statc object instance
 static staticObjInst* MenuObj[3];										// Pointer to each enemy object instance
 static staticObjInst* NumObj[3];
+static staticObjInst* bossHeart;
 static Inventory Backpack;
 static GameObj hpbar;
 
@@ -151,14 +152,14 @@ void GS_BossLevel_Load(void) {
 	// Mesh for hpbar - 2
 	AEGfxMeshStart();
 	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+		-0.5f, -0.5f, 0xFF880808, 0.0f, 0.0f,
+		0.5f, -0.5f, 0xFF880808, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFF880808, 0.0f, 0.0f);
 
 	AEGfxTriAdd(
-		-0.5f, -0.5f, 0x88880808, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0x88880808, 0.0f, 0.0f,
-		0.5f, 0.5f, 0x88880808, 0.0f, 0.0f);
+		-0.5f, -0.5f, 0xFF880808, 0.0f, 0.0f,
+		-0.5f, 0.5f, 0xFF880808, 0.0f, 0.0f,
+		0.5f, 0.5f, 0xFF880808, 0.0f, 0.0f);
 	meshList.push_back(AEGfxMeshEnd());
 
 	// Mesh for dark room - 3
@@ -237,7 +238,6 @@ void GS_BossLevel_Init(void) {
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
 	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
 
-
 	dark = notActivated;
 	darkTimer = 0; // Reset dark timer
 	playerHitTime = 0; // Reset hit cooldown
@@ -313,6 +313,7 @@ void GS_BossLevel_Init(void) {
 	cycle = 0;
 
 	AEAudioPlay(BossBGM, BossGroup, 0.2f, 1, 1);
+	bossHeart = staticObjInstCreate(TYPE_HEALTH, 1, nullptr, 0);
 }
 
 
@@ -677,7 +678,7 @@ void GS_BossLevel_Update(void) {
 		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 
 		utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
-
+		bossHeart->posCurr = { camX - 5.75f, camY - 370.f/80 };
 		// =====================================
 		// calculate the matrix for all objects
 		// =====================================
@@ -705,7 +706,7 @@ void GS_BossLevel_Update(void) {
 			pInst->calculateTransMatrix();
 		}
 
-		utilities::bossBarTransMatrix(boss, hpbartransform);
+		utilities::bossBarTransMatrix(boss, hpbartransform, camX, camY);
 
 		//Player->dustParticles();
 
@@ -918,11 +919,18 @@ void GS_BossLevel_Draw(void) {
 		}
 
 		//drawing of health bar
+		AEGfxSetTransparency(1.0f);
 		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-		AEGfxSetTintColor(0.7f, 0.7f, 0.7f, 0.0f);
-		AEGfxSetBlendMode(AE_GFX_BM_NONE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 		AEGfxSetTransform(hpbartransform.m);
 		AEGfxMeshDraw(meshList[2], AE_GFX_MDM_TRIANGLES);
+
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+		AEGfxSetTransform(bossHeart->transform.m);
+		AEGfxTextureSet(bossHeart->pObject->pTexture, bossHeart->TextureMap.x* TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH, 
+			bossHeart->TextureMap.y* TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+		AEGfxMeshDraw(bossHeart->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
 		if (state == Activated)
 		{
