@@ -281,6 +281,12 @@ void GS_World_Init(void) {
 		}
 
 		utilities::unloadObjs(pos);
+
+		Backpack.Key = 0;
+		Backpack.Potion = 0;
+		levelCleared[colosseum] = false;
+		levelCleared[maze] = false;
+		levelCleared[tower] = false;
 	}
 
 	// =====================================

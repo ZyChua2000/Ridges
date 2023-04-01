@@ -60,20 +60,23 @@ void GameObjInst::playerWalk(float walkCD)
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP)) // movement for W key 
 		{
 			velCurr.y = 1;// this is direction , positive y direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			AEVec2 temp_velo{ velCurr };
+			AEVec2Normalize(&velCurr, &temp_velo);// normalise velocity
 			velCurr.y *= (g_dt * PLAYER_SPEED);
 		}
 		if (AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN))
 		{
 			velCurr.y = -1;// this is direction , negative y direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			AEVec2 temp_velo{ velCurr };
+			AEVec2Normalize(&velCurr, &temp_velo);// normalise velocity
 			velCurr.y *= (g_dt * PLAYER_SPEED);
 			
 		}
 		if (AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT))
 		{
 			velCurr.x = -1;// this is direction , negative x direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			AEVec2 temp_velo{ velCurr };
+			AEVec2Normalize(&velCurr, &temp_velo);// normalise velocity
 			velCurr.x *= (g_dt * PLAYER_SPEED);
 			scale = -1;
 			
@@ -81,7 +84,8 @@ void GameObjInst::playerWalk(float walkCD)
 		if (AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT))
 		{
 			velCurr.x = 1;// this is direction , positive x direction
-			AEVec2Normalize(&velCurr, &velCurr);// normalise velocity
+			AEVec2 temp_velo{ velCurr };
+			AEVec2Normalize(&velCurr, &temp_velo);// normalise velocity
 			velCurr.x *= (g_dt * PLAYER_SPEED);
 			scale = 1;
 			

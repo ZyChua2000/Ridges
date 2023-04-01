@@ -57,6 +57,8 @@ void NodesInit(int *grid, int width, int height)
 
 			nodes[index].ae_NodePos.x = x +0.5f; //init pos x for node, + 0.5 offset to set node in the middle of x axis grid
 			nodes[index].ae_NodePos.y = -y -0.5f; //init pos y for node, - 0.5 offset to set node in the middle of y axis grid
+
+			
 			nodes[index].parent = nullptr; //init parent to point to nothing first 
 			nodes[index].b_Closed = false; //init closed node to false
 
@@ -173,7 +175,6 @@ std::vector<Node*> pathfind(float x, float y, float x1, float y1)
 	nodedesc->ae_NodePos.x = x1;
 	nodedesc->ae_NodePos.y = y1;
 	nodedesc->b_Obstacle = false;
-
 
 	for (int x2 = 0; x2 < path_width; x2++)
 	{
@@ -303,6 +304,7 @@ void GameObjInst::mobsKilled() {
 */
 /*******************************************************************/
 void GameObjInst::mobsPathFind(GameObjInst target) {
+
 	pathtimer -= g_dt; // timer counting down 
 
 	//bool is_at_end = false;
@@ -310,26 +312,30 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 	{
 		// perform pathfinding for this enemy
 		path.clear();
+
 		path = pathfind(posCurr.x, posCurr.y, target.posCurr.x, target.posCurr.y); //pathfind function
+
 		pathtimer = pathfindtime; // set timer back to default;
 		target_node = 0; // target node for enemy to find the next node
 		//is_at_end = false;
+
 	}
 
 	// update enemy velocity based on path
 	if (!path.empty())// as long as path not empty 
 	{
+
 		//Node* pNextNode = pEnemy->path[1];
 
 		// calculate the distance between the enemy and player
 		float distance = sqrtf(powf(target.posCurr.x - posCurr.x, 2) + powf(target.posCurr.y - posCurr.y, 2));
 
-		AEVec2 target_pos;
-		AEVec2Set(&target_pos, 0, 0);
+		AEVec2 target_pos{ 0,0 };
 
 		// update enemy velocity only if it is farther than the maximum distance
 		if (distance > MAX_ENEMY_DISTANCE)
 		{
+
 			float dist = AEVec2Distance(&posCurr, &path[target_node]->ae_NodePos);
 
 			// to check the enemy is at the node 
@@ -358,9 +364,14 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 				target_pos.x = path[target_node]->ae_NodePos.x;//
 				target_pos.y = path[target_node]->ae_NodePos.y;//
 			}
+
 			velCurr.x = target_pos.x - posCurr.x;//
 			velCurr.y = target_pos.y - posCurr.y;//
-			AEVec2Normalize(&velCurr, &velCurr);//normalise to unit vec 1
+
+
+			AEVec2 temp_velo{ velCurr };
+			AEVec2Normalize(&velCurr, &temp_velo);//normalise to unit vec 1
+
 			velCurr.x *= (g_dt * NPC_SPEED); //
 			velCurr.y *= (g_dt * NPC_SPEED);
 		}

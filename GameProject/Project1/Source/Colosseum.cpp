@@ -193,7 +193,6 @@ void GS_Colosseum_Load(void) {
 */
 /******************************************************************************/
 void GS_Colosseum_Init(void) {
-
 	//Create objects for pause and start screen
 	PauseObj = staticObjInstCreate(TYPE_PAUSE, 1, nullptr, 0);
 	StartScreenbj = staticObjInstCreate(TYPE_START, 1, nullptr, 0);
@@ -243,6 +242,7 @@ void GS_Colosseum_Init(void) {
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	// Initialise camera pos
+	camX = 0, camY = 0;
 	AEGfxSetCamPosition(0, 0);
 
 	// =====================================
@@ -265,6 +265,7 @@ void GS_Colosseum_Init(void) {
 	levelstart = true;
 	pause = true;
 	cycle = 0;
+	waves = 0;
 
 	// Time Variables
 	slashCD = 0;				
@@ -298,6 +299,7 @@ void GS_Colosseum_Update(void) {
 	}
 
 	if (pause == false) {
+
 
 
 		// Normalising mouse to 0,0 at the center
@@ -400,7 +402,6 @@ void GS_Colosseum_Update(void) {
 		//		boundingRect_min = -(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 		//		boundingRect_max = +(BOUNDING_RECT_SIZE/2.0f) * instance->scale + instance->pos
 
-
 			// Pathfinding for Enemy AI
 		for (int j = 0; j < GAME_OBJ_INST_NUM_MAX; j++)
 		{
@@ -445,6 +446,10 @@ void GS_Colosseum_Update(void) {
 
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++) {
 			GameObjInst* pInst = sGameObjInstList + i;
+			if (pInst->flag != FLAG_ACTIVE) {
+				continue;
+			}
+
 			if (pInst->velCurr.x != 0 || pInst->velCurr.y != 0) //if player direction is not 0, as you cannot normalize 0.
 			{
 				pInst->velToPos();
@@ -565,6 +570,7 @@ void GS_Colosseum_Update(void) {
 			for (int i = 0; i < CURRENT_MOBS; i++) {
 				GameObjInst* enemy = gameObjInstCreate(TYPE_ENEMY, 1, &pos[i], 0, 0);
 			}
+
 			utilities::unloadObjs(pos);
 			spawned = false;
 		}

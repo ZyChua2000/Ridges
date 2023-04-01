@@ -300,7 +300,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 			pInst->timetracker = 0;
 			pInst->damagetint = { 1,1,1 };
 			pInst->damagebuffer = 0;
-	
+
 			switch (type) {
 			case TYPE_CHARACTER:
 				pInst->TextureMap = TEXTURE_PLAYER;
@@ -311,6 +311,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				pInst->health = 3;
 				pInst->pathfindtime = 0.25f;
 				pInst->pathtimer = pInst->pathfindtime;
+				pInst->path.clear();
 				break;
 			case TYPE_BULLET:
 				pInst->TextureMap = TEXTURE_BULLET;
@@ -321,6 +322,7 @@ GameObjInst* gameObjInstCreate(unsigned long type,
 				pInst->pathfindtime = 0.25f;
 				pInst->pathtimer = pInst->pathfindtime;
 				pInst->timetracker = 1;
+				pInst->path.clear();
 				break;
 			default:
 				pInst->TextureMap = { 0,0 };
@@ -350,6 +352,7 @@ void gameObjInstDestroy(GameObjInst* pInst)
 
 	// zero out the flag
 	sGameObjInstNum--; //Decrement the number of game object instance
+	pInst->path.clear();
 	pInst->flag = 0;
 }
 
