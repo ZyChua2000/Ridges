@@ -30,9 +30,7 @@ static const unsigned int	MAX_CHESTS = 6;						// The total number of chests
 static const int			MAP_CELL_WIDTH = 124;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
-
-
-static const AEVec2 playerStartPoint = { 12,-8 };				// Starting coordinate of new game player
+static const AEVec2 playerStartPoint { 12,-8 };					// Starting coordinate of new game player
 static const AEVec2 SavedPoint{ 106, -22 };						// Location to load to after completing other challenges
 static const int directionInstructionX = 93;					// X coordinate limit to display direction instructions
 
@@ -80,8 +78,8 @@ static int chestNum;									// Dynamic number of Chests
 
 // State Variables
 bool loadState;											// Variable for new game vs returning from another level
-static unsigned int	state = 0;							// Debugging state
-static unsigned int	mapeditor = 0;						// Map edtior state
+static bool	debugging = 0;								// Debugging state
+static bool	mapeditor = 0;								// Map edtior state
 static bool directionShown;								// Bool of Mid-level instruction state
 static bool directionDraw;								// Bool of Mid-level instruction drawing
 
@@ -388,25 +386,30 @@ void GS_World_Init(void) {
 
 void GS_World_Update(void) {
 
-	
+	// Show Mid-Level instructions condition
 	if (directionShown == false && Player->posCurr.x > directionInstructionX) {
 		pause = true;
 		directionDraw = true;
 
+		// Move on from Mid-level instructions
 		if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 			directionShown = true;
 			directionDraw = false;
 		}
 	}
 
+	// Toggle Pause button
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		pause = !pause;
 		levelstart = false;
+		cycle = 0;
 	}
 
-	if (pause == true) {
+	// Toggle help screen
+	if (pause == true && levelstart == false) {
 		utilities::moveHelpScreen(*PauseObj, 4);
 	}
+
 	if (pause == false) {
 
 		// Normalising mouse to 0,0 at the center
@@ -432,11 +435,11 @@ void GS_World_Update(void) {
 		// =====================================
 		//Debugging mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_F3)) {
-			state ^= 1;
+			debugging ^= true;
 		}
 		//Map editor mode - Developer Use
 		if (AEInputCheckTriggered(AEVK_9)) {
-			mapeditor ^= 1;
+			mapeditor ^= true;
 		}
 
 		Player->playerStand();
@@ -493,7 +496,7 @@ void GS_World_Update(void) {
 		}
 
 		//Map editor selection - Developer Use
-		if (mapeditor == 1) {
+		if (mapeditor == true) {
 			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
 
 			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
@@ -612,11 +615,6 @@ void GS_World_Update(void) {
 					}
 				}
 			}
-
-			if (Player->health == 0) {
-				gGameStateNext = GS_DEATHSCREEN;
-			}
-
 		}
 
 
@@ -626,7 +624,7 @@ void GS_World_Update(void) {
 
 		for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
-			if (pInst->flag != 1 || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_SPIKE_NONFADE)) {
+			if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_SPIKE && pInst->pObject->type != TYPE_SPIKE_NONFADE)) {
 				continue;
 			}
 
@@ -635,7 +633,7 @@ void GS_World_Update(void) {
 				pInst->spikeUpdate(); // Updates alpha of spikes
 			}
 			// Between Spikes and Players
-			if (Player->calculateDistance(*pInst) <= 1 && (pInst->Alpha == 0) && playerHitTime == 0) {
+			if (Player->calculateDistance(*pInst) <= SPIKE_RANGE && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 				Player->deducthealth();
 				playerHitTime = DAMAGE_COODLDOWN_t;
@@ -653,6 +651,10 @@ void GS_World_Update(void) {
 				Player->posCurr = SavedPoint;
 				saveGame(data, sGameObjInstList, sStaticObjInstList, GAME_OBJ_INST_NUM_MAX, STATIC_OBJ_INST_NUM_MAX);
 			}
+		}
+
+		if (Player->health == 0) {
+			gGameStateNext = GS_DEATHSCREEN;
 		}
 			
 		// ===================================
@@ -756,16 +758,15 @@ void GS_World_Update(void) {
 /******************************************************************************/
 void GS_World_Draw(void) {
 
-	// Tell the engine to get ready to draw something with texture. 
+	// Set modes for rendering
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	// Set the tint to white, so that the sprite can // display the full range of colors (default is black). 
 	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-	// Set blend mode to AE_GFX_BM_BLEND // This will allow transparency. 
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
 
 	if (pause == true) {
 
+		// Draw starting instructions
 		if (levelstart)
 		{
 			AEMtx33 rot, scale, trans;
@@ -785,9 +786,9 @@ void GS_World_Draw(void) {
 			AEGfxMeshDraw(StartScreenbj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
+		// Draw pause screen
 		else
 		{
-
 			AEGfxTextureSet(PauseObj->pObject->pTexture, 0, 0);
 
 			PauseObj->transform.m[0][2] = camX * SPRITE_SCALE;
@@ -801,6 +802,7 @@ void GS_World_Draw(void) {
 			AEGfxMeshDraw(PauseObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 		}
 
+		// Drawing Mid-level instructions
 		if (directionDraw) {
 			AEMtx33 rot, scale, trans, transform;
 
@@ -830,7 +832,8 @@ void GS_World_Draw(void) {
 				}
 				AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-				if (mapeditor == 1 && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
+				// Tint the tile mouse is hovering over when mapeditor mode is on
+				if (mapeditor == true && (int)(mouseX + camX) == (int)Pos.x && (int)(mouseY + camY) == (int)Pos.y) {
 					AEGfxSetTintColor(1.0f, 0.0f, 0.0f, 0.8f);
 				}
 
@@ -911,7 +914,7 @@ void GS_World_Draw(void) {
 				AEGfxTextureSet(pInst->pObject->pTexture,
 					pInst->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
 					pInst->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
-
+			// For tint upon damage, all set to 1 by default
 			AEGfxSetTintColor(pInst->damagetint.red, pInst->damagetint.green, pInst->damagetint.blue, 1.0f);
 			// Set the current object instance's transform matrix using "AEGfxSetTransform"
 			AEGfxSetTransform(pInst->transform.m);
@@ -920,7 +923,7 @@ void GS_World_Draw(void) {
 		}
 
 		//Debugging text - for developer use
-		if (state == 1)
+		if (debugging == true)
 		{
 			char debug[20] = "Debug Screen";
 			char input[20] = "Input";

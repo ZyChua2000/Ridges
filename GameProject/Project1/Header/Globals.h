@@ -121,6 +121,7 @@ extern const float			challengeATKREFRESH;	// Time for Challenges attack to be re
 extern const float			SPIKE_TRANSITION_t;		// Time for spike to fade in/out
 extern const float			SPIKE_DEATH_t;			// Duration for spike to be non-existent
 extern const float			SPIKE_LIFE_t;			// Duration for spike to be existent
+extern const float			SPIKE_RANGE;			// Range of spike
 
 //Player globals
 extern const float			PLAYER_SPEED;			// Player movement speed

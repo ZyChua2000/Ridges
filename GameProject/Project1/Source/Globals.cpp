@@ -120,6 +120,7 @@ const float			challengeATKREFRESH = 10.f;		// Time for Challenges attack to be r
 const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent
 const float			SPIKE_LIFE_t = 2.f;				// Duration for spike to be existent
+const float			SPIKE_RANGE = 0.8f;				// Range of spike
 
 //Player Globals
 const float			PLAYER_SPEED = 5.f;				// Player movement speed
