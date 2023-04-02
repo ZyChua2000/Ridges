@@ -1,8 +1,8 @@
 /******************************************************************************/
 /*!
 \file		Colosseum.cpp
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Jaasmeet Singh
+\par    	email: jaasmeet.s@digipen.edu
 \date   	February 02, 2023
 \brief		This source file contains the functions for the level of Colosseum.
 

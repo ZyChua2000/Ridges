@@ -344,8 +344,8 @@ namespace utilities {
 		camY += yOffset;
 
 		boss.damagetaken = boss.maxhp - *boss.currenthp;
-		boss.width = SPRITE_SCALE * barLength * *boss.currenthp / boss.maxhp;
-		boss.height = SPRITE_SCALE/2;
+		boss.width = static_cast<float>(SPRITE_SCALE) * barLength * *boss.currenthp / boss.maxhp;
+		boss.height = static_cast<float>(SPRITE_SCALE)/2;
 
 
 		// Boss Heart X = CamX - 1/2 of max boss bar
