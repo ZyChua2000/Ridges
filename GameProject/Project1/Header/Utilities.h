@@ -1,11 +1,14 @@
 /******************************************************************************/
 /*!
-\file		Utilities.hpp
-\co-author  Liu Chengrong, 
-\par    	email: chengrong.liu\@digipen.edu, 
+\file		Utilities.h
+\co-author  Chua Zheng Yang, Liu Chengrong
+\par    	email: c.zhengyang\@digipen.edu, chengrong.liu\@digipen.edu 
 \date   	March 31, 2023
 \brief		This source file contains the function declaration of different functions
 			that will be called and use to run the game
+
+			- updatePlayerUI done by Liu Chengrong
+			- The rest done by Chua Zheng Yang
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

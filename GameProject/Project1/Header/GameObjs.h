@@ -4,11 +4,23 @@
 /******************************************************************************/
 /*!
 \file		GameObjs.h
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Chua Zheng Yang, 
+			Javier Low Zhi Liang, 
+			Liu Chengrong,
+			Jaasmeet Singh
+\par    	email:	c.zhengyang\@digipen.edu, 
+					zhiliangjavier.low@digipen.edu, 
+					chengrong.liu\@digipen.edu,
+					jaasmeet.s@digipen.edu
+
 \date   	March 31, 2023
 \brief		This header file contains the functions for game object related
 			structs and functions
+
+			- Chest2Potion, drinkPotion done by Liu Chengrong
+			- mobsPathfind done by Javier Low
+			- dustParticles done by Jaasmeet Singh
+			- The rest done by Chua Zheng Yang
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

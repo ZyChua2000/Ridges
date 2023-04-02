@@ -1,8 +1,8 @@
 /******************************************************************************/
 /*!
 \file		Bosslevel.cpp
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Javier Low Zhi Liang
+\par    	email: zhiliangjavier.low@digipen.edu
 \date   	February 02, 2023
 \brief		This source file contains the functions for the level of Boss Level.
 
@@ -12,7 +12,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  */
  /******************************************************************************/
 #include "Main.h"
-#include <vector>
 #include <fstream>
 #include <iostream>
 #include <time.h>

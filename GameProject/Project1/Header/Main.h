@@ -1,7 +1,7 @@
 /******************************************************************************/
 /*!
 \file		Main.h
-\author 	Chua Zheng Yang, c.zhengyang, 620005922
+\author 	Chua Zheng Yang
 \par    	email: c.zhengyang\@digipen.edu
 \date   	February 01, 2023
 \brief		This header file stores global variables meant for usage of main.

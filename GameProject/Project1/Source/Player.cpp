@@ -2,10 +2,13 @@
 /******************************************************************************/
 /*!
 \file		Player.cpp
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Chua Zheng Yang, Liu Chengrong
+\par    	email: c.zhengyang\@digipen.edu, chengrong.liu\@digipen.edu 
 \date   	February 02, 2023
 \brief		This source file contains definitions of Player functions
+
+			- drinkPotion done by Liu Chengrong
+			- The rest done by Chua Zheng Yang
 
 
 Copyright (C) 2023 DigiPen Institute of Technology.

@@ -1,6 +1,6 @@
 #include "Main.h"
 #include <iostream>
-#include "Globals.h"
+
 /******************************************************************************/
 /*!
 \file		WinScreen.cpp
@@ -17,7 +17,11 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 // ---------------------------------------------------------------------------
 
-static int debugstate = 0;
+/******************************************************************************/
+/*!
+	Struct/Class Definitions
+*/
+/******************************************************************************/
 
 enum TYPE_BUTTON
 {
@@ -27,11 +31,6 @@ enum TYPE_BUTTON
 	TYPE_BACK4,
 	TYPE_BACK5,
 	TYPE_BACK6,
-
-
-
-
-
 };
 struct WinObj
 {
@@ -52,36 +51,58 @@ struct WinObjInst
 	AEMtx33				transform;
 };
 
-static const unsigned int	Win_OBJ_NUM_MAX = 8;
-static const unsigned int	Win_OBJ_INST_NUM_MAX = 32;
+/*!
+	Defines
+*/
+/******************************************************************************/
 
-
+static const unsigned int	Win_OBJ_NUM_MAX = 8;						// Max number of unique objects
+static const unsigned int	Win_OBJ_INST_NUM_MAX = 32;					// Max number of object instances
 static WinObj				sWinObjList[Win_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sWinObjNum;
-static WinObjInst			sWinObjInstList[Win_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sWinObjInstNum;
+static unsigned long		sWinObjNum;									// Number of existing game obj
+static WinObjInst			sWinObjInstList[Win_OBJ_INST_NUM_MAX];		// Each element in this array represents a unique game object instance (sprite)
+static unsigned long		sWinObjInstNum;								// Number of existing game obj inst
+static const float BackSize = 10;										// Scale of BG
 
-static WinObjInst* mBack;
-static AEGfxTexture* CycleBG[3];
+static WinObjInst* mBack;												// Pointer to Background object
+static bool debugstate = 0;												// Boolean for debugging state
 
-//MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
-static float animated = 1;
+static float animated = 1;												// Timer for animation
+static AEGfxTexture* WinanimationBG[6];									// Pointer to 6 animation frames
 
-//MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+static AEAudio WinBGM;
+static AEAudioGroup WinGroup;
 
 
-static const float BackSize = 10;
-static AEGfxTexture* WinanimationBG[6];
-
+// Functions for WinScreen.cpp only
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 WinObjInst* WinObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 void WinObjInstDestroy(WinObjInst* pInst);
-AEAudio WinBGM;
-AEAudioGroup WinGroup;
 
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the Main Menu level.
+	This function loads all necessary assets for the Win Screen level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
@@ -98,7 +119,7 @@ void GS_WinScreen_Load(void) {
 	WinanimationBG[5] = AEGfxTextureLoad("Assets/WinScreen/Win_Screen6.png");
 
 
-
+	// Mesh for bakground
 	WinObj* Background_1;
 	Background_1 = sWinObjList + sWinObjNum++;
 	AEGfxMeshStart();
@@ -112,7 +133,7 @@ void GS_WinScreen_Load(void) {
 	Background_1->pMesh = AEGfxMeshEnd();
 
 	Background_1->type = TYPE_BACK1;
-	Background_1->pTexture = CycleBG[0];
+	Background_1->pTexture = WinanimationBG[0];
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
@@ -124,7 +145,7 @@ void GS_WinScreen_Load(void) {
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the Main Menu state. It should
+	This function initialises all the values of the Win Screen state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
@@ -280,7 +301,7 @@ void GS_WinScreen_Draw(void) {
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the Main Menu level.
+	This function frees all the instances created for the Win Screen level.
 */
 /******************************************************************************/
 void GS_WinScreen_Free(void) {
@@ -298,7 +319,7 @@ void GS_WinScreen_Free(void) {
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	Main Menu level.
+	Win Screen level.
 */
 /******************************************************************************/
 void GS_WinScreen_Unload(void) {
@@ -318,11 +339,20 @@ void GS_WinScreen_Unload(void) {
 }
 
 // ---------------------------------------------------------------------------
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 WinObjInst* WinObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
@@ -356,11 +386,12 @@ WinObjInst* WinObjInstCreate(unsigned long type, float scale, AEVec2* pPos, floa
 	return 0;
 }
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 
 void WinObjInstDestroy(WinObjInst* pInst)
 {

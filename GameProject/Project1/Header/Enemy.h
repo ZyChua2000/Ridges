@@ -4,7 +4,8 @@
 \author 	Javier Low Zhi Liang
 \par    	email: zhiliangjavier.low@digipen.edu
 \date   	February 02, 2023
-\brief		This source file contains function declarations for enemy interactivity like A* path finding, Initialising nodes for A* and enemy movement.
+\brief		This source file contains function declarations for enemy interactivity 
+			like A* path finding, Initialising nodes for A* and enemy movement.
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

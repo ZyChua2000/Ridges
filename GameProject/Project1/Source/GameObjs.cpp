@@ -1,12 +1,14 @@
 /******************************************************************************/
 /*!
 \file		GameObj.cpp
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Chua Zheng Yang, Liu Chengrong
+\par    	email: c.zhengyang\@digipen.edu, chengrong.liu\@digipen.edu 
 \date   	February 02, 2023
 \brief		This source file contains definitions of GameObjs like updating of spikes, 
 			health deduction and recovery.
 
+			- chest2Potion done by Liu Chengrong
+			- The rest done by Chua Zheng Yang
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

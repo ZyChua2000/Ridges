@@ -14,11 +14,14 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 #include "Main.h"
 #include <iostream>
-#include "Globals.h"
 
 // ---------------------------------------------------------------------------
 
-static int debugstate = 0;
+/******************************************************************************/
+/*!
+	Struct/Class Definitions
+*/
+/******************************************************************************/
 
 enum TYPE_BUTTON
 {
@@ -28,10 +31,6 @@ enum TYPE_BUTTON
 	TYPE_BACK4,
 	TYPE_BACK5,
 	TYPE_BACK6,
-
-
-
-
 
 };
 struct DEATHObj
@@ -53,35 +52,55 @@ struct DEATHObjInst
 	AEMtx33				transform;
 };
 
-static const unsigned int	DEATH_OBJ_NUM_MAX = 8;
-static const unsigned int	DEATH_OBJ_INST_NUM_MAX = 32;
+/*!
+	Defines
+*/
+/******************************************************************************/
 
-
-static DEATHObj				sDEATHObjList[DEATH_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sDEATHObjNum;
+static const unsigned int	DEATH_OBJ_NUM_MAX = 8;						// Max number of unique objects
+static const unsigned int	DEATH_OBJ_INST_NUM_MAX = 32;				// Max number of object instances
+static DEATHObj				sDEATHObjList[DEATH_OBJ_NUM_MAX];			// Each element in this array represents a unique game object (shape)
+static unsigned long		sDEATHObjNum;								// Number of existing game obj
 static DEATHObjInst			sDEATHObjInstList[DEATH_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sDEATHObjInstNum;
+static unsigned long		sDEATHObjInstNum;							// Number of existing game obj inst
+static const float BackSize = 10;										// Scale of BG
 
-static DEATHObjInst* mBack;
-static AEGfxTexture* animationBG[4];
+static DEATHObjInst* mBack;												// Pointer to Background object
+static AEGfxTexture* animationBG[4];									// Pointer to 4 animation frames
 
-//MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
-static float animated = 1;
+static bool debugstate = 0;												// Boolean for debug state
+static float animated = 1;												// Timer for animation
 
-//MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
-
-
-static const float BackSize = 10;
-
-
+// Functions for DeathScreen.cpp only
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+\
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 void DEATHObjInstDestroy(DEATHObjInst* pInst);
 
 
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the Main Menu level.
+	This function loads all necessary assets for the Death Screen level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
@@ -118,7 +137,7 @@ void GS_DeathScreen_Load(void) {
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the Main Menu state. It should
+	This function initialises all the values of the Death Screen state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
@@ -137,7 +156,7 @@ void GS_DeathScreen_Init(void) {
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the Main Menu state.
+	the game loop runs for the Death Screen state.
 */
 /******************************************************************************/
 void GS_DeathScreen_Update(void) {
@@ -290,7 +309,7 @@ void GS_DeathScreen_Draw(void) {
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the Main Menu level.
+	This function frees all the instances created for the Death Screen level.
 */
 /******************************************************************************/
 void GS_DeathScreen_Free(void) {
@@ -308,7 +327,7 @@ void GS_DeathScreen_Free(void) {
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	Main Menu level.
+	Death Screen level.
 */
 /******************************************************************************/
 void GS_DeathScreen_Unload(void) {
@@ -325,11 +344,20 @@ void GS_DeathScreen_Unload(void) {
 }
 
 // ---------------------------------------------------------------------------
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
@@ -363,11 +391,12 @@ DEATHObjInst* DEATHObjInstCreate(unsigned long type, float scale, AEVec2* pPos, 
 	return 0;
 }
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 
 void DEATHObjInstDestroy(DEATHObjInst* pInst)
 {

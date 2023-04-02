@@ -14,7 +14,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 #include "Main.h"
 #include <iostream>
-#include "Globals.h"
 
 // ---------------------------------------------------------------------------
 
@@ -53,34 +52,55 @@ struct HelpObjInst
 	AEMtx33				transform;
 };
 
-static const unsigned int	Help_OBJ_NUM_MAX = 8;
-static const unsigned int	Help_OBJ_INST_NUM_MAX = 32;
+/*!
+	Defines
+*/
+/******************************************************************************/
 
-
+static const unsigned int	Help_OBJ_NUM_MAX = 8;						// Max number of unique objects
+static const unsigned int	Help_OBJ_INST_NUM_MAX = 32;					// Max number of object instances
 static HelpObj				sHelpObjList[Help_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sHelpObjNum;
+static unsigned long		sHelpObjNum;								// Number of existing game obj
 static HelpObjInst			sHelpObjInstList[Help_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sHelpObjInstNum;
+static unsigned long		sHelpObjInstNum;							// Number of existing game obj inst
+static const float BackSize = 10;										// Scale of BG
 
-static HelpObjInst* mBack;
-static AEGfxTexture* CycleBG[3];
-
-//MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
-static float animated = 1;
-
-//MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+static HelpObjInst* mBack;												// Pointer to Background object
+static AEGfxTexture* CycleBG[3];										// Pointer to 3 pages
 
 
-static const float BackSize = 10;
+static float animated = 1;												// Timer for Animation
 
+// Functions for HelpScreen.cpp only
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 void HelpObjInstDestroy(HelpObjInst* pInst);
 
 
 /******************************************************************************/
 /*!
 	"Load" function of this state
-	This function loads all necessary assets for the Main Menu level.
+	This function loads all necessary assets for the Help Screen level.
 	It should be called once before the start of the level.
 	It loads assets like textures, meshes and music files etc
 */
@@ -117,7 +137,7 @@ void GS_HelpScreen_Load(void) {
 /******************************************************************************/
 /*!
 	"Initialize" function of this state
-	This function initialises all the values of the Main Menu state. It should
+	This function initialises all the values of the Help Screen state. It should
 	be called once at the start of the level.
 */
 /******************************************************************************/
@@ -136,7 +156,7 @@ void GS_HelpScreen_Init(void) {
 /*!
 	"Update" function of this state
 	This function updates the game logic, physics and collision. It runs while
-	the game loop runs for the Main Menu state.
+	the game loop runs for the Help Screen state.
 */
 /******************************************************************************/
 void GS_HelpScreen_Update(void) {
@@ -291,7 +311,7 @@ void GS_HelpScreen_Draw(void) {
 /******************************************************************************/
 /*!
 	"Free" function of this state
-	This function frees all the instances created for the Main Menu level.
+	This function frees all the instances created for the Help Screen level.
 */
 /******************************************************************************/
 void GS_HelpScreen_Free(void) {
@@ -309,7 +329,7 @@ void GS_HelpScreen_Free(void) {
 /*!
 	"Unload" function of this state
 	This function frees all the shapes and assets that were loaded for the
-	Main Menu level.
+	Help Screen level.
 */
 /******************************************************************************/
 void GS_HelpScreen_Unload(void) {
@@ -326,11 +346,20 @@ void GS_HelpScreen_Unload(void) {
 }
 
 // ---------------------------------------------------------------------------
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir)
 {
 	AEVec2 zero;
@@ -364,11 +393,12 @@ HelpObjInst* HelpObjInstCreate(unsigned long type, float scale, AEVec2* pPos, fl
 	return 0;
 }
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 
 void HelpObjInstDestroy(HelpObjInst* pInst)
 {

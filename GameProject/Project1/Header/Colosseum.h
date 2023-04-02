@@ -1,8 +1,8 @@
 ﻿/******************************************************************************/
 /*!
 \file		Colosseum.h
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\author 	Jaasmeet Singh
+\par    	email: jaasmeet.s@digipen.edu
 \date   	February 21, 2023
 \brief		This header file contains the functions for the level of Colosseum.
 

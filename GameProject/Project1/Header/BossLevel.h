@@ -1,8 +1,9 @@
 /******************************************************************************/
 /*!
-\file		Bosslevel.h
-\author 	Chua Zheng Yang
-\par    	email: c.zhengyang\@digipen.edu
+\file		BossLevel.h
+\author 	Javier Low Zhi Liang
+\par    	email: zhiliangjavier.low@digipen.edu
+\date   	February 02, 2023
 \date   	February 02, 2023
 \brief		This header file contains the functions for the level of Boss Level.
 
