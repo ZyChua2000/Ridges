@@ -24,7 +24,9 @@ R				- Use potion to recover 1 health(only when less than max health)
 
 Left Mouse Click 		- Slash(direction relative from mouse to player sprite)
 
-H 				- Help Screen
+M 				- Previous path feature in Maze Level ONLY.
+
+H 				- Help Screen from Main Menu/ Pause Menu
 
 Esc 				- Pause Menu to exit the game back to Main Menu	
 
