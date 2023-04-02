@@ -236,7 +236,7 @@ void GS_World_Load(void) {
 	InteractGroup = AEAudioCreateGroup();
 	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
 	MovementGroup = AEAudioCreateGroup();
-	WorldBGM = AEAudioLoadMusic("Assets/Music");
+	WorldBGM = AEAudioLoadMusic("Assets/Music/Designed, Drone, Deep Resonances, Static 01 SND12667.wav");
 	WorldGroup = AEAudioCreateGroup();
 }
 
@@ -394,7 +394,7 @@ void GS_World_Init(void) {
 
 	ParticleSystemInit();
 
-	AEAudioPlay(WorldBGM, WorldGroup, 0.2f, 1, 1);
+	AEAudioPlay(WorldBGM, WorldGroup, 0.3f, 1, -1);
 
 	// Initialise in-game states
 	levelstart = true;

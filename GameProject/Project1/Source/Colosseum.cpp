@@ -190,7 +190,7 @@ void GS_Colosseum_Load(void) {
 	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
 	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
 	MovementGroup = AEAudioCreateGroup();
-	ColosseumBGM = AEAudioLoadMusic("Assets/Music");
+	ColosseumBGM = AEAudioLoadMusic("Assets/Music/DEEP WATERS - DanceTechno MSCDNT2_57.mp3");
 	ColosseumGroup = AEAudioCreateGroup();
 }
 
@@ -266,7 +266,7 @@ void GS_Colosseum_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	AEAudioPlay(ColosseumBGM, ColosseumGroup, 0.1f, 1, 1);
+	AEAudioPlay(ColosseumBGM, ColosseumGroup, 0.1f, 0.8, -1);
 
 	// Initialise in-game states
 	spawned = false;					
@@ -525,6 +525,8 @@ void GS_Colosseum_Update(void) {
 
 		//Change level conditions
 		if (Player->health == 0) {
+			AEAudioStopGroup(MovementGroup);
+			AEAudioStopGroup(ColosseumGroup);
 			gGameStateNext = GS_DEATHSCREEN;
 		}
 

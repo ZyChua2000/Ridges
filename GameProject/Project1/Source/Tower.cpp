@@ -196,7 +196,7 @@ void GS_Tower_Load(void) {
 	InteractGroup = AEAudioCreateGroup();
 	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
 	MovementGroup = AEAudioCreateGroup();
-	towerBGM = AEAudioLoadMusic("Assets/Music");
+	towerBGM = AEAudioLoadMusic("Assets/Music/Swooshes, Whoosh, Dark, Tonal SND12053.wav");
 	towerGroup = AEAudioCreateGroup();
 
 	ParticleSystemLoad();		
@@ -346,7 +346,7 @@ void GS_Tower_Init(void) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
 
-	AEAudioPlay(towerBGM, towerGroup, 0.2f, 1, 1);
+	AEAudioPlay(towerBGM, towerGroup, 0.2f, 1, -1);
 
 	ParticleSystemInit();
 

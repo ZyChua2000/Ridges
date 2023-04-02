@@ -291,7 +291,7 @@ void GS_Maze_Init(void) {
 
 	ParticleSystemInit();
 
-	AEAudioPlay(MazeBG, MazeBGG, 0.1f, 1, 1);
+	AEAudioPlay(MazeBG, MazeBGG, 0.25f, 1, 1);
 
 	// Initialise states and timers
 	debugging = false;
