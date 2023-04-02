@@ -7,8 +7,8 @@
 \brief		This source file contains definitions of GameObjs like updating of spikes, 
 			health deduction and recovery.
 
-			- chest2Potion done by Liu Chengrong
-			- The rest done by Chua Zheng Yang
+			- chest2Potion done by Liu Chengrong (10%)
+			- The rest done by Chua Zheng Yang (90%)
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

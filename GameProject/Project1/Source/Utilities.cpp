@@ -1,11 +1,15 @@
 /******************************************************************************/
 /*!
 \file		Utilities.cpp
-\co-author  Liu Chengrong,
-\par    	email: chengrong.liu\@digipen.edu,
+\co-author  Chua Zheng Yang, Liu Chengrong, Alvin Woo Jia Hao
+\par    	email: cd.zhengyang\@digipen.edu, chengrong.liu\@digipen.edu, a.woo\@digipen.edu
 \date   	March 31, 2023
 \brief		This source file contains the function definition of different functions
 			that will be called and use to run the game
+
+			- updatePlayerUI and bossBarTransMatrix done by Liu Chengrong (20%)
+			- moveHelpScreen done by Alvin Woo Jia Hao (10%)
+			- The rest done by Chua Zheng Yang (70%)
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the
@@ -391,6 +395,11 @@ namespace utilities {
 
 	}
 
+	/*!***********************************************************************
+	\brief
+		This function makes a dialog box pop up upon trying to quit game to
+		confirm the quitting of game.
+	*************************************************************************/
 	void quitGame() {
 		int result = MessageBox(NULL, "Do you want to Exit the Game?", "Confirmation", MB_YESNO | MB_ICONQUESTION);
 

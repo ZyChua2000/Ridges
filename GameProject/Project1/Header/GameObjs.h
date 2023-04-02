@@ -17,10 +17,10 @@
 \brief		This header file contains the functions for game object related
 			structs and functions
 
-			- Chest2Potion, drinkPotion done by Liu Chengrong
-			- mobsPathfind done by Javier Low
-			- dustParticles done by Jaasmeet Singh
-			- The rest done by Chua Zheng Yang
+			- Chest2Potion, drinkPotion done by Liu Chengrong (5%)
+			- mobsPathfind done by Javier Low (5%)
+			- dustParticles done by Jaasmeet Singh (5%)
+			- The rest done by Chua Zheng Yang (85%)
 
 Copyright (C) 2023 DigiPen Institute of Technology.
 Reproduction or disclosure of this file or its contents without the

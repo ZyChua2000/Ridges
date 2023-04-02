@@ -7,8 +7,8 @@
 \date   	February 02, 2023
 \brief		This source file contains definitions of Player functions
 
-			- drinkPotion done by Liu Chengrong
-			- The rest done by Chua Zheng Yang
+			- drinkPotion done by Liu Chengrong (10%)
+			- The rest done by Chua Zheng Yang (90%)
 
 
 Copyright (C) 2023 DigiPen Institute of Technology.
