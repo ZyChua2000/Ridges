@@ -251,4 +251,6 @@ namespace utilities {
 		ID number of texture in texturelist for pause
 	*************************************************************************/
 	void moveHelpScreen(staticObjInst& PauseObj, int textureID);
+
+	void quitGame();
 }

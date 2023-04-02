@@ -390,4 +390,19 @@ namespace utilities {
 		}
 
 	}
+
+	void quitGame() {
+		int result = MessageBox(NULL, "Do you want to Exit the Game?", "Confirmation", MB_YESNO | MB_ICONQUESTION);
+
+		if (result == IDYES)
+		{
+			gGameStateNext = GS_QUIT;
+			return;// user clicked yes
+		}
+		else
+		{
+			return;// user clicked no
+		}
+
+	}
 }

@@ -204,8 +204,7 @@ void GS_DeathScreen_Update(void) {
 
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
-				gGameStateNext = GS_QUIT;
-				return;
+				utilities::quitGame();
 			}
 			//gGameStateNext = GS_WORLD;
 		}

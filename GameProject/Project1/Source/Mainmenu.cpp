@@ -13,6 +13,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  /******************************************************************************/
 
 #include "Main.h"
+#include <Windows.h>
 #include <iostream>
 
 // ---------------------------------------------------------------------------
@@ -238,8 +239,7 @@ void GS_MainMenu_Update(void) {
 
 			if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 			{
-				gGameStateNext = GS_QUIT;
-					return;
+				utilities::quitGame();
 			}
 
 			if (utilities::rectbuttonClicked_AlignCtr(155.f, 820.f, 245.f, 85.f) == 1)//width 245 height 85
