@@ -40,7 +40,7 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 	
 
 	// Initialize the system
-	AESysInit(instanceH, show, 1600, 900, 1, 60, false, NULL);
+	AESysInit(instanceH, show, 1600, 900, 0, 60, false, NULL);
 
 	AEGfxCreateFont("Assets/OpenSans-Regular.ttf", 12);
 
