@@ -31,7 +31,7 @@ static const AEVec2			mapRange{ 17, 8 };					// Range of available coordinates f
 static const int			maxLevelNum = 3;					// Total number of challenge levels
 
 // Boss Attributes
-static const float			darkRoom_duration = 3.f;			// Duration for dark room to exist
+static const float			darkRoom_duration = 6.f;			// Duration for dark room to exist
 static const float			bossCircle_duration = 0.25f;		// Duration for boss circle to toggle
 static const float			bossCircleSize = 4.0f;				// Size of boss circle attack
 static const float			bossAttackRange = 1.0f;				// Range of boss attack
