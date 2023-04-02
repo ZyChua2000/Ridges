@@ -87,10 +87,3 @@ float heuristic(Node* a, Node* b);
 */
 /*******************************************************************/
 void deletenodes();
-
-/******************************************************************/
-/*!
-\brief function definition for mobsKilled
-*/
-/*******************************************************************/
-void BossStateMachine(GameObjInst* pInst);

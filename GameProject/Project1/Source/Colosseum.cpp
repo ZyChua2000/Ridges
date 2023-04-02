@@ -15,9 +15,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
-#include "Globals.h"
-
-
 
 /*!
 	Defines
@@ -80,6 +77,9 @@ static float playerHitTime;				// Stores time left for player invulnerability af
 static Inventory Backpack;				// Inventory of Character
 
 static int CURRENT_MOBS;				// Current number of mobs in game
+
+static AEAudio ColosseumBGM;
+static AEAudioGroup ColosseumGroup;
 
 
 /******************************************************************************/
@@ -183,6 +183,15 @@ void GS_Colosseum_Load(void) {
 	utilities::loadMeshNTexture(Start, fullSizeMesh, startTex, TYPE_START);
 
 	ParticleSystemLoad();
+
+	// Load Audio
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
+	MovementGroup = AEAudioCreateGroup();
+	ColosseumBGM = AEAudioLoadMusic("Assets/Music");
+	ColosseumGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -257,6 +266,7 @@ void GS_Colosseum_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
+	AEAudioPlay(ColosseumBGM, ColosseumGroup, 0.1f, 1, 1);
 
 	// Initialise in-game states
 	spawned = false;					
@@ -338,6 +348,10 @@ void GS_Colosseum_Update(void) {
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 			Player->playerWalk(walkCD);
+		}
+		else {
+			Player->TextureMap = TEXTURE_PLAYER;
+			AEAudioStopGroup(MovementGroup);
 		}
 
 		if (CURRENT_MOBS == 0 && waves >= 1) { // From wave 2 onwards, wave 1 activated by chest
@@ -476,7 +490,7 @@ void GS_Colosseum_Update(void) {
 					if (Player->health > 0)
 					{
 						Player->deducthealth();
-
+						AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 						//Hit cooldown
 						playerHitTime = DAMAGE_COODLDOWN_t;
 
@@ -701,6 +715,10 @@ void GS_Colosseum_Draw(void) {
 			}
 		}
 
+		ParticleSystemDraw(&Player->transform);   //localtransform
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
 		// Spawn Static entities
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 		{
@@ -828,8 +846,6 @@ void GS_Colosseum_Draw(void) {
 			}
 		}
 
-		ParticleSystemDraw(&Player->transform);   //localtransform
-
 	}
 }
 
@@ -855,6 +871,8 @@ void GS_Colosseum_Free(void) {
 		}
 	}
 	deletenodes();
+
+	AEAudioStopGroup(ColosseumGroup);
 
 	ParticleSystemFree();
 

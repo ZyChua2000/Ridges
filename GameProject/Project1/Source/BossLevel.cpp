@@ -26,11 +26,23 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static const int			MAP_CELL_WIDTH = 24;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
+static const AEVec2			mapMin{ 3.5, -6 };					// Minimal coordinate of map
+static const AEVec2			mapRange{ 17, 8 };					// Range of available coordinates from min of map
+
+static const int			maxLevelNum = 3;					// Total number of challenge levels
+
 // Boss Attributes
 static const float			darkRoom_duration = 3.f;			// Duration for dark room to exist
-static const float			bossCircle_duration = 0.5f;			// Duration for boss circle to toggle
+static const float			bossCircle_duration = 0.25f;		// Duration for boss circle to toggle
+static const float			bossCircleSize = 4.0f;				// Size of boss circle attack
 static const float			bossAttackRange = 1.0f;				// Range of boss attack
 static const float			bossSearchRange = 1.5f;				// Range of boss to stop patrolling
+static const float			bossStillDuration = 0.5f;			// Duration for boss to stand still when activating skill
+static const float			aoeREFRESH = 3.0f;					// Time for AOE attack to be refreshed
+static const float			challengeATKREFRESH = 5.f;			// Time for Challenges attack to be refreshed
+
+static const AEVec2 playerStartPoint{ 4,-10 };					// Starting coordinate of new game player
+static const AEVec2 BossStartPoint{ 17,-10 };					// Starting coordinate of new game player
 
 // -----------------------------------------------------------------------------
 
@@ -42,8 +54,8 @@ static GameObjInst* Player;								// Pointer to the "Player" game object instan
 static GameObjInst* Boss;								// Pointer to the "Boss" game object instance
 static staticObjInst* mapEditorObj;						// Pointer to the reference map editor object instance
 static staticObjInst* Health[3];						// Pointer to the player health statc object instance
-static staticObjInst* MenuObj[3];						// Pointer to each menu UI object
-static staticObjInst* NumObj[3];						// Pointer to each number UI object
+static staticObjInst* MenuObj[2];						// Pointer to each menu UI object
+static staticObjInst* NumObj[2];						// Pointer to each number UI object
 static staticObjInst* bossHeart;						// Pointer to bossHeart object
 static staticObjInst* PauseObj;							// Pointer to Pause Obj
 static staticObjInst* StartScreenbj;					// Pointer to start screen Obj
@@ -72,6 +84,18 @@ static AEAudio BossBGM;
 static AEAudioGroup BossGroup;
 
 // ---------------------------------------------------------------------------
+
+// Function for BossLevel.cpp Only
+
+/******************************************************************/
+/*!
+\brief Boss State machine that toggles between states for boss 
+		behavior
+\param[in] pInst
+		Pointer to the boss game obj inst
+*/
+/*******************************************************************/
+void BossStateMachine(GameObjInst* pInst);
 
 /******************************************************************************/
 /*!
@@ -202,6 +226,11 @@ void GS_BossLevel_Load(void) {
 
 	BossBGM = AEAudioLoadMusic("Assets/Music/DEEP WATERS - DanceTechno MSCDNT2_57.wav");
 	BossGroup = AEAudioCreateGroup();
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
+	MovementGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -236,7 +265,7 @@ void GS_BossLevel_Init(void) {
 	//	Initialize objects for new game
 	// =====================================
 		//Initialise Player
-		AEVec2 PlayerPos = { 4,-10 };
+		AEVec2 PlayerPos = playerStartPoint;
 		Player = gameObjInstCreate(TYPE_CHARACTER, 1, &PlayerPos, 0, 0);
 
 		std::ifstream ifs{ "Assets/save.txt" };
@@ -254,7 +283,7 @@ void GS_BossLevel_Init(void) {
 	NodesInit(*binaryMap, MAP_CELL_WIDTH, MAP_CELL_HEIGHT);
 
 	//init Boss
-	AEVec2 BossPos = { 17,-10 }; // TXT
+	AEVec2 BossPos = BossStartPoint; // TXT
 	Boss = gameObjInstCreate(TYPE_BOSS, 1, &BossPos, 0, 0);
 
 	// Initialise camera pos
@@ -279,7 +308,7 @@ void GS_BossLevel_Init(void) {
 	ParticleSystemInit();
 
 	// Initialise available attack list
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < maxLevelNum; i++) {
 		if (levelCleared[i] == false) {
 			stageList.push_back(i);
 		}
@@ -361,6 +390,10 @@ void GS_BossLevel_Update(void) {
 		if (AEInputCheckCurr(AEVK_W) || AEInputCheckCurr(AEVK_UP) || AEInputCheckCurr(AEVK_S) || AEInputCheckCurr(AEVK_DOWN)
 			|| AEInputCheckCurr(AEVK_A) || AEInputCheckCurr(AEVK_LEFT) || AEInputCheckCurr(AEVK_D) || AEInputCheckCurr(AEVK_RIGHT)) {
 			Player->playerWalk(walkCD);
+		}
+		else {
+			Player->TextureMap = TEXTURE_PLAYER;
+			AEAudioStopGroup(MovementGroup);
 		}
 
 		// Healing from Potion
@@ -478,6 +511,7 @@ void GS_BossLevel_Update(void) {
 						if (Player->health > 0)
 						{
 							Player->deducthealth();
+							AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 
 							//Hit cooldown
 							playerHitTime = DAMAGE_COODLDOWN_t;
@@ -526,6 +560,7 @@ void GS_BossLevel_Update(void) {
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 					// Between Bullet and Player
 					Player->deducthealth();
+					AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 					gameObjInstDestroy(pInst);
 				}
 				if (snapCollision(*pInst, flag)) {
@@ -543,15 +578,24 @@ void GS_BossLevel_Update(void) {
 
 		for (int i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++) {
 			staticObjInst* pInst = sStaticObjInstList + i;
-			if (pInst->flag != 1 || (pInst->pObject->type != TYPE_BOSSCIRCLEATTACK)) {
+			if (pInst->flag != FLAG_ACTIVE || (pInst->pObject->type != TYPE_BOSSCIRCLEATTACK && pInst->pObject->type != TYPE_BOSSSLASH)) {
 				continue;
 			}
 
 			// Between boss circle attack and player
 			if (pInst->pObject->type == TYPE_BOSSCIRCLEATTACK) {
-				if (Player->calculateDistance(*pInst) < 1.5f && playerHitTime == 0) {
+				if (Player->calculateDistance(*pInst) < bossCircleSize/2 && playerHitTime == 0) {
 					playerHitTime = DAMAGE_COODLDOWN_t;
 					Player->deducthealth();
+					AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
+				}
+			}
+
+			if (pInst->pObject->type == TYPE_BOSSSLASH) {
+				if (Player->calculateDistance(*pInst) < bossAttackRange && playerHitTime == 0) {
+					playerHitTime = DAMAGE_COODLDOWN_t;
+					Player->deducthealth();
+					AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 				}
 			}
 
@@ -631,7 +675,8 @@ void GS_BossLevel_Update(void) {
 		utilities::snapCamPos(Player->posCurr, camX, camY, MAP_CELL_WIDTH, 18);
 		AEGfxSetCamPosition(static_cast<f32>(static_cast<int>(camX * (float)SPRITE_SCALE)), static_cast<f32>(static_cast<int> (camY * (float)SPRITE_SCALE)));
 		utilities::updatePlayerUI(Health, MenuObj, NumObj, Backpack, Player->health, camX, camY);
-		bossHeart->posCurr = { camX - 5.75f, camY - 370.f/80 };
+
+		utilities::bossBarTransMatrix(bossHP, hpbartransform, *bossHeart, camX, camY);
 
 		// =====================================
 		// calculate the matrix for all objects
@@ -660,9 +705,9 @@ void GS_BossLevel_Update(void) {
 			pInst->calculateTransMatrix();
 		}
 
-		utilities::bossBarTransMatrix(bossHP, hpbartransform, camX, camY);
+		
 
-		//Player->dustParticles();
+		Player->dustParticles();
 
 		ParticleSystemUpdate();
 	}
@@ -757,6 +802,10 @@ void GS_BossLevel_Draw(void) {
 			}
 		}
 
+		ParticleSystemDraw(&Player->transform);   //localtransform
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
 		// Spawn Static entities
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 		{
@@ -800,6 +849,7 @@ void GS_BossLevel_Draw(void) {
 
 		AEGfxSetTransparency(1.0f);
 
+
 		// Spawn dynamic entities
 		for (unsigned long i = 0; i < GAME_OBJ_INST_NUM_MAX; i++)
 		{
@@ -842,6 +892,28 @@ void GS_BossLevel_Draw(void) {
 			AEGfxSetTransform(ltransform.m);
 			// Actually drawing the mesh
 			AEGfxMeshDraw(meshList[3], AE_GFX_MDM_TRIANGLES);
+
+			// Draw menu UI on top of dark room
+			for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
+				AEGfxSetTransform(Health[i]->transform.m);
+				AEGfxTextureSet(Health[i]->pObject->pTexture, Health[i]->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+					Health[i]->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+				AEGfxMeshDraw(Health[i]->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
+			
+			for (staticObjInst* i : NumObj) {
+				AEGfxSetTransform(i->transform.m);
+				AEGfxTextureSet(i->pObject->pTexture, i->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+					i->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+				AEGfxMeshDraw(i->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
+
+			for (staticObjInst* i : MenuObj) {
+				AEGfxSetTransform(i->transform.m);
+				AEGfxTextureSet(i->pObject->pTexture, i->TextureMap.x * TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH,
+					i->TextureMap.y * TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+				AEGfxMeshDraw(i->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+			}
 		}
 
 		//drawing of health bar
@@ -851,11 +923,12 @@ void GS_BossLevel_Draw(void) {
 		AEGfxSetTransform(hpbartransform.m);
 		AEGfxMeshDraw(meshList[2], AE_GFX_MDM_TRIANGLES);
 
+		// Drawing of boss heart
 		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 		AEGfxSetTransform(bossHeart->transform.m);
 		AEGfxTextureSet(bossHeart->pObject->pTexture, bossHeart->TextureMap.x* TEXTURE_CELLSIZE / TEXTURE_MAXWIDTH, 
-			bossHeart->TextureMap.y* TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
+						bossHeart->TextureMap.y* TEXTURE_CELLSIZE / TEXTURE_MAXHEIGHT);
 		AEGfxMeshDraw(bossHeart->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 
 		if (debugging == true)
@@ -918,8 +991,6 @@ void GS_BossLevel_Draw(void) {
 				AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 			}
 		}
-
-		ParticleSystemDraw(&Player->transform);   //localtransform
 	}
 }
 
@@ -946,6 +1017,7 @@ void GS_BossLevel_Free(void) {
 	}
 	deletenodes();
 
+	AEAudioStopGroup(BossGroup);
 
 	ParticleSystemFree();
 }
@@ -978,9 +1050,15 @@ void GS_BossLevel_Unload(void) {
 	ParticleSystemUnload();
 }
 
-/******************************************************************
-function definition for boss finite state machine
-*******************************************************************/
+
+/******************************************************************/
+/*!
+\brief Boss State machine that toggles between states for boss
+		behavior
+\param[in] pInst
+		Pointer to the boss game obj inst
+*/
+/*******************************************************************/
 void BossStateMachine(GameObjInst* pInst)
 {
 	AEVec2 enemyPos1 = Player->posCurr;
@@ -990,15 +1068,25 @@ void BossStateMachine(GameObjInst* pInst)
 	//states declared at GameObjs.h
 	switch (pInst->state)
 	{
+
+	/**********************************************************************************
+	
+		Patrol state - Pathfinding for Boss until timer for AOE/Challenge attack
+
+	***********************************************************************************/
+
 	case STATE_PATROL:
 		switch (pInst->innerState) { 
-		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF PATROL
+		case INNER_STATE_ON_ENTER: /////////////////////////////////////////////////
+
 			std::cout << "entering state 0 " << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
 			
-			break;
-		case INNER_STATE_ON_UPDATE: // INNER STATE UPDATE OF PATROL
+			break; /////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_UPDATE: ////////////////////////////////////////////////
+
 			std::cout << "updating state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->mobsPathFind(*Player);
@@ -1007,8 +1095,8 @@ void BossStateMachine(GameObjInst* pInst)
 				//CHALLENGE ATTACK
 				// random between 0, 1 and 2
 				pInst->innerState = INNER_STATE_ON_EXIT;
-				if (Backpack.Key != 3) {
-					int random = stageList[rand() % 3-Backpack.Key];
+				if (Backpack.Key != maxLevelNum) {
+					int random = stageList[rand() % maxLevelNum-Backpack.Key];
 					if (random == 0) {
 						pInst->stateFlag = STATE_MAZE_DARKEN;
 					}
@@ -1026,7 +1114,6 @@ void BossStateMachine(GameObjInst* pInst)
 				//AOE ATTACK
 				pInst->stateFlag = STATE_AOE;
 				pInst->innerState = INNER_STATE_ON_EXIT; 
-				
 				break;
 			}
 
@@ -1036,101 +1123,116 @@ void BossStateMachine(GameObjInst* pInst)
 				break;
 			}
 
+			break; /////////////////////////////////////////////////////////////////
 
-			break;
+		case INNER_STATE_ON_EXIT: //////////////////////////////////////////////////
 
-		case INNER_STATE_ON_EXIT: // INNER STATE UPDATE OF PATROL
 			std::cout << "exiting state 0" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->state = pInst->stateFlag;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			
-			break;
+			break; /////////////////////////////////////////////////////////////////
 		} break;
 
 
+	/**********************************************************************************
+	
+		Basic Attack state - Slash at player
+
+	***********************************************************************************/
+	
 	case STATE_BASIC:
 		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER: // INNER STATE ON ENTER OF BASIC
+		case INNER_STATE_ON_ENTER: ////////////////////////////////////////////////
+
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
 			playerPosition = Player->posCurr;
 
-			break;
-		case INNER_STATE_ON_UPDATE: // INNER STATE ON UPDATE OF BASIC
+			break; /////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_UPDATE: ///////////////////////////////////////////////
+
 			std::cout << "updating state 1" << std::endl;
 			pInst->timetracker += g_dt;
 
 			//stand still for 1 second
 			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 1.0f) {
+			if (pInst->timeCD > bossStillDuration) {
 				pInst->timeCD = 0;
+
 				float angle = utilities::getAngle(pInst->posCurr.x, pInst->posCurr.y, playerPosition.x, playerPosition.y);
-				AEVec2 slashPosition = { pInst->posCurr.x -cos(angle) / 1.3f, pInst->posCurr.y -sin(angle) / 1.3f };
-				staticObjInst* bossSlash = staticObjInstCreate(TYPE_BOSSSLASH, 2, &slashPosition, PI + angle);
-				if (Player->calculateDistance(*bossSlash) < bossAttackRange) {
-					playerHitTime = DAMAGE_COODLDOWN_t;
-					Player->deducthealth();
+				if (Player->posCurr.y > pInst->posCurr.y) {
+					angle = -angle;
 				}
 
-				//Run slash command
+				AEVec2 slashPosition = { pInst->posCurr.x -cos(angle) / 1.3f, pInst->posCurr.y -sin(angle) / 1.3f };
+				staticObjInst* bossSlash = staticObjInstCreate(TYPE_BOSSSLASH, 2, &slashPosition, PI + angle);
 				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;
-
 			}
+
+			break; /////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_EXIT:///////////////////////////////////////////////////
 			
-
-
-			break;
-		case INNER_STATE_ON_EXIT: // INNER STATE ON EXIT OF BASIC
 			std::cout << "exiting state 1" << std::endl;
 			pInst->timetracker += g_dt;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 
-			break;
+			break; /////////////////////////////////////////////////////////////////
 		}break;
 
 
+	/**********************************************************************************
+	
+		AOE Attack state - Blink a circle at player position 3 times before detonating
+
+	***********************************************************************************/
 	case STATE_AOE:
 		switch (pInst->innerState) {
-		case INNER_STATE_ON_ENTER:
+
+		case INNER_STATE_ON_ENTER://///////////////////////////////////////////////
+			
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 2" << std::endl;
 			playerPosition = Player->posCurr;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
+
+			break;/////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_UPDATE:////////////////////////////////////////////////
+			
 			std::cout << "updating state 2" << std::endl;
 			//AOE Attack
 			pInst->timeCD += g_dt;
 			switch (stage) {
-			case 0:
-
-					staticObjInstCreate(TYPE_BOSSCIRCLE, 3, &playerPosition, 0);
+			case 0: // First Circle
+					staticObjInstCreate(TYPE_BOSSCIRCLE, bossCircleSize, &playerPosition, 0);
 					//Draw Circle
 					pInst->timeCD = 0;
 					stage = 1;
 					break;
-			case 1:
-				if (pInst->timeCD > 1.0f) {
+			case 1: // Second Circle
+				if (pInst->timeCD > bossCircle_duration * 2) {
 					//Draw circle
-					staticObjInstCreate(TYPE_BOSSCIRCLE, 3, &playerPosition, 0);
+					staticObjInstCreate(TYPE_BOSSCIRCLE, bossCircleSize, &playerPosition, 0);
 					pInst->timeCD = 0;
 					stage = 2;
 				} break;
-			case 2:
-				if (pInst->timeCD > 1.0f) {
+			case 2: // Third Circle
+				if (pInst->timeCD > bossCircle_duration * 2) {
 					//Draw circle
-					staticObjInstCreate(TYPE_BOSSCIRCLE, 3, &playerPosition, 0);
+					staticObjInstCreate(TYPE_BOSSCIRCLE, bossCircleSize, &playerPosition, 0);
 					pInst->timeCD = 0;
 					stage = 3;
 				} break;
-			case 3:
-				if (pInst->timeCD > 3.0f) {
-					//Damage player
+			case 3: // Actual Attack Circle
+				if (pInst->timeCD > bossCircle_duration * 4) {
 					staticObjInstCreate(TYPE_BOSSCIRCLEATTACK, 3, &playerPosition, 0);
 					pInst->timeCD = 0;
 					stage = 0;
@@ -1139,89 +1241,106 @@ void BossStateMachine(GameObjInst* pInst)
 				}
 				break;
 			}
-			break;
-		case INNER_STATE_ON_EXIT:
+
+			break;/////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_EXIT://///////////////////////////////////////////////
+
 			std::cout << "exiting state 2" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 
-			break;
+			break;/////////////////////////////////////////////////////////////////
 		} break;
 
 
-	case STATE_SPAWN_ENEMIES:
+	/**********************************************************************************
+	
+		Spawn Enemy state - Spawn 2 enemies at random positions
+
+	***********************************************************************************/
+
+	case STATE_SPAWN_ENEMIES: /////////////////////////////////////////////////////
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 3" << std::endl;
-			//stand still for 1 second
 			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
+			break;/////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_UPDATE: ///////////////////////////////////////////////
 
 			std::cout << "updating state 3" << std::endl;
 			//Spawn enemies
-			// Stay still for awhile
-
-
 			pInst->timeCD += g_dt;
-
-			if (pInst->timeCD > 2.0f) {
+			if (pInst->timeCD > bossStillDuration) {
 				pInst->timeCD = 0;
+				// Set 2 random enemy positions within the map, ensuring that enemies don't spawn on the player
 				do {
-					enemyPos1 = { 3.5f + AERandFloat() * 17 ,-6 - AERandFloat() * 8 };
-					enemyPos2 = { 3.5f + AERandFloat() * 17 ,-6 - AERandFloat() * 8 };
+					enemyPos1 = { mapMin.x + AERandFloat() * mapRange.x ,mapMin.y - AERandFloat() * mapRange.y };
+					enemyPos2 = { mapMin.x + AERandFloat() * mapRange.x ,mapMin.y - AERandFloat() * mapRange.y };
 				} while (static_cast<int> (enemyPos1.x) == Player->posCurr.x || static_cast<int> (enemyPos2.y) == Player->posCurr.y);
 
-				GameObjInst* first = gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos1, nullptr, 0);
-				GameObjInst* second = gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos2, nullptr, 0);
+				// Spawn 2 enemies
+				gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos1, nullptr, 0);
+				gameObjInstCreate(TYPE_ENEMY, 1, &enemyPos2, nullptr, 0);
+
 				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
-			break;
-		case INNER_STATE_ON_EXIT:
+			break;/////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_EXIT: /////////////////////////////////////////////////
 			std::cout << "exiting state 3" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
-			break;
+			break;/////////////////////////////////////////////////////////////////
 		} break;
 
-	case STATE_SPAWN_BULLETS:
+	/**********************************************************************************
+	
+		Spawn Bullet state - Shoots 3 bullets at player
+
+	***********************************************************************************/
+
+	case STATE_SPAWN_BULLETS://////////////////////////////////////////////////////
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 4" << std::endl;
-			//stand still for 1 second
 			pInst->innerState = INNER_STATE_ON_UPDATE;
-			break;
-		case INNER_STATE_ON_UPDATE:
+			break;/////////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_UPDATE:////////////////////////////////////////////////
 			pInst->timeCD += g_dt;
 			std::cout << "updating state 4" << std::endl;
-			//Spawn Bullets
+
+			//Spawn Bullets with normalized direction vector
 			AEVec2 dirVec = Player->posCurr - Boss->posCurr;
 			AEVec2 normDir;
 			AEVec2Normalize(&normDir, &dirVec);
+
 			switch (stage) {
 			case 0:
 				gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
 				stage = 1;
 				break;
 			case 1:
-				if (pInst->timeCD == 0.5f) {
+				if (pInst->timeCD > bossStillDuration) {
 				gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
 				stage = 2;
 				pInst->timeCD = 0;
 				}
 				break;
 			case 2:
-				if (pInst->timeCD == 0.5f) {
+				if (pInst->timeCD > bossStillDuration) {
 					gameObjInstCreate(TYPE_BULLET, 0.5, &pInst->posCurr, &normDir, 0);
 					stage = 3;
 					pInst->timeCD = 0;
 				}
 				break;
 			case 3:
-				if (pInst->timeCD > 2.0f) {
+				if (pInst->timeCD > bossStillDuration) {
 					pInst->timeCD = 0;
 					pInst->stateFlag = STATE_PATROL;
 					pInst->innerState = INNER_STATE_ON_EXIT;
@@ -1229,52 +1348,51 @@ void BossStateMachine(GameObjInst* pInst)
 				}
 				break;
 			}
+			break;////////////////////////////////////////////////////////////////////
 
-			break;
-		case INNER_STATE_ON_EXIT:
+		case INNER_STATE_ON_EXIT://///////////////////////////////////////////////////
 			std::cout << "exiting state 4" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 			break;
-		}break;
+		}break;///////////////////////////////////////////////////////////////////////
 
-	case STATE_MAZE_DARKEN:
+	/**********************************************************************************
+	
+		Spawn Dark room state - Darkens the room
+
+	***********************************************************************************/
+	case STATE_MAZE_DARKEN://///////////////////////////////////////////////////
 		switch (pInst->innerState) {
 		case INNER_STATE_ON_ENTER:
+			// Reset velocity
 			pInst->velCurr = { 0,0 };
 			std::cout << "entering state 5" << std::endl;
 			pInst->innerState = INNER_STATE_ON_UPDATE;
+			break;//////////////////////////////////////////////////////////////
 
-			break;
-		case INNER_STATE_ON_UPDATE:
+		case INNER_STATE_ON_UPDATE: ////////////////////////////////////////////
 
 			std::cout << "updating state 5" << std::endl;
+			// Activate dark room
 			dark = true;
 			// Stay still for awhile
 			pInst->timeCD += g_dt;
-			if (pInst->timeCD > 1.0f) {
+			if (pInst->timeCD > bossStillDuration) {
 				pInst->timeCD = 0;
+
 				pInst->stateFlag = STATE_PATROL;
 				pInst->innerState = INNER_STATE_ON_EXIT;
 			}
-			break;
-		case INNER_STATE_ON_EXIT:
+			break;///////////////////////////////////////////////////////////////
+
+		case INNER_STATE_ON_EXIT:////////////////////////////////////////////////
+			// Return to patrol
 			std::cout << "exiting state 5" << std::endl;
 			pInst->innerState = INNER_STATE_ON_ENTER;
 			pInst->state = pInst->stateFlag;
 			break;
-		} break;
-
-
-
-
-		/*this will be the last 4 states
-		 pinst->state = (srand(3,6));*/
-
-
-
-
-
+		} break;/////////////////////////////////////////////////////////////////
 	}
 }
 

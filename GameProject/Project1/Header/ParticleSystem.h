@@ -48,7 +48,7 @@ void ParticleSystemUpdate();
 	\param AEMtx33* localTransform
 */
 /******************************************************************************/
-void ParticleSystemDraw(AEMtx33* localTransform);
+void ParticleSystemDraw(const AEMtx33* localTransform);
 
 /******************************************************************************/
 /*!

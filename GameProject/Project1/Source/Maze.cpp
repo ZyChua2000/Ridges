@@ -215,6 +215,12 @@ void GS_Maze_Load(void) {
 	 MazeBG = AEAudioLoadMusic("Assets/Music/INPUT - NewAge MSCNEW2_01.wav");
 	 MazeBGG = AEAudioCreateGroup();
 
+	 HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	 Damage = AEAudioCreateGroup();
+	 HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	 Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
+	 MovementGroup = AEAudioCreateGroup();
+
 	 ParticleSystemLoad();
 }
 
@@ -461,7 +467,7 @@ void GS_Maze_Update(void) {
 			if (Player->calculateDistance(*pInst) <= SPIKE_RANGE && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 				Player->deducthealth();
-
+				AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 				playerHitTime = DAMAGE_COODLDOWN_t;
 			}
 		}
@@ -669,6 +675,10 @@ void GS_Maze_Draw(void) {
 
 			}
 		}
+
+		ParticleSystemDraw(&Player->transform);   //localtransform
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 		// Spawn spikes
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
@@ -888,8 +898,6 @@ void GS_Maze_Draw(void) {
 			}
 		}
 	}
-
-	ParticleSystemDraw(&Player->transform);   //localtransform
 }
 
 /******************************************************************************/

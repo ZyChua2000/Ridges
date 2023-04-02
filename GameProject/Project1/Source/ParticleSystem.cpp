@@ -188,7 +188,7 @@ void ParticleSystemUpdate()
 	\param AEMtx33* localTransform
 */
 /******************************************************************************/
-void ParticleSystemDraw(AEMtx33* localTransform)
+void ParticleSystemDraw(const AEMtx33* localTransform)
 {
 	for (size_t i = 0; i < PARTICLE_OBJ_INST_NUM_MAX; ++i)
 	{
@@ -197,15 +197,15 @@ void ParticleSystemDraw(AEMtx33* localTransform)
 		// skip non-active object
 		if (0 == (pInst->flag & FLAG_ACTIVE)) continue;
 
-		AEMtx33 scale, rot, trans;
+		AEMtx33 scale, rot, trans, transform;
 
 		AEMtx33Scale(&scale, pInst->scale, pInst->scale);
 		AEMtx33Rot(&rot, pInst->dirCurr);
 		AEMtx33Trans(&trans, pInst->posCurr.x * 80, pInst->posCurr.y * 80);
 
 	
-		AEMtx33Concat(localTransform, &rot, &scale);
-		AEMtx33Concat(localTransform, &trans, localTransform);
+		AEMtx33Concat(&transform, &rot, &scale);
+		AEMtx33Concat(&transform, &trans, &transform);
 
 		if (pInst->pObject->type == TYPE_DEFAULT)
 		{
@@ -215,7 +215,7 @@ void ParticleSystemDraw(AEMtx33* localTransform)
 		}
 		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 		AEGfxSetTransparency(1.0f);
-		AEGfxSetTransform(localTransform->m);
+		AEGfxSetTransform(transform.m);
 		/*AEMtx33 test = { 80,0,960,
 						0,80,-640,
 						0,0,1 };

@@ -324,21 +324,40 @@ namespace utilities {
 	\brief
 		This function calculates a transformation matrix for the boss's health bar
 		print the health bar of the boss
-	\param[in] boss
+	\param[in\out] boss
 		Accessing the bosshp variable details
-	\param[in] hpbartransform
+	\param[out] hpbartransform
 		Calculation of a matrix for boss health bar
+	\param[out] bossHeart
+		Game obj of boss heart
+	\param[in] camX
+		Camera X position
+	\param[in] camY
+		Camera Y position
 	*************************************************************************/
-	void bossBarTransMatrix(bosshp& boss, AEMtx33 &hpbartransform, float camX, float camY) {
+	void bossBarTransMatrix(bosshp& boss, AEMtx33 &hpbartransform, staticObjInst& bossHeart, float camX, float camY) {
+		float barLength = 12.f; // Length of bar
+		float yOffset = -4.5f;// Offset of Y from Camera for UI
+		float xOffset = 0.25f;// Offset of X from Camera for UI
+
+		camX += xOffset;
+		camY += yOffset;
+
 		boss.damagetaken = boss.maxhp - *boss.currenthp;
-		boss.width = SPRITE_SCALE * 12.f * *boss.currenthp / boss.maxhp;
+		boss.width = SPRITE_SCALE * barLength * *boss.currenthp / boss.maxhp;
 		boss.height = SPRITE_SCALE/2;
+
+
+		// Boss Heart X = CamX - 1/2 of max boss bar
+		bossHeart.posCurr = { camX - (barLength / 2 ), camY };
 
 		//scale, rot, trans for health bar
 		AEMtx33 bar_scale, bar_trans, bar_rot;
 		AEMtx33Scale(&bar_scale, boss.width, boss.height);
 		AEMtx33Rot(&bar_rot, 0);
-		AEMtx33Trans(&bar_trans, camX * SPRITE_SCALE + 20 - (boss.damagetaken * SPRITE_SCALE * 4 / boss.maxhp), camY * SPRITE_SCALE - 370.f);
+		// Trans X = (camX - (Amount of damage taken * 1/2 unit length of boss hp)) * SPRITE_SCALE
+		// unit length of boss hp = Width / Max HP
+		AEMtx33Trans(&bar_trans, (camX - (boss.damagetaken * (barLength / boss.maxhp) / 2)) * SPRITE_SCALE, camY * SPRITE_SCALE);
 		AEMtx33Concat(&hpbartransform, &bar_scale, &bar_rot);
 		AEMtx33Concat(&hpbartransform, &bar_trans, &hpbartransform);
 	}

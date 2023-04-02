@@ -15,8 +15,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
-#include <time.h>
-
 
 /*!
 	Defines
@@ -86,6 +84,9 @@ static float walkCD;									// Stores time left before player can move after sl
 
 static Inventory Backpack;								// Inventory of Character
 static int	CURRENT_MOBS;								// Current number of mobs in game
+
+static AEAudio towerBGM;
+static AEAudioGroup towerGroup;
 
 /******************************************************************************/
 /*!
@@ -187,6 +188,20 @@ void GS_Tower_Load(void) {
 	utilities::loadMeshNTexture(Pause, fullSizeMesh, PauseTex, TYPE_PAUSE);
 	utilities::loadMeshNTexture(Start, fullSizeMesh, startTex, TYPE_START);	
 	
+
+	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
+	Damage = AEAudioCreateGroup();
+	HeroSlash = AEAudioLoadMusic("Assets/Music/METAL-HIT_GEN-HDF-17085.wav");
+	Interact = AEAudioLoadMusic("Assets/Music/SWITCH-LEVER_GEN-HDF-22196.wav");
+	InteractGroup = AEAudioCreateGroup();
+	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
+	MovementGroup = AEAudioCreateGroup();
+	towerBGM = AEAudioLoadMusic("Assets/Music");
+	towerGroup = AEAudioCreateGroup();
+
+	ParticleSystemLoad();		ParticleSystemDraw(&Player->transform);   //localtransform
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 /******************************************************************************/
@@ -330,6 +345,8 @@ void GS_Tower_Init(void) {
 	for (int i = 0; i < MAX_PLAYER_HEALTH; i++) {
 		Health[i] = staticObjInstCreate(TYPE_HEALTH, 0.75, nullptr, 0);
 	}
+
+	AEAudioPlay(towerBGM, towerGroup, 0.2f, 1, 1);
 
 	ParticleSystemInit();
 
@@ -542,6 +559,7 @@ void GS_Tower_Update(void) {
 					{
 
 						Player->deducthealth();
+						AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 
 						//Hit cooldown
 						playerHitTime = DAMAGE_COODLDOWN_t;
@@ -573,6 +591,7 @@ void GS_Tower_Update(void) {
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 					// Between bullet and player
 					Player->deducthealth();
+					AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 					gameObjInstDestroy(pInst);
 				}
 				// between bullet and wall
@@ -598,6 +617,7 @@ void GS_Tower_Update(void) {
 			if (Player->calculateDistance(*pInst) <= 0.8f && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 				Player->deducthealth();
+				AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 				playerHitTime = DAMAGE_COODLDOWN_t;
 			}
 		}
@@ -702,7 +722,7 @@ void GS_Tower_Update(void) {
 			pInst->calculateTransMatrix();
 		}
 
-		//Player->dustParticles();
+		Player->dustParticles();
 
 		ParticleSystemUpdate();
 	}
@@ -795,6 +815,10 @@ void GS_Tower_Update(void) {
 
 			}
 		}
+
+		ParticleSystemDraw(&Player->transform);   //localtransform
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 		// Spawn Static entities
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
@@ -921,8 +945,6 @@ void GS_Tower_Update(void) {
 				AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 			}
 		}
-
-		ParticleSystemDraw(&Player->transform);   //localtransform
 	}
 
 }
@@ -950,7 +972,11 @@ void GS_Tower_Free(void) {
 	}
 	deletenodes();
 
+	AEAudioStopGroup(towerGroup);
+
 	utilities::unloadObjs(Gates);
+
+	ParticleSystemFree();
 }
 
 /******************************************************************************/
@@ -975,6 +1001,8 @@ void GS_Tower_Unload(void) {
 
 	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
 	AEGfxSetCamPosition(0, 0);
+
+	ParticleSystemUnload();
 }
 
 // ---------------------------------------------------------------------------

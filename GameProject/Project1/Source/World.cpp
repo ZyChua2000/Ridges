@@ -15,8 +15,6 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 #include "Main.h"
 #include <fstream>
 #include <iostream>
-#include <time.h>
-
 
 /*!
 	Defines
@@ -38,8 +36,29 @@ static const int directionInstructionX = 93;					// X coordinate limit to displa
 // -----------------------------------------------------------------------------
 
 // Functions for World.cpp only
+
+	/*!***********************************************************************
+	\brief
+		This function saves data to text file through a saveData struct
+	\param[in] data
+		The struct of all data
+	\param[in] gameObjList
+		The game obj inst list
+	\param[in] staticObjList
+		The static obj inst list
+	\param[in] gameObjMax
+		The maximum number of game obj inst
+	\param[in] staticObjMax
+		The maximum number of static obj inst
+	*************************************************************************/
 void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax);
 
+	/*!***********************************************************************
+	\brief
+		This function loads data from text file into the saveData struct
+	\param[out] data
+		Data struct to be loaded into
+	*************************************************************************/
 void loadData(saveData data);
 
 
@@ -94,6 +113,9 @@ static int	CURRENT_MOBS;								// Current number of mobs in game
 
 // All the warp points to enter other levels
 static AEVec2* WarpPts;									// Dynamic array of warp points
+
+static AEAudio WorldBGM;
+static AEAudioGroup WorldGroup;
 
 
 // ---------------------------------------------------------------------------
@@ -214,6 +236,8 @@ void GS_World_Load(void) {
 	InteractGroup = AEAudioCreateGroup();
 	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
 	MovementGroup = AEAudioCreateGroup();
+	WorldBGM = AEAudioLoadMusic("Assets/Music");
+	WorldGroup = AEAudioCreateGroup();
 }
 
 /******************************************************************************/
@@ -369,6 +393,8 @@ void GS_World_Init(void) {
 	utilities::unloadObjs(pos);
 
 	ParticleSystemInit();
+
+	AEAudioPlay(WorldBGM, WorldGroup, 0.2f, 1, 1);
 
 	// Initialise in-game states
 	levelstart = true;
@@ -600,6 +626,7 @@ void GS_World_Update(void) {
 					if (Player->health > 0)
 					{
 						Player->deducthealth();
+						AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 						//Hit cooldown
 						playerHitTime = DAMAGE_COODLDOWN_t;
 						//knockback
@@ -642,6 +669,7 @@ void GS_World_Update(void) {
 			if (Player->calculateDistance(*pInst) <= SPIKE_RANGE && (pInst->Alpha == 0) && playerHitTime == 0) {
 
 				Player->deducthealth();
+				AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 				playerHitTime = DAMAGE_COODLDOWN_t;
 			}
 		}
@@ -860,6 +888,10 @@ void GS_World_Draw(void) {
 			}
 		}
 
+		ParticleSystemDraw(&Player->transform);   //localtransform
+		AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+		AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+
 		// Spawn Static entities
 		for (unsigned long i = 0; i < STATIC_OBJ_INST_NUM_MAX; i++)
 		{
@@ -988,8 +1020,6 @@ void GS_World_Draw(void) {
 				AEGfxPrint(1, s, -0.99f, 0.45f, 1.0f, 0.0f, 1.0f, 0.0f);
 			}
 		}
-
-		ParticleSystemDraw(&Player->transform);   //localtransform
 	}
 }
 
@@ -1019,6 +1049,8 @@ void GS_World_Free(void) {
 	utilities::unloadObjs(Gates);
 
 	utilities::unloadObjs(WarpPts);
+
+	AEAudioStopGroup(WorldGroup);
 
 	ParticleSystemFree();
 }
@@ -1052,7 +1084,20 @@ void GS_World_Unload(void) {
 // ---------------------------------------------------------------------------
 
 
-
+	/*!***********************************************************************
+	\brief
+		This function saves data to text file through a saveData struct
+	\param[in] data
+		The struct of all data
+	\param[in] gameObjList
+		The game obj inst list
+	\param[in] staticObjList
+		The static obj inst list
+	\param[in] gameObjMax
+		The maximum number of game obj inst
+	\param[in] staticObjMax
+		The maximum number of static obj inst
+	*************************************************************************/
 void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjList, int gameObjMax, int staticObjMax) {
 	// Put data into struct
 	for (int i = 0; i < gameObjMax; i++) {
@@ -1170,6 +1215,12 @@ void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjL
 	delete[] Levers;
 }
 
+/*!***********************************************************************
+\brief
+	This function loads data from text file into the saveData struct
+\param[out] data
+	Data struct to be loaded into
+*************************************************************************/
 void loadData(saveData data) {
 	std::ifstream saveText{ "Assets/save.txt" };
 

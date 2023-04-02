@@ -70,7 +70,6 @@ void GameObjInst::deducthealth(int damage)
 {
 	if (health > 0)
 	{
-		AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
 		health -= damage;
 	}
 }

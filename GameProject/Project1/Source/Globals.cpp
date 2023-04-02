@@ -112,10 +112,6 @@ const float			TOWER_LEFT = -PI / 2;			// Direction of tower facing left
 const float			TOWER_UP = PI;					// Direction of tower facing up
 const float			TOWER_DOWN = 0;					// Direction of tower facing down
 
-//Boss Globals
-const float			aoeREFRESH = 5.0f;				// Time for AOE attack to be refreshed
-const float			challengeATKREFRESH = 10.f;		// Time for Challenges attack to be refreshed
-
 //Spike Globals
 const float			SPIKE_TRANSITION_t = 0.5f;		// Time for spike to fade in/out
 const float			SPIKE_DEATH_t = 0.5f;			// Duration for spike to be non-existent

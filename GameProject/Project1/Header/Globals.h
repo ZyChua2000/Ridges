@@ -113,10 +113,6 @@ extern const float			TOWER_LEFT;				// Direction of tower facing left
 extern const float			TOWER_UP;				// Direction of tower facing up
 extern const float			TOWER_DOWN;				// Direction of tower facing down
 
-//Boss Globals
-extern const float			aoeREFRESH;				// Time for AOE attack to be refreshed
-extern const float			challengeATKREFRESH;	// Time for Challenges attack to be refreshed
-
 //Spike globals
 extern const float			SPIKE_TRANSITION_t;		// Time for spike to fade in/out
 extern const float			SPIKE_DEATH_t;			// Duration for spike to be non-existent

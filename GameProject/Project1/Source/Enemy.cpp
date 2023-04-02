@@ -398,5 +398,3 @@ void GameObjInst::mobKnockback(staticObjInst slash) {
 	AEVec2 slash2Mob = slash.posCurr - posCurr; //Based on distance between mob and slash
 	posCurr -= slash2Mob;
 }
-
-

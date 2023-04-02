@@ -225,16 +225,18 @@ namespace utilities {
 	\brief
 		This function calculates a transformation matrix for the boss's health bar
 		print the health bar of the boss
-	\param[in] boss
+	\param[in\out] boss
 		Accessing the boss details
-	\param[in] hpbartransform
+	\param[out] hpbartransform
 		Calculation of a matrix for boss health bar
+	\param[out] bossHeart
+		Game obj of boss heart
 	\param[in] camX
 		Camera X position
 	\param[in] camY
 		Camera Y position
 	*************************************************************************/
-	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform, float camX, float camY);
+	void bossBarTransMatrix(bosshp& boss, AEMtx33& hpbartransform, staticObjInst& bossHeart, float camX, float camY);
 
 	/*!***********************************************************************
 	\brief
