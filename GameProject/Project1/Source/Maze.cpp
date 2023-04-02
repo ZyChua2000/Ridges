@@ -212,7 +212,7 @@ void GS_Maze_Load(void) {
 	// =====================================
 	//	Load Audio
 	// =====================================
-	 MazeBG = AEAudioLoadMusic("Assets/Music/INPUT - NewAge MSCNEW2_01.wav");
+	 MazeBG = AEAudioLoadMusic("Assets/Music/INPUT - NewAge MSCNEW2_01.mp3");
 	 MazeBGG = AEAudioCreateGroup();
 
 	 HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");

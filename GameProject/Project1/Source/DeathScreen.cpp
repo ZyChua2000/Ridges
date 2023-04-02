@@ -44,12 +44,12 @@ struct DEATHObj
 
 struct DEATHObjInst
 {
-	DEATHObj* pObject;
+	DEATHObj* pObject{};
 	unsigned long flag = 0;
-	float scale;
-	AEVec2 posCurr;
-	float	dirCurr;
-	AEMtx33				transform;
+	float scale{};
+	AEVec2 posCurr{};
+	float	dirCurr{};
+	AEMtx33	transform{};
 };
 
 /*!

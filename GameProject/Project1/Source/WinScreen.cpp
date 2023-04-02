@@ -43,12 +43,12 @@ struct WinObj
 
 struct WinObjInst
 {
-	WinObj* pObject;
+	WinObj* pObject{};
 	unsigned long flag = 0;
-	float scale;
-	AEVec2 posCurr;
-	float	dirCurr;
-	AEMtx33				transform;
+	float scale{};
+	AEVec2 posCurr{};
+	float	dirCurr{};
+	AEMtx33				transform{};
 };
 
 /*!
@@ -138,7 +138,7 @@ void GS_WinScreen_Load(void) {
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
 
-	WinBGM = AEAudioLoadMusic("Assets/Music/SUPERSTRUCTURE - Corporate MSCCRP2_01.wav");
+	WinBGM = AEAudioLoadMusic("Assets/Music/SUPERSTRUCTURE - Corporate MSCCRP2_01.mp3");
 	WinGroup = AEAudioCreateGroup();
 }
 

@@ -223,7 +223,7 @@ void GS_BossLevel_Load(void) {
 
 	ParticleSystemLoad();
 
-	BossBGM = AEAudioLoadMusic("Assets/Music/DEEP WATERS - DanceTechno MSCDNT2_57.wav");
+	BossBGM = AEAudioLoadMusic("Assets/Music/DEEP WATERS - DanceTechno MSCDNT2_57.mp3");
 	BossGroup = AEAudioCreateGroup();
 	HeroDamaged = AEAudioLoadMusic("Assets/Music/HUMAN-GRUNT_GEN-HDF-15047.wav");
 	Damage = AEAudioCreateGroup();
