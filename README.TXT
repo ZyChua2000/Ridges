@@ -1,16 +1,21 @@
 Game Name: Dungeon Redemption
+Team Name: Ridges
+CSD1451s23
 
-Team Name : Ridges
-
-Class/Section/Year : CSD1451/B/2022
+All content © 2023 DigiPen Institute of Technology Singapore. All Rights Reserved
 
 Teammates:
 
 Chua Zheng Yang		-	c.zhengyang@digipen.edu
 Liu Chengrong		-	Chengrong.liu@digipen
-Alvin Woo Jia Hao	-	a.woo@digipen.edu
+Alvin Woo Jia Hao	-	-	a.woo@digipen.edu
 Javier Low Zhi Liang	-	zhiliangjavier.low@digipen.edu
 Jaasmeet Singh		-	Jaasmeet.s@digipen.edu
+
+How to Play:
+Click New Game to start in the World Level. Explore the world, battling enemies, opening
+gates and obtaining potions. At the end, choose to either clear challenges which will
+nerf the Boss or challenge the Boss directly.
 
 Controls:
 W				- Move Up
@@ -32,11 +37,11 @@ Esc 				- Pause Menu to exit the game back to Main Menu
 
 
 
-Level Selection From Main Menu:
+Level Selection From Main Menu (Cheat Mode):
 
 3 				- Maze Level
 
-4 				- Coloseum Level
+4 				- Colosseum Level
 
 5 				- Tower Level
 
@@ -46,10 +51,19 @@ Debugging Console in game:
 
 F3 				- Toggle on/off debugging console
 
-Level Editor:
+Level Editor (Based on Sprite Sheet), only in  game levels:
+
+8				- Export binary and texture text file
 
 9 				- Toggle on/off level editor 
 
-J 				- Previous Texture
+I				- Move Texture Up
 
-L 				- Next Texture 
+J 				- Move Texture Left
+
+K				- Move Texture Down
+
+L 				- Move Texture Right
+
+Credits:
+K

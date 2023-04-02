@@ -1146,9 +1146,11 @@ void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjL
 			continue;
 		}
 		if (pInst->pObject->type == TYPE_ENEMY) {
-			Mobs[k].health = pInst->health;
-			Mobs[k].posCurr = pInst->posCurr;
-			k++;
+			if (k != data.mobsNum) { // ensure that k does not read out of range
+				Mobs[k].health = pInst->health;
+				Mobs[k].posCurr = pInst->posCurr;
+				k++;
+			}
 		}
 	}
 
@@ -1160,15 +1162,19 @@ void saveGame(saveData data, GameObjInst* gameObjList, staticObjInst* staticObjL
 			continue;
 		}
 		if (pInst->pObject->type == TYPE_CHEST) {
-			Chests[k].posCurr = pInst->posCurr;
-			Chests[k].TextureMap = pInst->TextureMap;
-			k++;
+			if (k != data.chestNum) { // ensure that k does not read out of range
+				Chests[k].posCurr = pInst->posCurr;
+				Chests[k].TextureMap = pInst->TextureMap;
+				k++;
+			}
 		}
 
 		if (pInst->pObject->type == TYPE_LEVERS) {
-			Levers[j].posCurr = pInst->posCurr;
-			Levers[j].TextureMap = pInst->TextureMap;
-			j++;
+			if (j != data.leverNum) { // ensure that j does not read out of range
+				Levers[j].posCurr = pInst->posCurr;
+				Levers[j].TextureMap = pInst->TextureMap;
+				j++;
+			}
 		}
 	}
 

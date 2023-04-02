@@ -23,28 +23,44 @@ extern double	g_appTime;
 
 // ---------------------------------------------------------------------------
 // includes
+#include <vector>
+
+// Levels
+#include "Mainmenu.h"
+#include "World.h"
+#include "Maze.h"
+#include "Tower.h"
+#include "Colosseum.h"
+#include "BossLevel.h"
+// Screens
+#include "WinScreen.h"
+#include "DeathScreen.h"
+#include "HelpScreen.h"
+#include "SplashScreen.h"
 
 #include "AEEngine.h"
 #include "GameStateList.h"
 #include "GSM.h"
-#include "Mainmenu.h"
-#include "BossLevel.h"
-#include "World.h"
+// Functions
 #include "GameObjs.h"
-#include "Utilities.h"
-#include "Maze.h"
-#include "Colosseum.h"
-#include "DeathScreen.h"
-#include "Tower.h"
 #include "collision.h"
-#include "AEVecOverloads.h"
 #include "Enemy.h"
-#include "Globals.h"
 #include "ParticleSystem.h"
+#include "Utilities.h"
 #include "mapFunctions.h"
-#include "SplashScreen.h"
-#include "WinScreen.h"
-#include "HelpScreen.h"
+#include "AEVecOverloads.h"
+
+#include "Globals.h"
+
+
+
+
+
+
+
+
+
+
 
 #endif
 
