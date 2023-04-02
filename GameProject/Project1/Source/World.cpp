@@ -236,7 +236,7 @@ void GS_World_Load(void) {
 	InteractGroup = AEAudioCreateGroup();
 	Movement = AEAudioLoadMusic("Assets/Music/FOOTSTEPS-OUTDOOR_GEN-HDF-12363.mp3");
 	MovementGroup = AEAudioCreateGroup();
-	WorldBGM = AEAudioLoadMusic("Assets/Music/Designed, Drone, Deep Resonances, Static 01 SND12667.wav");
+	WorldBGM = AEAudioLoadMusic("Assets/Music/Designed, Drone, Deep Resonances, Static 01 SND12667.mp3");
 	WorldGroup = AEAudioCreateGroup();
 }
 
@@ -1050,7 +1050,11 @@ void GS_World_Free(void) {
 
 	utilities::unloadObjs(WarpPts);
 
+	// Stops all audio
 	AEAudioStopGroup(WorldGroup);
+	AEAudioStopGroup(Damage);
+	AEAudioStopGroup(MovementGroup);
+	AEAudioStopGroup(InteractGroup);
 
 	ParticleSystemFree();
 }
@@ -1072,8 +1076,10 @@ void GS_World_Unload(void) {
 		AEGfxTextureUnload(texture);
 	}
 
+	// Reset camera position
 	AEGfxSetCamPosition(0, 0);
 
+	// Clears Vector
 	meshList.clear();
 	textureList.clear();
 

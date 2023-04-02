@@ -922,8 +922,10 @@ void GS_Maze_Free(void) {
 		}
 	}
 
-	// Stops BG music
+	// Stops all audio
 	AEAudioStopGroup(MazeBGG);
+	AEAudioStopGroup(Damage);
+	AEAudioStopGroup(MovementGroup);
 
 	ParticleSystemFree();
 }

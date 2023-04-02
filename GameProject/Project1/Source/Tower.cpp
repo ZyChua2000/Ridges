@@ -972,7 +972,11 @@ void GS_Tower_Free(void) {
 	}
 	deletenodes();
 
+	// Stops all audio
 	AEAudioStopGroup(towerGroup);
+	AEAudioStopGroup(Damage);
+	AEAudioStopGroup(MovementGroup);
+	AEAudioStopGroup(InteractGroup);
 
 	utilities::unloadObjs(Gates);
 
@@ -996,10 +1000,11 @@ void GS_Tower_Unload(void) {
 		AEGfxTextureUnload(texture);
 	}
 
+	// Clears all Vectors
 	meshList.clear();
 	textureList.clear();
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
+	//Resets camera
 	AEGfxSetCamPosition(0, 0);
 
 	ParticleSystemUnload();

@@ -266,7 +266,7 @@ void GS_Colosseum_Init(void) {
 	NumObj[0] = staticObjInstCreate(TYPE_ITEMS, 1, nullptr, 0); // Potions
 	NumObj[1] = staticObjInstCreate(TYPE_KEY, 1, nullptr, 0); // Keys
 
-	AEAudioPlay(ColosseumBGM, ColosseumGroup, 0.1f, 0.8, -1);
+	AEAudioPlay(ColosseumBGM, ColosseumGroup, 0.1f, 0.8f, -1);
 
 	// Initialise in-game states
 	spawned = false;					
@@ -874,7 +874,10 @@ void GS_Colosseum_Free(void) {
 	}
 	deletenodes();
 
+	// Stops all audio
 	AEAudioStopGroup(ColosseumGroup);
+	AEAudioStopGroup(Damage);
+	AEAudioStopGroup(MovementGroup);
 
 	ParticleSystemFree();
 

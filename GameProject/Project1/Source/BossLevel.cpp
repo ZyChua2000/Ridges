@@ -193,6 +193,7 @@ void GS_BossLevel_Load(void) {
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_2.png")); //6
 	textureList.push_back(AEGfxTextureLoad("Assets/MainMenu/Instruction_3.png")); //7
 	textureList.push_back(AEGfxTextureLoad("Assets/Boss_Obj.png")); // 8
+	textureList.push_back(AEGfxTextureLoad("Assets/slashBoss.png")); // 9
 
 	//Texture Alias
 	AEGfxTexture*& slashTex = textureList[0];
@@ -201,7 +202,8 @@ void GS_BossLevel_Load(void) {
 	AEGfxTexture*& darkRoom = textureList[3];
 	AEGfxTexture*& PauseTex = textureList[4];
 	AEGfxTexture*& startTex = textureList[8];
-	
+	AEGfxTexture*& slashBosstex = textureList[9];
+
 	// =====================================
 	//	Load Unique Game Objs
 	// =====================================
@@ -217,7 +219,7 @@ void GS_BossLevel_Load(void) {
 	utilities::loadMeshNTexture(Boss, spriteMesh, spriteSheet, TYPE_BOSS);
 	utilities::loadMeshNTexture(BossCircle, spriteMesh, spriteSheet, TYPE_BOSSCIRCLE);
 	utilities::loadMeshNTexture(BossCircleAttack, spriteMesh, spriteSheet, TYPE_BOSSCIRCLEATTACK);
-	utilities::loadMeshNTexture(BossSlash, fullSizeMesh, slashTex, TYPE_BOSSSLASH);
+	utilities::loadMeshNTexture(BossSlash, fullSizeMesh, slashBosstex, TYPE_BOSSSLASH);
 	utilities::loadMeshNTexture(Pause, fullSizeMesh, PauseTex, TYPE_PAUSE);
 	utilities::loadMeshNTexture(Start, fullSizeMesh, startTex, TYPE_START);
 
@@ -1016,7 +1018,10 @@ void GS_BossLevel_Free(void) {
 	}
 	deletenodes();
 
+	// Stops all audio
 	AEAudioStopGroup(BossGroup);
+	AEAudioStopGroup(Damage);
+	AEAudioStopGroup(MovementGroup);
 
 	ParticleSystemFree();
 }
@@ -1040,8 +1045,10 @@ void GS_BossLevel_Unload(void) {
 	}
 
 
-	//BUGGY CODE, IF UANBLE TO LOAD, CANNOT USE DEBUGGING MODE
+	// Reset camera position
 	AEGfxSetCamPosition(0, 0);
+
+	// Clear all vectors
 	meshList.clear();
 	textureList.clear();
 	stageList.clear();
