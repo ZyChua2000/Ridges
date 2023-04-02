@@ -206,7 +206,7 @@ void GS_HelpScreen_Update(void) {
 
 		if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
 		{
-			gGameStateNext = GS_QUIT;
+			utilities::quitGame();
 			return;
 		}
 		//gGameStateNext = GS_WORLD;

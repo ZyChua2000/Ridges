@@ -21,6 +21,7 @@
     <ClCompile Include="Source\mapFunctions.cpp" />
     <ClCompile Include="Source\HelpScreen.cpp" />
     <ClCompile Include="Source\SplashScreen.cpp" />
+    <ClCompile Include="Source\WinScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header\AEVecOverloads.h" />
@@ -44,5 +45,6 @@
     <ClInclude Include="Header\staticObjs.h" />
     <ClInclude Include="Header\HelpScreen.h" />
     <ClInclude Include="Header\SplashScreen.h" />
+    <ClInclude Include="Header\WinScreen.h" />
   </ItemGroup>
 </Project>

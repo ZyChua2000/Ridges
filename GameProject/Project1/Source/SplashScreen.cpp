@@ -91,6 +91,12 @@ void GS_SplashScreen_Update(void)
 		return;
 	}
 
+	if (AEInputCheckReleased(AEVK_LBUTTON) || AEInputCheckReleased(AEVK_RETURN) || 
+		AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_ESCAPE)) {
+		gGameStateNext = GS_MAINMENU;
+		return;
+	}
+
 }
 
 /******************************************************************************/
