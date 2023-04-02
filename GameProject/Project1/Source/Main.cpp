@@ -92,8 +92,8 @@ int WINAPI WinMain(HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_l
 			g_dt = (f32)AEFrameRateControllerGetFrameTime();
 
 			//capping the game loop - delta time, to 1/60.0f
-			if (g_dt > 1.f/30)	//0.01667f = 1/60.0f
-				g_dt = 1.f / 30;
+			if (g_dt > 1.f/ 60)	//0.01667f = 1/60.0f
+				g_dt = 1.f / 60;
 
 			g_appTime += g_dt;
 		}
