@@ -21,7 +21,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 */
 /******************************************************************************/
 
-static const unsigned int	MAX_MOBS = 11;						// The total number of mobs
+static const unsigned int	MAX_MOBS = 15;						// The total number of mobs
 static const int			totalWaves = 3;						// The total number of waves
 
 static const unsigned int	MAX_CHESTS = 1;						// The total number of chests
