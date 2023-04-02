@@ -26,7 +26,8 @@ Left Mouse Click 		- Slash(direction relative from mouse to player sprite)
 
 H 				- Help Screen
 
-Esc 				- Pause Menu	
+Esc 				- Pause Menu to exit the game back to Main Menu	
+
 
 
 Level Selection From Main Menu:
