@@ -305,9 +305,10 @@ void GameObjInst::mobsKilled() {
 /*******************************************************************/
 void GameObjInst::mobsPathFind(GameObjInst target) {
 
+
 	pathtimer -= g_dt; // timer counting down 
 
-	//bool is_at_end = false;
+	
 	if (pathtimer <= 0)
 	{
 		// perform pathfinding for this enemy
@@ -317,7 +318,7 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 
 		pathtimer = pathfindtime; // set timer back to default;
 		target_node = 0; // target node for enemy to find the next node
-		//is_at_end = false;
+		
 
 	}
 
@@ -325,10 +326,9 @@ void GameObjInst::mobsPathFind(GameObjInst target) {
 	if (!path.empty())// as long as path not empty 
 	{
 
-		//Node* pNextNode = pEnemy->path[1];
-
+	
 		// calculate the distance between the enemy and player
-		float distance = sqrtf(powf(target.posCurr.x - posCurr.x, 2) + powf(target.posCurr.y - posCurr.y, 2));
+		 float distance = sqrtf(powf(target.posCurr.x - posCurr.x, 2) + powf(target.posCurr.y - posCurr.y, 2));
 
 		AEVec2 target_pos{ 0,0 };
 

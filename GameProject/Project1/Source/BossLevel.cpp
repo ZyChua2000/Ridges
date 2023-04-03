@@ -25,8 +25,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 static const int			MAP_CELL_WIDTH = 24;				// Total number of cell widths
 static const int			MAP_CELL_HEIGHT = 42;				// Total number of cell heights
 
-static const AEVec2			mapMin{ 3.5, -6 };					// Minimal coordinate of map
-static const AEVec2			mapRange{ 17, 8 };					// Range of available coordinates from min of map
+static const AEVec2			mapMin{ 4.5, -7 };					// Minimal coordinate of map
+static const AEVec2			mapRange{ 15, 6 };					// Range of available coordinates from min of map
 
 static const int			maxLevelNum = 3;					// Total number of challenge levels
 

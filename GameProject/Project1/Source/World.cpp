@@ -563,8 +563,11 @@ void GS_World_Update(void) {
 				continue;
 
 			if (Player->calculateDistance(*pEnemy) > enemySightRange)
+			{
+				pEnemy->velCurr.x = 0;
+				pEnemy->velCurr.y = 0;
 				continue;
-
+			}
 			pEnemy->mobsPathFind(*Player);
 		}
 
