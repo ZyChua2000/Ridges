@@ -71,6 +71,7 @@ static AEGfxTexture* animationBG[6];									// Pointer to 6 animation frames
 
 static float animated = 1;												// Timer for Animation
 
+bool devMode = false;													// Boolean for cheat mode
 static bool credit = false;												// Boolean for credit page
 AEGfxVertexList* CreditMesh;											// Pointer to Credit Mesh
 AEGfxTexture* Credit_Img;												// Pointer to Credit Texture
@@ -188,37 +189,47 @@ void GS_MainMenu_Update(void) {
 	
 	mBack->pObject->pTexture = animationBG[(int)(animated*10) %6];
 
-	
+	if (AEInputCheckCurr(AEVK_Q)) { // turn on devMode
+		if (AEInputCheckReleased(AEVK_L)) {
+			devMode = true;
+		}
+	}
 		
-	if (AEInputCheckTriggered(AEVK_1)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_WIN;
-		return;
-	}
-	
-	if (AEInputCheckTriggered(AEVK_3)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_MAZE;
-		return;
-	}
+	if (devMode == true) {
+		if (AEInputCheckTriggered(AEVK_1)) {
+			AEAudioStopGroup(Group1);
+			gGameStateNext = GS_WIN;
+			return;
+		}
 
-	if (AEInputCheckTriggered(AEVK_4)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_COLOSSEUM;
-		return;
-	}
+		if (AEInputCheckTriggered(AEVK_3)) {
+			AEAudioStopGroup(Group1);
+			gGameStateNext = GS_MAZE;
+			return;
+		}
 
-	if (AEInputCheckTriggered(AEVK_5)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_TOWER;
-		return;
-	}
+		if (AEInputCheckTriggered(AEVK_4)) {
+			AEAudioStopGroup(Group1);
+			gGameStateNext = GS_COLOSSEUM;
+			return;
+		}
+
+		if (AEInputCheckTriggered(AEVK_5)) {
+			AEAudioStopGroup(Group1);
+			gGameStateNext = GS_TOWER;
+			return;
+		}
 
 
-	if (AEInputCheckTriggered(AEVK_6)) {
-		AEAudioStopGroup(Group1);
-		gGameStateNext = GS_BOSSLEVEL;
-		return;
+		if (AEInputCheckTriggered(AEVK_6)) {
+			AEAudioStopGroup(Group1);
+			gGameStateNext = GS_BOSSLEVEL;
+			return;
+		}
+
+		if (AEInputCheckTriggered(AEVK_F3)) {
+			debugstate ^= 1;
+		}
 	}
 	if (AEInputCheckTriggered(AEVK_H)) {
 		AEAudioPauseGroup(Group1);
@@ -237,11 +248,6 @@ void GS_MainMenu_Update(void) {
 	mouseY = float (mY);
 
 	//pPlay = nullptr;
-	
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		debugstate ^= 1;
-
-	}
 	
 	
 		if (AEInputCheckReleased(AEVK_LBUTTON)) {
@@ -267,7 +273,6 @@ void GS_MainMenu_Update(void) {
 				credit = true;
 				
 			}
-			//gGameStateNext = GS_WORLD;
 		}
 	
 		

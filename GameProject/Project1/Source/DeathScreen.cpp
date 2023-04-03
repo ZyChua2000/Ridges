@@ -167,19 +167,6 @@ void GS_DeathScreen_Update(void) {
 	mBack->pObject->pTexture = animationBG[(int)(animated * 10) % 4];
 
 
-	if (AEInputCheckTriggered(AEVK_3)) {
-		gGameStateNext = GS_MAZE;
-	}
-
-	if (AEInputCheckTriggered(AEVK_4)) {
-		gGameStateNext = GS_COLOSSEUM;
-	}
-
-	if (AEInputCheckTriggered(AEVK_H)) {
-		gGameStateNext = GS_HELP;
-		return;
-	}
-
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float(mX);
@@ -187,9 +174,10 @@ void GS_DeathScreen_Update(void) {
 
 	//pPlay = nullptr;
 
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		debugstate ^= 1;
-
+	if (devMode == true) {
+		if (AEInputCheckTriggered(AEVK_F3)) {
+			debugstate ^= 1;
+		}
 	}
 	
 		if (AEInputCheckReleased(AEVK_LBUTTON)) {

@@ -173,15 +173,6 @@ void GS_HelpScreen_Update(void) {
 	}
 	mBack->pObject->pTexture = CycleBG[cycle];
 
-
-	if (AEInputCheckTriggered(AEVK_3)) {
-		gGameStateNext = GS_MAZE;
-	}
-
-	if (AEInputCheckTriggered(AEVK_4)) {
-		gGameStateNext = GS_COLOSSEUM;
-	}
-
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float(mX);
@@ -189,29 +180,16 @@ void GS_HelpScreen_Update(void) {
 
 	//pPlay = nullptr;
 
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		debugstate ^= 1;
+	if (devMode == true) {
+		if (AEInputCheckTriggered(AEVK_F3)) {
+			debugstate ^= 1;
 
-	}
-
-	if (AEInputCheckReleased(AEVK_LBUTTON)) {
-
-
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 445.f, 245.f, 85.f) == 1)//width 245 height 85
-		{
-
-			gGameStateNext = GS_MAINMENU;
-			return;
 		}
-
-		if (utilities::rectbuttonClicked_AlignCtr(800.f, 585.f, 245.f, 85.f) == 1)//width 245 height 85
-		{
-			utilities::quitGame();
-			return;
-		}
-		//gGameStateNext = GS_WORLD;
 	}
-
+	
+	if (AEInputCheckReleased(AEVK_ESCAPE)) {
+		gGameStateNext = GS_MAINMENU
+	}
 
 
 

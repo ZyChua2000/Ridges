@@ -355,18 +355,42 @@ void GS_Maze_Update(void) {
 		// User Input
 		// =====================================
 		//Debugging mode - Developer Use
-		if (AEInputCheckTriggered(AEVK_F3)) {
-			debugging ^= true;
-		}
-		//Map editor mode - Developer Use
-		if (AEInputCheckTriggered(AEVK_9)) {
-			mapeditor ^= true;
+		if (devMode == true) {
+			//Debugging mode - Developer Use
+			if (AEInputCheckTriggered(AEVK_F3)) {
+				debugging ^= true;
+			}
+
+			//Map editor mode - Developer Use
+			if (AEInputCheckTriggered(AEVK_9)) {
+				mapeditor ^= true;
+			}
+
+			// Dark editor mode - Developer Use
+			if (AEInputCheckTriggered(AEVK_1))
+			{
+				dark ^= true;
+			}
+
+			//Map editor selection - Developer Use
+			if (mapeditor == true) {
+				mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+				utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
+			}
+			else {
+				mapEditorObj->scale = 0;
+			}
+
+			// Map editor printing - Developer Use
+			if (AEInputCheckTriggered(AEVK_8)) {
+				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureBoss.txt");
+
+				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryBoss.txt");
+			}
 		}
 		//Dark Mesh toggle
-		if (AEInputCheckTriggered(AEVK_1))
-		{
-			dark ^= true;
-		}
 
 		//pathing toggle
 		if (pathingcd == 0) {
@@ -405,24 +429,6 @@ void GS_Maze_Update(void) {
 			walkCD = WALK_COOLDOWN_t;
 			Player->playerStand();
 			movement = false;
-		}
-
-		//Map editor selection - Developer Use
-		if (mapeditor == true) {
-			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-		}
-		else {
-			mapEditorObj->scale = 0;
-		}
-
-		// Map editor printing - Developer Use
-		if (AEInputCheckTriggered(AEVK_8)) {
-			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureMaze.txt");
-
-			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryMaze.txt");
 		}
 
 		// NO BOUNDING BOX UPDATE - AABB NOT USED IN this LEVEL

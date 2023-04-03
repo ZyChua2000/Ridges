@@ -174,16 +174,6 @@ void GS_WinScreen_Update(void) {
 
 	mBack->pObject->pTexture = WinanimationBG[(int)(animated * 10) % 6];
 
-	if (AEInputCheckTriggered(AEVK_3)) {
-		AEAudioStopGroup(WinGroup);
-		gGameStateNext = GS_MAZE;
-	}
-
-	if (AEInputCheckTriggered(AEVK_4)) {
-		AEAudioStopGroup(WinGroup);
-		gGameStateNext = GS_COLOSSEUM;
-	}
-
 	s32 mX, mY;
 	AEInputGetCursorPosition(&mX, &mY);
 	mouseX = float(mX);
@@ -191,9 +181,11 @@ void GS_WinScreen_Update(void) {
 
 	//pPlay = nullptr;
 
-	if (AEInputCheckTriggered(AEVK_F3)) {
-		debugstate ^= 1;
+	if (devMode == true) {
+		if (AEInputCheckTriggered(AEVK_F3)) {
+			debugstate ^= 1;
 
+		}
 	}
 	if (AEInputCheckTriggered(AEVK_ESCAPE)) {
 		AEAudioStopGroup(WinGroup);

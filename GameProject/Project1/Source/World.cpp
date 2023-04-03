@@ -466,13 +466,34 @@ void GS_World_Update(void) {
 		// =====================================
 		// User Input
 		// =====================================
-		//Debugging mode - Developer Use
-		if (AEInputCheckTriggered(AEVK_F3)) {
-			debugging ^= true;
-		}
-		//Map editor mode - Developer Use
-		if (AEInputCheckTriggered(AEVK_9)) {
-			mapeditor ^= true;
+		if (devMode == true) {
+			//Debugging mode - Developer Use
+			if (AEInputCheckTriggered(AEVK_F3)) {
+				debugging ^= true;
+			}
+
+			//Map editor mode - Developer Use
+			if (AEInputCheckTriggered(AEVK_9)) {
+				mapeditor ^= true;
+			}
+
+			//Map editor selection - Developer Use
+			if (mapeditor == true) {
+				mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
+
+				utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
+
+			}
+			else {
+				mapEditorObj->scale = 0;
+			}
+
+			// Map editor printing - Developer Use
+			if (AEInputCheckTriggered(AEVK_8)) {
+				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureBoss.txt");
+
+				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryBoss.txt");
+			}
 		}
 
 		Player->playerStand();
@@ -528,23 +549,6 @@ void GS_World_Update(void) {
 			Player->playerStand(); // Stop the player
 		}
 
-		//Map editor selection - Developer Use
-		if (mapeditor == true) {
-			mapEditorObj->mapEditorObjectSpawn(mouseX, mouseY, camX, camY);
-
-			utilities::changeMapObj(mouseX + camX, mouseY + camY, MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, *mapEditorObj);
-
-		}
-		else {
-			mapEditorObj->scale = 0;
-		}
-
-		// Map editor printing - Developer Use
-		if (AEInputCheckTriggered(AEVK_8)) {
-			utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
-
-			utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
-		}
 
 		// ======================================================
 		// update physics of all active game object instances
