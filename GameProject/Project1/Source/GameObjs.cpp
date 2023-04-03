@@ -467,13 +467,15 @@ void Inventory::itemPickUp(staticObjInst* item) {
 		if (Potion < 9)
 		{
 			Potion++;
+			staticObjInstDestroy(item);
 		}
 		break;
 	case TYPE_KEY:
 		Key++;
+		staticObjInstDestroy(item);
 		break;
 	default:
 		break;
 	}
-	staticObjInstDestroy(item);
+	
 }

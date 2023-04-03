@@ -560,9 +560,12 @@ void GS_BossLevel_Update(void) {
 				int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 					// Between Bullet and Player
-					Player->deducthealth();
-					AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
-					gameObjInstDestroy(pInst);
+					if (playerHitTime == 0) {
+						Player->deducthealth();
+						playerHitTime = DAMAGE_COODLDOWN_t;
+						AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
+						gameObjInstDestroy(pInst);
+					}
 				}
 				if (snapCollision(*pInst, flag)) {
 					// Between Bullet and Wall

@@ -593,9 +593,12 @@ void GS_Tower_Update(void) {
 				int flag = CheckInstanceBinaryMapCollision(pInst->posCurr.x, -pInst->posCurr.y, binaryMap, pInst->scale, pInst->scale);
 				if (CollisionIntersection_RectRect(Player->boundingBox, Player->velCurr, pInst->boundingBox, pInst->velCurr)) {
 					// Between bullet and player
-					Player->deducthealth();
-					AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
-					gameObjInstDestroy(pInst);
+					if (playerHitTime == 0) {
+						Player->deducthealth();
+						playerHitTime = DAMAGE_COODLDOWN_t;
+						AEAudioPlay(HeroDamaged, Damage, 0.3f, 1, 0);
+						gameObjInstDestroy(pInst);
+					}
 				}
 				// between bullet and wall
 				if (snapCollision(*pInst, flag)) {
