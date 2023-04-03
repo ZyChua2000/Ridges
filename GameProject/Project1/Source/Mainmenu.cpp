@@ -53,31 +53,54 @@ struct MenuObjInst
 	AEMtx33	transform{};
 };
 
-static const unsigned int	MENU_OBJ_NUM_MAX = 8;
-static const unsigned int	MENU_OBJ_INST_NUM_MAX = 32;
+/*!
+Defines
+* /
+/******************************************************************************/
 
-
+static const unsigned int	MENU_OBJ_NUM_MAX = 8;						// Max number of unique objects
+static const unsigned int	MENU_OBJ_INST_NUM_MAX = 32;					// Max number of object instances
 static MenuObj				sMenuObjList[MENU_OBJ_NUM_MAX];				// Each element in this array represents a unique game object (shape)
-static unsigned long		sMenuObjNum;
+static unsigned long		sMenuObjNum;								// Number of existing game obj
 static MenuObjInst			sMenuObjInstList[MENU_OBJ_INST_NUM_MAX];	// Each element in this array represents a unique game object instance (sprite)
-static unsigned long		sMenuObjInstNum;
+static unsigned long		sMenuObjInstNum;							// Number of existing game obj inst
+static const float BackSize = 10;										// Scale of BG
 
-static MenuObjInst* mBack;
-static AEGfxTexture* animationBG[6];
+static MenuObjInst* mBack;												// Pointer to Background object
+static AEGfxTexture* animationBG[6];									// Pointer to 6 animation frames
 
-//MenuObjInst* Animation[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
-static float animated = 1;
+static float animated = 1;												// Timer for Animation
 
-//MenuObjInst* Background[6] = { mBack1,mBack2,mBack3,mBack4,mBack5,mBack6 };
+static bool credit = false;												// Boolean for credit page
+AEGfxVertexList* CreditMesh;											// Pointer to Credit Mesh
+AEGfxTexture* Credit_Img;												// Pointer to Credit Texture
 
+// Functions for mainmenu.cpp only
 
-static const float BackSize = 10;
-static bool credit = false;
-AEGfxVertexList* CreditMesh;
-AEGfxTexture* Credit_Img;
-
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos, float dir);
+
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 void menuObjInstDestroy(MenuObjInst* pInst);
+
 AEAudio BackgroundMusic;
 AEAudioGroup Group1;
 
@@ -117,9 +140,6 @@ void GS_MainMenu_Load(void) {
 
 	Background_1->refTexture = false;
 	Background_1->refMesh = false;
-
-
-
 	
 	AEGfxMeshStart();
 	AEGfxTriAdd(-800.f, 450.f, 0x00FF00, 0.f, 0.f,
@@ -412,11 +432,20 @@ void GS_MainMenu_Unload(void) {
 }
 
 // ---------------------------------------------------------------------------
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function creates a static object instance
+\param[in] type
+	The type of object
+\param[in] scale
+	The scale of the object
+\param[in] pPos
+	Pointer to the initial position of the object
+\param[in] dir
+	The initial direction of the object
+\return
+	Pointer to the instance
+*************************************************************************/
 MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos,float dir)
 {
 	AEVec2 zero;
@@ -450,11 +479,12 @@ MenuObjInst* menuObjInstCreate(unsigned long type, float scale, AEVec2* pPos,flo
 	return 0;
 }
 
-/******************************************************************************/
-/*!
-
-*/
-/******************************************************************************/
+/*!***********************************************************************
+\brief
+	This function frees a static object instance
+\param[in] pInst
+	Pointer to the object instance
+*************************************************************************/
 
 void menuObjInstDestroy(MenuObjInst* pInst)
 {
