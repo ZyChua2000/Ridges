@@ -357,9 +357,9 @@ void GS_Colosseum_Update(void) {
 
 			// Map editor printing - Developer Use
 			if (AEInputCheckTriggered(AEVK_8)) {
-				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureBoss.txt");
+				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureColosseum.txt");
 
-				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryBoss.txt");
+				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryColosseum.txt");
 			}
 		}
 

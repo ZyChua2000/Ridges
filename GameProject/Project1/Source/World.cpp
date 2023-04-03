@@ -466,8 +466,13 @@ void GS_World_Update(void) {
 		// =====================================
 		// User Input
 		// =====================================
+
 		if (devMode == true) {
 			//Debugging mode - Developer Use
+			if (AEInputCheckReleased(AEVK_O)) { // Teleport to challenge area
+				Player->posCurr = { 106, -22 };
+			}
+
 			if (AEInputCheckTriggered(AEVK_F3)) {
 				debugging ^= true;
 			}
@@ -490,9 +495,9 @@ void GS_World_Update(void) {
 
 			// Map editor printing - Developer Use
 			if (AEInputCheckTriggered(AEVK_8)) {
-				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureBoss.txt");
+				utilities::exportMapTexture(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "textureWorld.txt");
 
-				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryBoss.txt");
+				utilities::exportMapBinary(MAP_CELL_HEIGHT, MAP_CELL_WIDTH, *MapObjInstList, "binaryWorld.txt");
 			}
 		}
 
