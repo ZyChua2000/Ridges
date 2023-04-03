@@ -188,7 +188,7 @@ void GS_HelpScreen_Update(void) {
 	}
 	
 	if (AEInputCheckReleased(AEVK_ESCAPE)) {
-		gGameStateNext = GS_MAINMENU
+		gGameStateNext = GS_MAINMENU;
 	}
 
 
